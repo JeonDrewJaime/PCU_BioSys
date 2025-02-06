@@ -1,13 +1,9 @@
-import { useState } from 'react'
-
-
-
+import HomeNavbar from "./components/HomeNavbar"
+import DashboardNavbar from "./components/DashboardNavbar"
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <h1>Hello World XD</h1>
+     <HomeNavbar/>
     </>
   )
 }
