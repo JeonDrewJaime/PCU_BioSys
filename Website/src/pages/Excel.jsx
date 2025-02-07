@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import {
   Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Typography, TextField,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, IconButton
 } from '@mui/material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { styled } from '@mui/system';
 import { handleSaveExcelContent } from '../../APIs/Admin';
+import sheesh from '../assets/sample.png';
+import file from '../downloads/SAMPLESSS.xlsx';
 
-const MAX_COLUMNS = 10; // Set column limit
+const MAX_COLUMNS = 10;
 
 const Container = styled('div')(({ theme }) => ({
   padding: '20px',
@@ -23,11 +26,23 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   WebkitOverflowScrolling: 'touch',
 }));
 
+const ImageWrapper = styled('div')({
+  textAlign: 'center',
+  marginTop: '20px',
+});
+
 function Excel() {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
+  const [fileInputRef, setFileInputRef] = useState(null);
+  const [instructionsAcknowledged, setInstructionsAcknowledged] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleUploadButtonClick = () => {
+    if (!dontShowAgain) setOpenDialog(true);
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -62,6 +77,8 @@ function Excel() {
 
         setColumns(jsonData[0]);
         setRows(jsonData.slice(1));
+        setOpenDialog(false); 
+        event.target.value = ''; 
       }
     };
     reader.readAsArrayBuffer(file);
@@ -76,35 +93,68 @@ function Excel() {
     setRows(updatedRows);
   };
 
+  const handleDeleteRow = (rowIndex) => {
+    const updatedRows = rows.filter((_, index) => index !== rowIndex);
+    setRows(updatedRows);
+  };
+
   const handleCloseDialog = () => setOpenDialog(false);
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Excel File Uploader
-      </Typography>
       <Button
         variant="contained"
-        component="label"
+        onClick={handleUploadButtonClick}
         style={{ marginBottom: '20px' }}
       >
         Upload Excel File
-        <input
-          type="file"
-          accept=".xlsx, .xls"
-          hidden
-          onChange={handleFileUpload}
-        />
       </Button>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Invalid File</DialogTitle>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="xl">
+        <DialogTitle>Upload Excel File</DialogTitle>
         <DialogContent>
-          {dialogMessage}
+          <Typography>Instructions</Typography>
+          <ImageWrapper>
+            <img src={sheesh} alt="Instructions Graphic" style={{ maxWidth: '50%', height: 'auto', marginTop: '10px' }} />
+          </ImageWrapper>
+          <Button
+            variant="outlined"
+            style={{ marginTop: '10px' }}
+            href={file}
+            download={file}
+          >
+            Download Attachment
+          </Button>
+          <FormControlLabel
+            control={<Checkbox checked={instructionsAcknowledged} onChange={(e) => setInstructionsAcknowledged(e.target.checked)} />}
+            label="I understand the instructions."
+            style={{ marginTop: '10px' }}
+          />
+          <FormControlLabel
+            control={<Checkbox checked={dontShowAgain} onChange={(e) => setDontShowAgain(e.target.checked)} />}
+            label="Don't show again."
+          />
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            hidden
+            ref={(ref) => setFileInputRef(ref)}
+            onChange={handleFileUpload}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => fileInputRef?.click()}
+            style={{ marginTop: '10px' }}
+            disabled={!instructionsAcknowledged}
+          >
+            Select File
+          </Button>
+          <Typography>{dialogMessage}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="primary">
-            OK
+            Close
           </Button>
         </DialogActions>
       </Dialog>
@@ -120,6 +170,7 @@ function Excel() {
                       {col}
                     </TableCell>
                   ))}
+                  <TableCell style={{ fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -136,11 +187,20 @@ function Excel() {
                         />
                       </TableCell>
                     ))}
+                    <TableCell>
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleDeleteRow(rowIndex)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </StyledTableContainer>
+
           <Button
             variant="contained"
             color="primary"
