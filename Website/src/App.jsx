@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { getDatabase, ref, set, onValue } from "firebase/database";
 import { app } from "../utils/firebase-config";
 import HomeNavbar from "./components/HomeNavbar";
+import DashboardNavbar from "./components/DashboardNavbar";
 
 function App() {
   useEffect(() => {

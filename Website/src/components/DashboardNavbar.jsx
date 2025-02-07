@@ -19,7 +19,7 @@ import Typography from '@mui/material/Typography';
 
 const drawerWidth = 240;
 
-function Navbar(props) {
+function DashboardNavbar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -142,8 +142,8 @@ function Navbar(props) {
   );
 }
 
-Navbar.propTypes = {
+DashboardNavbar.propTypes = {
   window: PropTypes.func,
 };
 
-export default Navbar;
+export default DashboardNavbar;
