@@ -1,51 +1,47 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, Button, Typography } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  email: Yup.string()
+    .email('Invalid email format')
+    .required('Email is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters long')
+    .required('Password is required')
+});
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const validationErrors = {};
-
-    // Simple validation rules
-    if (!email) {
-      validationErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      validationErrors.email = 'Invalid email format';
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: ''
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      console.log('Form Submitted:', values);
     }
-
-    if (!password) {
-      validationErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      validationErrors.password = 'Password must be at least 6 characters long';
-    }
-
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length === 0) {
-      // Handle form submission
-      console.log('Form Submitted:', { email, password });
-    }
-  };
+  });
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto' }}>
       <Typography variant="h4" gutterBottom>
         Login
       </Typography>
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={formik.handleSubmit} noValidate>
         <TextField
           fullWidth
           margin="normal"
           label="Email"
           variant="outlined"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          error={Boolean(errors.email)}
-          helperText={errors.email}
+          id="email"
+          name="email"
+          value={formik.values.email}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.email && Boolean(formik.errors.email)}
+          helperText={formik.touched.email && formik.errors.email}
         />
         <TextField
           fullWidth
@@ -53,10 +49,13 @@ function Login() {
           label="Password"
           type="password"
           variant="outlined"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={Boolean(errors.password)}
-          helperText={errors.password}
+          id="password"
+          name="password"
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.password && Boolean(formik.errors.password)}
+          helperText={formik.touched.password && formik.errors.password}
         />
         <Button
           type="submit"

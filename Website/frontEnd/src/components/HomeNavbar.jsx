@@ -19,6 +19,7 @@ import About from '../pages/About';
 import Contact from '../pages/Contact';
 import Login from '../pages/Login';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import Footer from './Footer';
 
 const drawerWidth = 240;
 const navItems = [
@@ -39,7 +40,7 @@ function HomeNavbar(props) {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        MUI
+        Sample langz
       </Typography>
       <Divider />
       <List>
@@ -57,6 +58,7 @@ function HomeNavbar(props) {
   const container = window !== undefined ? () => window().document.body : undefined;
 
   return (
+    <>
     <Router>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
@@ -112,13 +114,10 @@ function HomeNavbar(props) {
         </Box>
       </Box>
     </Router>
+    <Footer/>
+    </>
   );
 }
-
-
-
-
-
 
 HomeNavbar.propTypes = {
   window: PropTypes.func,
