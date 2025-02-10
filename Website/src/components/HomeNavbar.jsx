@@ -16,17 +16,16 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Home from '../pages/Home';
 import About from '../pages/About';
-import Contact from '../pages/Contact';
 import Login from '../pages/Login';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import Footer from './Footer';
+
 
 const drawerWidth = 240;
 const navItems = [
   { label: 'Home', path: '/' },
   { label: 'About', path: '/about' },
   { label: 'Login', path: '/login' },
-  
 ];
 
 function HomeNavbar(props) {
@@ -54,67 +53,66 @@ function HomeNavbar(props) {
       </List>
     </Box>
   );
-
   const container = window !== undefined ? () => window().document.body : undefined;
-
   return (
     <>
-    <Router>
-      <Box sx={{ display: 'flex' }}>
-        <CssBaseline />
-        <AppBar component="nav">
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' } }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
-            >
-              MUI
-            </Typography>
-            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {navItems.map((item) => (
-                <Button key={item.label} component={Link} to={item.path} sx={{ color: '#fff' }}>
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
-          </Toolbar>
-        </AppBar>
-        <nav>
-          <Drawer
-            container={container}
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{ keepMounted: true }}
-            sx={{
-              display: { xs: 'block', sm: 'none' },
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-            }}
+      <Router>
+        <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
+          <CssBaseline />
+          <AppBar component="nav"
+          sx = {{backgroundColor: "#FFFFFF"}}
           >
-            {drawer}
-          </Drawer>
-        </nav>
-        <Box component="main" sx={{ p: 3 }}>
-          <Toolbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/login" element={<Login/>} />
-          </Routes>
+            <Toolbar>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2, display: { sm: 'none' } }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' },  color: "black", fontFamily: "MyCustomFont"}}
+              >
+                Sheesh
+              </Typography>
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                {navItems.map((item) => (
+                  <Button key={item.label} component={Link} to={item.path} sx={{ color: '#fff' }}>
+                    {item.label}
+                  </Button>
+                ))}
+              </Box>
+            </Toolbar>
+          </AppBar>
+          <nav>
+            <Drawer
+              container={container}
+              variant="temporary"
+              open={mobileOpen}
+              onClose={handleDrawerToggle}
+              ModalProps={{ keepMounted: true }}
+              sx={{
+                display: { xs: 'block', sm: 'none' },
+                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+              }}
+            >
+              {drawer}
+            </Drawer>
+          </nav>
+          <Box component="main" sx={{ flexGrow: 1, width: '100%', mt: 8, px: 0 }}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/login" element={<Login />} />
+            </Routes>
+          </Box>
         </Box>
-      </Box>
-    </Router>
-    <Footer/>
+  
+      </Router>
     </>
   );
 }

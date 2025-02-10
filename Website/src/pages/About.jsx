@@ -1,9 +1,9 @@
 import React from 'react'
-import Excel from './Excel'
+import ScheduleManagement from './ScheduleManagement'
 function About() {
   return (
-    <div>
-      <Excel/>
+    <div> 
+      <ScheduleManagement/>
     </div>
   )
 }

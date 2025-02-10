@@ -4,6 +4,7 @@ import { useFormik } from 'formik';
 import validationSchema from '../../utils/validation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../utils/firebase-config';
+import Footer from '../components/Footer';
 
 function Login() {
   const formik = useFormik({
@@ -25,15 +26,15 @@ function Login() {
   });
 
   return (
+    <>
     <Box
     fullWidth
       sx={{
         height: '100vh',
-    
         display: 'grid',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundImage: 'url(https://pcu.edu.ph/wp-content/uploads/elementor/thumbs/school-pic-q2la0qlcmq5sg7szoyo55p45chas82a35dvpa0p4bk.jpg)',
+        backgroundImage: 'url(./src/assets/bg_blue.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
@@ -83,7 +84,10 @@ function Login() {
           </form>
         </CardContent>
       </Card>
+    
     </Box>
+    <Footer/>
+    </>
   );
 }
 

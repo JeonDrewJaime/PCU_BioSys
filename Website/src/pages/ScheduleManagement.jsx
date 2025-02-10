@@ -31,7 +31,7 @@ const ImageWrapper = styled('div')({
   marginTop: '20px',
 });
 
-function Excel() {
+function ScheduleManagement() {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -215,4 +215,4 @@ function Excel() {
   );
 }
 
-export default Excel;
+export default ScheduleManagement;

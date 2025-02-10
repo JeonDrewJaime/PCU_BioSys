@@ -3,6 +3,9 @@ import { getDatabase, ref, set, onValue } from "firebase/database";
 import { app } from "../utils/firebase-config";
 import HomeNavbar from "./components/HomeNavbar";
 import DashboardNavbar from "./components/DashboardNavbar";
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "../utils/theme"
+import '../fonts.css';
 
 function App() {
   useEffect(() => {
@@ -21,10 +24,9 @@ function App() {
   }, []);
 
   return (
-    <>
-      <HomeNavbar/>
-      
-    </>
+   // <ThemeProvider theme={theme}>
+      <DashboardNavbar />
+    //</ThemeProvider>
   );
 }
 
