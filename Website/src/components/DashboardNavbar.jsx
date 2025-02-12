@@ -6,29 +6,40 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import EmailIcon from '@mui/icons-material/Email';
 import DraftsIcon from '@mui/icons-material/Drafts';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
 import MailIcon from '@mui/icons-material/Mail';
 import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
+import People from '../pages/People'
+import KeyPerformanceIndicator from '../pages/KeyPerformanceIndicator';
+import Reports from '../pages/Reports'
+import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import Popover from '@mui/material/Popover';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Swal from 'sweetalert2';
+import Dashboard from '../pages/Dashboard';
+import GlobalStyles from '../../utils/GlobalStyles';
+import ScheduleManagement from '../pages/ScheduleManagement';
+import logo from '../assets/pcu_logo_nobg_white.png'
+import { useNavigate } from 'react-router-dom'; // Import for navigation
 
 const drawerWidth = 240;
 const drawerBgColor = '#012763';
 
 function DashboardNavbar(props) {
+  
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [selectedComponent, setSelectedComponent] = React.useState('Inbox');
@@ -61,16 +72,18 @@ function DashboardNavbar(props) {
 
   const renderContent = () => {
     switch (selectedComponent) {
-      case 'Inbox':
-        return <Typography paragraph>You clicked Inbox!</Typography>;
-      case 'Starred':
-        return <Typography paragraph>You clicked Starred!</Typography>;
-      case 'Send email':
-        return <Typography paragraph>You clicked Send email!</Typography>;
-      case 'Drafts':
-        return <Typography paragraph>You clicked Drafts!</Typography>;
+      case 'Dashboard':
+        return <Dashboard/>
+      case 'People':
+        return <People/>;
+      case 'Schedule Management':
+        return <ScheduleManagement/>
+      case 'Key Performance Indicator':
+        return <KeyPerformanceIndicator/>
+      case 'Reports':
+        return  <Reports/>
       default:
-        return <Typography paragraph>Welcome to the dashboard!</Typography>;
+        return 
     }
   };
 
@@ -80,20 +93,19 @@ function DashboardNavbar(props) {
       <Box sx={{ textAlign: 'center', mt: -6 }}>
         <Avatar
           alt="PCU Logo"
-          src="/path-to-your-logo.png" // Replace this with the correct logo path
-          sx={{ width: 80, height: 80, mx: 'auto' }}
+          src={logo} // Replace this with the correct logo path
+          sx={{ width: 100, height: 100, mx: 'auto' }}
         />
-        <Typography variant="h6" sx={{ color: 'white', mt: 1 }}>
-          Philippine Christian University
-        </Typography>
+
       </Box>
       <Divider />
       <List sx={{ color: 'white' }}>
         {[
-          { text: 'Inbox', icon: <InboxIcon /> },
-          { text: 'Starred', icon: <MailIcon /> },
-          { text: 'Send email', icon: <EmailIcon /> },
-          { text: 'Drafts', icon: <DraftsIcon /> },
+          { text: 'Dashboard', icon: <SpaceDashboardIcon/> },
+          { text: 'People', icon: <PeopleIcon/> },
+          { text: 'Schedule Management', icon: <CalendarMonthIcon/> },
+          { text: 'Key Performance Indicator', icon: <QueryStatsIcon/> },
+          { text: 'Reports', icon: <DraftsIcon /> },
         ].map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton onClick={() => setSelectedComponent(item.text)}>
@@ -109,7 +121,9 @@ function DashboardNavbar(props) {
   const container = window !== undefined ? () => window().document.body : undefined;
 
   return (
+    
     <Box sx={{ display: 'flex' }}>
+      <GlobalStyles/>
       <CssBaseline />
       <AppBar
         position="fixed"

@@ -1,11 +1,11 @@
 import React from 'react'
 
-function Reports() {
+function Dashboard() {
   return (
     <div>
-      Reports
+      WIll
     </div>
   )
 }
 
-export default Reports
+export default Dashboard

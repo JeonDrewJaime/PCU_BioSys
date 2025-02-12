@@ -24,9 +24,9 @@ function App() {
   }, []);
 
   return (
-   // <ThemeProvider theme={theme}>
+ 
       <DashboardNavbar />
-    //</ThemeProvider>
+ 
   );
 }
 
