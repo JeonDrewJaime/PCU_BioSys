@@ -74,7 +74,7 @@ function Home() {
 
       </Box>
    
-      <Footer />
+  
     </div>
   );
 }

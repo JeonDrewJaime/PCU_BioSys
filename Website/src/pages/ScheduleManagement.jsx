@@ -1,218 +1,227 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Typography, TextField,
-  Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, IconButton
+  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, TablePagination, Collapse, IconButton, Typography, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider
 } from '@mui/material';
-import { Delete as DeleteIcon } from '@mui/icons-material';
-import * as XLSX from 'xlsx';
-import { styled } from '@mui/system';
-import { handleSaveExcelContent } from '../../APIs/Admin';
-import sheesh from '../assets/sample.png';
-import file from '../downloads/SAMPLESSS.xlsx';
+import { get, ref, database } from '../../utils/firebase-config';
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import AddSchedule from './AddSchedule';  // Import AddSchedule component
 
-const MAX_COLUMNS = 10;
+const ScheduleManagement = () => {
+  const [academicYears, setAcademicYears] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [openRows, setOpenRows] = useState({});
+  const [openInstructorRows, setOpenInstructorRows] = useState({}); // State for instructor collapses
+  const [openAddScheduleDialog, setOpenAddScheduleDialog] = useState(false);  // State to control dialog visibility
 
-const Container = styled('div')(({ theme }) => ({
-  padding: '20px',
-  [theme.breakpoints.down('sm')]: {
-    padding: '10px',
-  },
-}));
-
-const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
-  maxWidth: '100%',
-  overflowX: 'auto',
-  WebkitOverflowScrolling: 'touch',
-}));
-
-const ImageWrapper = styled('div')({
-  textAlign: 'center',
-  marginTop: '20px',
-});
-
-function ScheduleManagement() {
-  const [rows, setRows] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState('');
-  const [fileInputRef, setFileInputRef] = useState(null);
-  const [instructionsAcknowledged, setInstructionsAcknowledged] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-
-  const handleUploadButtonClick = () => {
-    if (!dontShowAgain) setOpenDialog(true);
-  };
-
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const fileExtension = file.name.split('.').pop().toLowerCase();
-    if (!['xlsx', 'xls'].includes(fileExtension)) {
-      setDialogMessage('Invalid file format. Please upload an Excel file (.xlsx or .xls).');
-      setOpenDialog(true);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      if (jsonData.length > 0) {
-        if (jsonData[0].length > MAX_COLUMNS) {
-          setDialogMessage(`The uploaded file has more than ${MAX_COLUMNS} columns. Please upload a file with fewer columns.`);
-          setOpenDialog(true);
-          return;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const scheduleRef = ref(database, 'schedule_testing/academic_years/');
+        const snapshot = await get(scheduleRef);
+  
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const formattedData = Object.keys(data).map((acadYear) => {
+            const semesters = data[acadYear]?.semesters || {};
+            return {
+              acadYear,
+              semesters: Object.keys(semesters).map((semesterKey) => {
+                const semesterData = semesters[semesterKey];
+                const instructors = {};
+  
+                semesterData.courses.forEach((course) => {
+                  if (Array.isArray(course.instructors)) {
+                    course.instructors.forEach((instructor) => {
+                      if (!instructors[instructor.name]) {
+                        instructors[instructor.name] = {
+                          name: instructor.name,
+                          courses: [],
+                        };
+                      }
+                     
+                      const section = course.schedule?.[0]?.section || 'Unknown Section'; 
+                      instructors[instructor.name].courses.push({
+                        courseCode: course.course_code || 'Unknown Code',
+                        courseDescription: course.course_description || 'No Description',
+                        curriculum: course.curriculum || 'Unknown Curriculum',
+                        section: section,
+                      });
+                    });
+                  }
+                });
+  
+                return {
+                  semesterKey,
+                  instructors: Object.values(instructors),
+                };
+              }),
+            };
+          });
+  
+          setAcademicYears(formattedData);
+        } else {
+          console.log('No data found');
         }
-        if (jsonData.length === 1 || jsonData.slice(1).every(row => row.every(cell => cell === undefined || cell === ''))) {
-          setDialogMessage('The uploaded file contains no data rows. Please upload a valid file.');
-          setOpenDialog(true);
-          return;
-        }
-
-        setColumns(jsonData[0]);
-        setRows(jsonData.slice(1));
-        setOpenDialog(false); 
-        event.target.value = ''; 
+      } catch (error) {
+        console.error('Error fetching schedule data from Firebase:', error);
       }
     };
-    reader.readAsArrayBuffer(file);
+  
+    fetchData();
+  }, []);
+  
+  const handleRowClick = (index) => {
+    setOpenRows((prevState) => ({
+      ...prevState,
+      [index]: !prevState[index],
+    }));
   };
 
-  const handleCellChange = (rowIndex, colIndex, value) => {
-    const updatedRows = [...rows];
-    if (!updatedRows[rowIndex]) {
-      updatedRows[rowIndex] = [];
-    }
-    updatedRows[rowIndex][colIndex] = value;
-    setRows(updatedRows);
+  const handleInstructorClick = (instructorName) => {
+    setOpenInstructorRows((prevState) => ({
+      ...prevState,
+      [instructorName]: !prevState[instructorName],
+    }));
   };
 
-  const handleDeleteRow = (rowIndex) => {
-    const updatedRows = rows.filter((_, index) => index !== rowIndex);
-    setRows(updatedRows);
+  const handleCloseAddScheduleDialog = () => {
+    setOpenAddScheduleDialog(false);  // Close the AddSchedule dialog
   };
-
-  const handleCloseDialog = () => setOpenDialog(false);
 
   return (
-    <Container>
+    <>
       <Button
         variant="contained"
-        onClick={handleUploadButtonClick}
-        style={{ marginBottom: '20px' }}
+        color="primary"
+        onClick={() => setOpenAddScheduleDialog(true)}  // Open AddSchedule dialog
+        sx={{
+          mb: '20px',
+          borderRadius: '45px',
+          height: '40px',
+          width: '200px',
+          backgroundColor: '#E4E4F1',
+          borderColor: '#012763',
+          color: '#012763',
+          fontWeight: 600,
+        }}
       >
-        Upload Excel File
+        Add Schedule
       </Button>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="xl">
-        <DialogTitle>Upload Excel File</DialogTitle>
-        <DialogContent>
-          <Typography>Instructions</Typography>
-          <ImageWrapper>
-            <img src={sheesh} alt="Instructions Graphic" style={{ maxWidth: '50%', height: 'auto', marginTop: '10px' }} />
-          </ImageWrapper>
-          <Button
-            variant="outlined"
-            style={{ marginTop: '10px' }}
-            href={file}
-            download={file}
-          >
-            Download Attachment
-          </Button>
-          <FormControlLabel
-            control={<Checkbox checked={instructionsAcknowledged} onChange={(e) => setInstructionsAcknowledged(e.target.checked)} />}
-            label="I understand the instructions."
-            style={{ marginTop: '10px' }}
-          />
-          <FormControlLabel
-            control={<Checkbox checked={dontShowAgain} onChange={(e) => setDontShowAgain(e.target.checked)} />}
-            label="Don't show again."
-          />
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            hidden
-            ref={(ref) => setFileInputRef(ref)}
-            onChange={handleFileUpload}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => fileInputRef?.click()}
-            style={{ marginTop: '10px' }}
-            disabled={!instructionsAcknowledged}
-          >
-            Select File
-          </Button>
-          <Typography>{dialogMessage}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {rows.length > 0 && (
-        <>
-          <StyledTableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  {columns.map((col, index) => (
-                    <TableCell key={index} style={{ fontWeight: 'bold' }}>
-                      {col}
-                    </TableCell>
-                  ))}
-                  <TableCell style={{ fontWeight: 'bold' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {columns.map((_, colIndex) => (
-                      <TableCell key={colIndex}>
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          size="small"
-                          value={row[colIndex] || ''}
-                          onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                        />
+      <Box>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Academic Year</TableCell>
+                <TableCell>Semester</TableCell>
+                <TableCell>Instructors</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {academicYears.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) => (
+                year.semesters.map((semester, semIndex) => (
+                  <React.Fragment key={`${yearIndex}-${semIndex}`}>
+                    <TableRow>
+                      <TableCell>
+                        <IconButton onClick={() => handleRowClick(`${yearIndex}-${semIndex}`)}>
+                          <ExpandMoreIcon />
+                        </IconButton>
+                        {year.acadYear}
                       </TableCell>
-                    ))}
-                    <TableCell>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => handleDeleteRow(rowIndex)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </StyledTableContainer>
+                      <TableCell>{semester.semesterKey}</TableCell>
+                      <TableCell>{semester.instructors.length}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={3} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                        <Collapse in={openRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
+                          <Box margin={1}>
+                            {semester.instructors.map((instructor, idx) => (
+                              <Box key={idx} marginBottom={2}>
+                                
+                                <Typography  color="black">
+                                <IconButton onClick={() => handleInstructorClick(instructor.name)}>
+                                  <ExpandMoreIcon />
+                                </IconButton>
+                                  {instructor.name}</Typography>
+                                 <Divider/>
+                                <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
+                                  <Table>
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>Course Code</TableCell>
+                                        <TableCell>Description</TableCell>
+                                        <TableCell>Curriculum</TableCell>
+                                        <TableCell>Section</TableCell>
+                                        <TableCell>Room</TableCell>
+                                        <TableCell>Day</TableCell>
+                                        <TableCell>Starting Time</TableCell>
+                                        <TableCell>Ending Time</TableCell>
+                                        <TableCell>Total Units</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {instructor.courses.map((course, cIdx) => (
+                                        <TableRow key={cIdx}>
+                                          <TableCell>{course.courseCode}</TableCell>
+                                          <TableCell>{course.courseDescription}</TableCell>
+                                          <TableCell>{course.curriculum}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </Collapse>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleSaveExcelContent(columns, rows)}
-            style={{ marginTop: '20px' }}
-          >
-            Save to Firebase
-          </Button>
-        </>
-      )}
-    </Container>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={academicYears.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(event, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+        />
+      </Box>
+
+      <Dialog open={openAddScheduleDialog} onClose={handleCloseAddScheduleDialog} maxWidth="xl" fullWidth>
+  <DialogTitle>
+ 
+    <IconButton
+      aria-label="close"
+      onClick={handleCloseAddScheduleDialog}
+      sx={{
+        position: 'absolute',
+        right: 8,
+        top: 8,
+      }}
+    >
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+  <DialogContent>
+    <AddSchedule />
+  </DialogContent>
+</Dialog>
+    </>
   );
-}
+};
 
 export default ScheduleManagement;

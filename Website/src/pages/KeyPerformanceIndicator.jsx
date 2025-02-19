@@ -9,5 +9,3 @@ function KeyPerformanceIndicator() {
 }
 
 export default KeyPerformanceIndicator
-
-

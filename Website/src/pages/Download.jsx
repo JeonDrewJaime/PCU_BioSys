@@ -3,7 +3,7 @@ import Footer from '../components/Footer'
 function Download() {
   return (
     <div>
-      <Footer/>
+      
     </div>
   )
 }

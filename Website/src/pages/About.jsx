@@ -4,8 +4,7 @@ import ScheduleManagement from './ScheduleManagement'
 function About() {
   return (
     <div> 
-      jijij
-        <Footer/>
+    
     </div>
   )
 }

@@ -1,21 +1,23 @@
 import React, { useEffect } from 'react';
 import { Box, TextField, Button, Typography, Card, CardContent } from '@mui/material';
 import { useFormik } from 'formik';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import Swal from 'sweetalert2';
 import validationSchema from '../../utils/validation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../utils/firebase-config';
 import Footer from '../components/Footer';
 import pcubg from '../assets/pcubg.jpg';
+import SignUp from './SignUp'; // Import SignUp component
 
-function Login() {
+function Login({ setActiveComponent }) {
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
 
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const formik = useFormik({
     initialValues: {
@@ -27,10 +29,21 @@ function Login() {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         console.log('User logged in:', userCredential.user);
-        alert('Login successful!');
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Successful!',
+          text: 'Redirecting to dashboard...',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        setTimeout(() => navigate('/dashboard'), 2000);
       } catch (error) {
         console.error('Error during login:', error);
-        alert('Invalid email or password');
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: 'Invalid email or password. Please try again.',
+        });
       }
     }
   });
@@ -69,7 +82,7 @@ function Login() {
             >
               Login
             </Typography>
-            
+
             <Typography
               gutterBottom
               align="center"
@@ -142,7 +155,7 @@ function Login() {
                 <Button
                   variant="text"
                   sx={{ px: 1, fontWeight: 500, textTransform: 'none', color: 'var(--pri)' }}
-                  onClick={() => navigate('/signup')} // Navigate to SignUp
+                  onClick={() => setActiveComponent(<SignUp setActiveComponent={setActiveComponent} />)}
                 >
                   Register Now
                 </Button>
@@ -151,7 +164,7 @@ function Login() {
           </CardContent>
         </Card>
       </Box>
-      <Footer />
+    
     </>
   );
 }

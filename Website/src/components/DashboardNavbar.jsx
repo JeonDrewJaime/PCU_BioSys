@@ -29,11 +29,14 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import Popover from '@mui/material/Popover';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Swal from 'sweetalert2';
+import AddSchedule from '../pages/AddSchedule';
 import Dashboard from '../pages/Dashboard';
 import GlobalStyles from '../../utils/GlobalStyles';
 import ScheduleManagement from '../pages/ScheduleManagement';
 import logo from '../assets/pcu_logo_nobg_white.png'
 import { useNavigate } from 'react-router-dom'; // Import for navigation
+import { signOut } from "firebase/auth";
+import { auth } from "../../utils/firebase-config"; // Import your Firebase auth instance
 
 const drawerWidth = 240;
 const drawerBgColor = '#012763';
@@ -44,7 +47,7 @@ function DashboardNavbar(props) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [selectedComponent, setSelectedComponent] = React.useState('Inbox');
   const [anchorEl, setAnchorEl] = React.useState(null);
-
+  const navigate = useNavigate(); // Initialize navigation
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -64,7 +67,29 @@ function DashboardNavbar(props) {
       showCancelButton: true,
       confirmButtonText: 'Yes, logout',
       cancelButtonText: 'Cancel',
-    })
+    }).then((result) => {
+      if (result.isConfirmed) {
+        signOut(auth)
+          .then(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Logged out!',
+              text: 'You have been logged out successfully.',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            navigate("/"); // Redirect to login page after logout
+          })
+          .catch((error) => {
+            console.error("Logout error:", error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Logout Failed',
+              text: 'Something went wrong. Please try again.',
+            });
+          });
+      }
+    });
   };
 
   const open = Boolean(anchorEl);

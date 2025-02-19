@@ -12,6 +12,7 @@ import { ref, set } from 'firebase/database';
 import { auth, database } from '../../utils/firebase-config';
 import Footer from '../components/Footer';
 import pcubg from '../assets/pcubg.jpg';
+import Login from './Login';
 
 const steps = ['Account Details', 'Personal Information', 'Password Setup'];
 
@@ -20,8 +21,9 @@ const validationSchemas = [
     email: Yup.string().email('Invalid email').required('Email is required'),
   }),
   Yup.object({
-    firstName: Yup.string().required('First name is required'),
-    lastName: Yup.string().required('Last name is required'),
+    firstname: Yup.string().required('First name is required'),
+    lastname: Yup.string().required('Last name is required'),
+    role: Yup.string().required('Role is required'),
     department: Yup.string().required('Department is required'),
   }),
   Yup.object({
@@ -32,7 +34,7 @@ const validationSchemas = [
   }),
 ];
 
-function SignUp() {
+function SignUp({ setActiveComponent }) {
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
@@ -43,8 +45,9 @@ function SignUp() {
   const formik = useFormik({
     initialValues: {
       email: '',
-      firstName: '',
-      lastName: '',
+      firstname: '',
+      lastname: '',
+      role: '',
       department: '',
       password: '',
       confirmPassword: '',
@@ -58,28 +61,23 @@ function SignUp() {
           const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
           const user = userCredential.user;
 
-          // Store user details in Firebase Realtime Database
-          await set(ref(database, `users/${values.department}/${user.uid}`), {
-            firstName: values.firstName,
-            lastName: values.lastName,
+          await set(ref(database, `users/${values.role}/${user.uid}`), {
+            firstname: values.firstname,
+            lastname: values.lastname,
             email: values.email,
+            role: values.role,
             department: values.department,
           });
 
-          // SweetAlert success message
           Swal.fire({
             title: 'Registration Successful!',
             text: 'Your account has been created successfully.',
             icon: 'success',
             confirmButtonText: 'OK',
           }).then(() => {
-            navigate('/login');
+            navigate('/dashboard');
           });
-
         } catch (error) {
-          console.error('Error during sign up:', error);
-
-          // SweetAlert error message
           Swal.fire({
             title: 'Sign Up Failed',
             text: error.message,
@@ -94,89 +92,73 @@ function SignUp() {
   });
 
   return (
-    <>
-      <Box
-        fullWidth
-        sx={{
-          height: '100vh',
-          display: 'grid',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: `linear-gradient(rgba(10, 8, 47, 0.5), rgb(18, 25, 104)), url(${pcubg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <Card data-aos="fade-up" sx={{ width: 420, padding: '24px', borderRadius: '16px', boxShadow: 3, backgroundColor: '#FAFAFF', opacity: 0.85 }}>
-          <CardContent>
-            <Typography variant="h4" gutterBottom align="center" sx={{ color: '#041129', fontWeight: 900, letterSpacing: 1 }}>
-              Create Your Account
-            </Typography>
-            <Typography
-              gutterBottom
-              align="center"
-              sx={{ color: '#606369', fontWeight: 100, fontSize: '12px', marginBottom: '28px', marginTop: '-8px',  }}
-            >
-              Start your journey with us today—it only takes a minute!
-            </Typography>
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-            <form onSubmit={formik.handleSubmit} noValidate>
-              {activeStep === 0 && (
-                <TextField fullWidth margin="normal" label="Email" {...formik.getFieldProps('email')} error={formik.touched.email && Boolean(formik.errors.email)} helperText={formik.touched.email && formik.errors.email} />
+    <Box
+      fullWidth
+      sx={{
+        height: '100vh',
+        display: 'grid',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: `linear-gradient(rgba(10, 8, 47, 0.5), rgb(18, 25, 104)), url(${pcubg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <Card data-aos="fade-up" sx={{ width: 420, padding: '24px', borderRadius: '16px', boxShadow: 3, backgroundColor: '#FAFAFF', opacity: 0.85 }}>
+        <CardContent>
+          <Typography variant="h4" gutterBottom align="center" sx={{ color: '#041129', fontWeight: 900, letterSpacing: 1 }}>
+            Create Your Account
+          </Typography>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+          <form onSubmit={formik.handleSubmit} noValidate>
+            {activeStep === 0 && (
+              <TextField fullWidth margin="normal" label="Email" {...formik.getFieldProps('email')} error={formik.touched.email && Boolean(formik.errors.email)} helperText={formik.touched.email && formik.errors.email} />
+            )}
+            {activeStep === 1 && (
+              <>
+                <TextField fullWidth margin="normal" label="First Name" {...formik.getFieldProps('firstname')} error={formik.touched.firstname && Boolean(formik.errors.firstname)} helperText={formik.touched.firstname && formik.errors.firstname} />
+                <TextField fullWidth margin="normal" label="Last Name" {...formik.getFieldProps('lastname')} error={formik.touched.lastname && Boolean(formik.errors.lastname)} helperText={formik.touched.lastname && formik.errors.lastname} />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Role</InputLabel>
+                  <Select {...formik.getFieldProps('role')} error={formik.touched.role && Boolean(formik.errors.role)}>
+                    <MenuItem value="faculty">Faculty</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Department</InputLabel>
+                  <Select {...formik.getFieldProps('department')} error={formik.touched.department && Boolean(formik.errors.department)}>
+                    <MenuItem value="Information Technology">Information Technology</MenuItem>
+                    <MenuItem value="Computer Science">Computer Science</MenuItem>
+                    <MenuItem value="Computer Engeneering">Computer Engeneering</MenuItem>
+                  </Select>
+                </FormControl>
+              </>
+            )}
+            {activeStep === 2 && (
+              <>
+                <TextField fullWidth margin="normal" label="Password" type="password" {...formik.getFieldProps('password')} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} />
+                <TextField fullWidth margin="normal" label="Confirm Password" type="password" {...formik.getFieldProps('confirmPassword')} error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)} helperText={formik.touched.confirmPassword && formik.errors.confirmPassword} />
+              </>
+            )}
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              {activeStep > 0 && (
+                <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)} startIcon={<ArrowBack />}>Back</Button>
               )}
-              {activeStep === 1 && (
-                <>
-                  <TextField fullWidth margin="normal" label="First Name" {...formik.getFieldProps('firstName')} error={formik.touched.firstName && Boolean(formik.errors.firstName)} helperText={formik.touched.firstName && formik.errors.firstName} />
-                  <TextField fullWidth margin="normal" label="Last Name" {...formik.getFieldProps('lastName')} error={formik.touched.lastName && Boolean(formik.errors.lastName)} helperText={formik.touched.lastName && formik.errors.lastName} />
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Department</InputLabel>
-                    <Select {...formik.getFieldProps('department')} error={formik.touched.department && Boolean(formik.errors.department)}>
-                      <MenuItem value="Faculty">Faculty</MenuItem>
-                      <MenuItem value="Admin">Admin</MenuItem>
-                    </Select>
-                  </FormControl>
-                </>
-              )}
-              {activeStep === 2 && (
-                <>
-                  <TextField fullWidth margin="normal" label="Password" type="password" {...formik.getFieldProps('password')} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} />
-                  <TextField fullWidth margin="normal" label="Confirm Password" type="password" {...formik.getFieldProps('confirmPassword')} error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)} helperText={formik.touched.confirmPassword && formik.errors.confirmPassword} />
-                </>
-              )}
-              <Box display="flex" justifyContent="space-between" mt={2}>
-                {activeStep > 0 && (
-                  <Button variant="outlined" sx={{ borderRadius: '45px', height: '45px', width:'115px', backgroundColor:'#E4E4F1', borderColor:'#012763', color:'#012763', fontWeight: 600 }} onClick={() => setActiveStep((prev) => prev - 1)} startIcon={<ArrowBack />}>Back</Button>
-                )}
-                <Button type="submit" variant="contained" color="primary" sx={{ borderRadius: '45px', height: '45px', width:'115px', backgroundColor:'#012763',  marginLeft: 'auto', }} endIcon={<ArrowForward />}>
-                  {activeStep === steps.length - 1 ? 'Submit' : 'Next'}
-                </Button>
-              </Box>
-                     <Typography
-                              gutterBottom
-                              align="center"
-                              sx={{ color: '#606369', fontWeight: 50, fontSize: '14px', mt: '5%' }}
-                            >
-                              Already registered? 
-                              <Button
-                                variant="text"
-                                sx={{ px: 1, fontWeight: 500, textTransform: 'none', color: 'var(--pri)' }}
-                                onClick={() => navigate('/login')} // Navigate to SignUp
-                              >
-                                Log in
-                              </Button>
-                            </Typography>
-            </form>
-          </CardContent>
-        </Card>
-      </Box>
-      <Footer />
-    </>
+              <Button type="submit" variant="contained" color="primary" endIcon={<ArrowForward />}>
+                {activeStep === steps.length - 1 ? 'Submit' : 'Next'}
+              </Button>
+            </Box>
+          </form>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
 

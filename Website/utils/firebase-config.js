@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set,push} from "firebase/database"; // Import the required Firebase functions
+import { getDatabase, ref, set,push, get} from "firebase/database"; // Import the required Firebase functions
 import { getAuth } from "firebase/auth";
 
 
@@ -18,4 +18,4 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app); // Initialize the database
 const auth = getAuth(app); // Initialize the database
 
-export { app, database, ref, set, push, auth}; // Export the necessary Firebase methods
+export { app, database, ref, set, push, auth, get }; // Export the necessary Firebase methods

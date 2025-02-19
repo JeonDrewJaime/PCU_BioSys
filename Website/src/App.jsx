@@ -1,32 +1,40 @@
-import { useEffect } from "react";
-import { getDatabase, ref, set, onValue } from "firebase/database";
-import { app } from "../utils/firebase-config";
+import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../utils/firebase-config";
 import HomeNavbar from "./components/HomeNavbar";
 import DashboardNavbar from "./components/DashboardNavbar";
+import Login from "./pages/Login";
 import { ThemeProvider } from "@mui/material/styles";
-import theme from "../utils/theme"
-import '../fonts.css';
+import theme from "../utils/theme";
+import "../fonts.css";
 
 function App() {
-  useEffect(() => {
-    const db = getDatabase(app);
-    // Write data to test the connection
-    set(ref(db, "test_connection/"), {
-      status: "Firebase connection successful!"
-    });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    // Read the data back
-    const testRef = ref(db, "test_connection/status");
-    onValue(testRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("Test Data:", data);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
+    return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
 
+  if (loading) {
+    return <div>Loading...</div>; // You can replace this with a spinner or splash screen
+  }
+
   return (
- 
-      <DashboardNavbar />
- 
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/" element={ <HomeNavbar />} />
+     
+          <Route path="/dashboard" element = {<DashboardNavbar /> } />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
