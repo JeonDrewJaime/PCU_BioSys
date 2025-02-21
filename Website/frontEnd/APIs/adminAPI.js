@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const ADMIN_URL = 'http://localhost:3000/admin';
+const API_BASE_URL = 'http://localhost:3000/admin';
 
 const adminAPI = axios.create({
-  baseURL: ADMIN_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,31 +11,83 @@ const adminAPI = axios.create({
 
 /**
  * Fetch schedule data from the API
- * @returns {Promise} - Resolves with the schedule data
+ * @returns {Promise<Array>} Resolves with the schedule data
  */
 export const fetchScheduleData = async () => {
   try {
-    const response = await adminAPI.get('/schedule');
-    return response.data.data;
+    const { data } = await adminAPI.get('/schedule');
+    return data?.data || [];
   } catch (error) {
-    console.error('Error fetching schedule data:', error);
-    throw error.response?.data || 'Failed to fetch schedule data.';
+    console.error('❌ Error fetching schedule data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch schedule data.');
   }
 };
 
 /**
- * Save Excel content to the database
- * @param {Array} columns - Column headers from the Excel file
- * @param {Array} rows - Data rows from the Excel file
- * @returns {Promise} - Resolves when the data is successfully saved
+ * Save Excel data to the API
+ * @param {Array} columns - Column headers
+ * @param {Array} rows - Data rows
+ * @returns {Promise<Object>} Resolves with the API response
  */
-export const handleSaveExcelContent = async (columns, rows) => {
+export const saveExcelData = async (columns, rows) => {
   try {
-    const response = await adminAPI.post('/save-excel', { columns, rows });
-    return response.data;
+    const { data } = await adminAPI.post('/schedule/save-excel', { columns, rows });
+    return data;
   } catch (error) {
-    console.error('Error saving Excel data:', error);
-    throw error.response?.data || 'Failed to save Excel data.';
+    console.error('❌ Error saving Excel data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to save Excel data.');
+  }
+};
+
+/**
+ * Fetch all users (faculty & admin)
+ * @returns {Promise<Array>} Resolves with the list of users
+ */
+export const fetchAllUsers = async () => {
+  try {
+    const { data } = await adminAPI.get('/users');
+    return data?.data || [];
+  } catch (error) {
+    console.error('❌ Error fetching users:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch users.');
+  }
+};
+
+/**
+ * Fetch user by ID (faculty or admin)
+ * @param {string} userId - The ID of the user
+ * @returns {Promise<Object|null>} Resolves with the user data or null if not found
+ */
+export const fetchUserById = async (userId) => {
+  try {
+    const { data } = await adminAPI.get(`/users/${userId}`);
+    return data?.data || null;
+  } catch (error) {
+    console.error(`❌ Error fetching user with ID ${userId}:`, error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch user data.');
+  }
+
+
+};
+
+export const deleteUser = async (userId) => {
+  try {
+    const { data } = await adminAPI.delete(`/delete/${userId}`);
+    return data;
+  } catch (error) {
+    console.error(`❌ Error deleting user with ID ${userId}:`, error);
+    throw new Error(error.response?.data?.message || error.message || 'Failed to delete user.');
+  }
+};
+
+
+export const editUser = async (userId, updatedData) => {
+  try {
+    const { data } = await adminAPI.put(`/edit/${userId}`, updatedData);
+    return data;
+  } catch (error) {
+    console.error(`❌ Error updating user with ID ${userId}:`, error);
+    throw new Error(error.response?.data?.message || 'Failed to update user.');
   }
 };
 

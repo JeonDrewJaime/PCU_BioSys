@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import adminAPI from "../../APIs/adminAPI";
 import { database, ref, get } from "../../utils/firebase-config";
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Table,
   TableBody,
@@ -11,36 +13,134 @@ import {
   IconButton,
   Collapse,
   Box,
+  TextField,
   Chip,
+  FormControl,
+  MenuItem,
+  InputLabel,
+  Select,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+
 } from "@mui/material";
-import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
+import Swal from "sweetalert2";
+import CreateUser from "../UI/CreateUser";
 
 function People() {
   const [people, setPeople] = useState([]);
+  const [editingRow, setEditingRow] = useState(null);
+  const [editedData, setEditedData] = useState({});
   const [expandedRows, setExpandedRows] = useState({});
+  const [selectedRole, setSelectedRole] = useState(""); // New state for role filtering
   const [expandedDates, setExpandedDates] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+   const [openDialog, setOpenDialog] = useState(false);
+
+
+  const handleRoleChange = (event) => {
+    setSelectedRole(event.target.value);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredPeople = people.filter(
+    (person) =>
+      [person.firstname, person.lastname, person.email, person.department, person.role].some(
+        (field) => field.toLowerCase().includes(searchQuery.toLowerCase())
+      ) && (selectedRole === "" || person.role === selectedRole)
+  );
 
   useEffect(() => {
     const fetchData = async () => {
-      const peopleRef = ref(database, "users/faculty");
       try {
-        const snapshot = await get(peopleRef);
-        if (snapshot.exists()) {
-          const usersData = snapshot.val();
-          const usersList = Object.keys(usersData).map((key) => ({
-            id: key,
-            ...usersData[key],
-          }));
-          setPeople(usersList);
-        } else {
-          setPeople([]);
-        }
+        const response = await adminAPI.get("/users");
+        setPeople(response.data?.data || []);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("❌ Error fetching users:", error);
       }
     };
+
     fetchData();
   }, []);
+
+  const handleEditUser = (userId) => {
+    if (editingRow === userId) {
+      setEditingRow(null);
+    } else {
+      setEditingRow(userId);
+      const user = people.find((p) => p.id === userId);
+      setEditedData({ ...user });
+    }
+  };
+
+  const handleInputChange = (e, field) => {
+    setEditedData({ ...editedData, [field]: e.target.value });
+  };
+
+  const handleSaveUser = async (userId) => {
+    try {
+      await adminAPI.put(`/edit/${userId}`, editedData);
+      setPeople((prev) =>
+        prev.map((user) => (user.id === userId ? { ...user, ...editedData } : user))
+      );
+      setEditingRow(null);
+      Swal.fire("Success!", "User details updated successfully.", "success");
+    } catch (error) {
+      console.error("❌ Error updating user:", error);
+      Swal.fire("Error!", "Failed to update user.", "error");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRow(null);
+    setEditedData({});
+  };
+  const getStatusChip = (status) => {
+    let color = "default";
+
+    switch (status?.toLowerCase()) {
+      case "on time":
+        color = "success";
+        break;
+      case "late":
+        color = "warning";
+        break;
+      case "absent":
+        color = "error";
+        break;
+      default:
+        color = "default";
+    }
+
+    return <Chip label={status} color={color} variant="outlined" />;
+  };
+  const handleDeleteUser = async (userId) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await adminAPI.delete(`/delete/${userId}`);
+        setPeople((prev) => prev.filter((user) => user.id !== userId));
+        Swal.fire("Deleted!", "User has been deleted.", "success");
+      } catch (error) {
+        console.error("❌ Error deleting user:", error);
+        Swal.fire("Error!", "Failed to delete user.", "error");
+      }
+    }
+  };
 
   const toggleRow = async (id) => {
     setExpandedRows((prev) => ({
@@ -52,12 +152,13 @@ function People() {
       const attendanceRef = ref(database, `users/faculty/${id}/attendance`);
       try {
         const snapshot = await get(attendanceRef);
+        const attendanceData = snapshot.exists() ? snapshot.val() : {};
         setExpandedRows((prev) => ({
           ...prev,
-          [id]: { loading: false, data: snapshot.exists() ? snapshot.val() : {} },
+          [id]: { loading: false, data: attendanceData },
         }));
       } catch (error) {
-        console.error("Error fetching attendance:", error);
+        console.error("❌ Error fetching attendance:", error);
       }
     }
   };
@@ -65,45 +166,66 @@ function People() {
   const toggleDate = async (personId, date) => {
     setExpandedDates((prev) => ({
       ...prev,
-      [`${personId}-${date}`]: prev[`${personId}-${date}`] ? null : { loading: true, data: null },
+      [`${personId}-${date}`]: prev[`${personId}-${date}`] ? null : { loading: true, data: null, totalHours: 0 },
     }));
-
+  
     if (!expandedDates[`${personId}-${date}`]) {
       const attendanceDetailRef = ref(database, `users/faculty/${personId}/attendance/${date}`);
       try {
         const snapshot = await get(attendanceDetailRef);
+        const attendanceData = snapshot.exists() ? snapshot.val() : {};
+  
+        // Calculate total hours
+        const totalHours = Object.values(attendanceData).reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+  
         setExpandedDates((prev) => ({
           ...prev,
-          [`${personId}-${date}`]: { loading: false, data: snapshot.exists() ? snapshot.val() : {} },
+          [`${personId}-${date}`]: { loading: false, data: attendanceData, totalHours },
         }));
       } catch (error) {
-        console.error("Error fetching attendance details:", error);
+        console.error("❌ Error fetching attendance details:", error);
       }
     }
   };
 
-  const getStatusChip = (status) => {
-    let color = "default"; // Default color
-
-    switch (status?.toLowerCase()) {
-      case "on time":
-        color = "success"; // Green
-        break;
-      case "late":
-        color = "warning"; // Yellow
-        break;
-      case "absent":
-        color = "error"; // Red
-        break;
-      default:
-        color = "default"; // Grey for unknown values
-    }
-
-    return <Chip label={status} color={color} variant="outlined" />;
-  };
-
   return (
+    <>
     <Paper sx={{ padding: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Search sx={{ mr: 1 }} />
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search users..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          size="small"
+        />
+                  <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
+            <InputLabel>Role</InputLabel>
+            <Select value={selectedRole} onChange={handleRoleChange}>
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="Faculty">Faculty</MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+            </Select>
+          </FormControl>
+         <Button
+                  variant="contained"
+                  onClick={() => setOpenDialog(true)}
+                  sx={{
+                    mx: 1,
+                    borderRadius: '45px',
+                    height: '40px',
+                    width: '200px',
+                    backgroundColor: '#E4E4F1',
+                    borderColor: '#012763',
+                    color: '#012763',
+                    fontWeight: 600,
+                  }}
+                >
+                  Add People
+                </Button>
+      </Box>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -113,10 +235,11 @@ function People() {
               <TableCell>Department</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {people.map((person) => (
+            {filteredPeople.map((person) => (
               <React.Fragment key={person.id}>
                 <TableRow>
                   <TableCell>
@@ -124,14 +247,89 @@ function People() {
                       {expandedRows[person.id] ? <ExpandLess /> : <ExpandMore />}
                     </IconButton>
                   </TableCell>
-                  <TableCell>{`${person.firstname} ${person.lastname}`}</TableCell>
-                  <TableCell>{person.department}</TableCell>
-                  <TableCell>{person.email}</TableCell>
-                  <TableCell>{person.role}</TableCell>
+                  <TableCell>
+                    {editingRow === person.id ? (
+                      <TextField
+                        value={editedData.firstname}
+                        onChange={(e) => handleInputChange(e, "firstname")}
+                        fullWidth
+                      />
+                    ) : (
+                      `${person.firstname} ${person.lastname}`
+                    )}
+                  </TableCell>
+                  <TableCell>
+  {editingRow === person.id ? (
+    <FormControl fullWidth>
+      <InputLabel>Department</InputLabel>
+      <Select
+        value={editedData.department}
+        onChange={(e) => handleInputChange(e, "department")}
+      >
+        <MenuItem value="Computer Science">Computer Science</MenuItem>
+        <MenuItem value="Mathematics">Mathematics</MenuItem>
+        <MenuItem value="Physics">Physics</MenuItem>
+        <MenuItem value="Engineering">Engineering</MenuItem>
+      </Select>
+    </FormControl>
+  ) : (
+    person.department
+  )}
+</TableCell>
+
+                  <TableCell>
+                    {editingRow === person.id ? (
+                      <TextField
+                        value={editedData.email}
+                        onChange={(e) => handleInputChange(e, "email")}
+                        fullWidth
+                      />
+                    ) : (
+                      person.email
+                    )}
+                  </TableCell>
+                  <TableCell>
+  {editingRow === person.id ? (
+    <FormControl fullWidth>
+      <InputLabel>Role</InputLabel>
+      <Select
+        value={editedData.role}
+        onChange={(e) => handleInputChange(e, "role")}
+      >
+        <MenuItem value="Faculty">Faculty</MenuItem>
+        <MenuItem value="Admin">Admin</MenuItem>
+       
+      </Select>
+    </FormControl>
+  ) : (
+    person.role
+  )}
+</TableCell>
+                  <TableCell>
+                    {editingRow === person.id ? (
+                      <>
+                        <IconButton onClick={() => handleSaveUser(person.id)} color="success">
+                          <Save />
+                        </IconButton>
+                        <IconButton onClick={handleCancelEdit} color="warning">
+                          <Cancel />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <IconButton onClick={() => handleEditUser(person.id)} color="primary">
+                          <Edit />
+                        </IconButton>
+                        <IconButton onClick={() => handleDeleteUser(person.id)} color="error">
+                          <Delete />
+                        </IconButton>
+                      </>
+                    )}
+                  </TableCell>
                 </TableRow>
                 {expandedRows[person.id] && (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={7}>
                       <Collapse in timeout="auto" unmountOnExit>
                         <Box>
                           <strong>Attendance Dates:</strong>
@@ -151,6 +349,7 @@ function People() {
                                           <TableCell>Time In</TableCell>
                                           <TableCell>Time Out</TableCell>
                                           <TableCell>Status</TableCell>
+                                          <TableCell>Hours</TableCell>
                                         </TableRow>
                                       </TableHead>
                                       <TableBody>
@@ -162,9 +361,20 @@ function People() {
                                                 <TableCell>{details.time_in}</TableCell>
                                                 <TableCell>{details.time_out}</TableCell>
                                                 <TableCell>{getStatusChip(details.late_status)}</TableCell>
+                                                <TableCell>{details.total_hours}</TableCell>
                                               </TableRow>
                                             )
                                           )}
+
+<TableRow>
+    <TableCell colSpan={4} align="right" sx={{ fontWeight: "bold" }}>
+      Total Hours:
+    </TableCell>
+    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>
+      {expandedDates[`${person.id}-${date}`]?.totalHours || 0}
+    </TableCell>
+  </TableRow>
+
                                       </TableBody>
                                     </Table>
                                   </TableContainer>
@@ -182,7 +392,27 @@ function People() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}maxWidth="xs" fullWidth>
+        <DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <CreateUser/>
+        </DialogContent>
+      </Dialog>
     </Paper>
+    </>
   );
 }
 

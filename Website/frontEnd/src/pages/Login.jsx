@@ -10,7 +10,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../utils/firebase-config';
 import Footer from '../components/Footer';
 import pcubg from '../assets/pcubg.jpg';
-import SignUp from './SignUp'; // Import SignUp component
+import SignUp from './SIgnUp';
 
 function Login({ setActiveComponent }) {
   useEffect(() => {
@@ -129,22 +129,22 @@ function Login({ setActiveComponent }) {
               </Typography>
 
               <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                style={{
-                  marginTop: '16px',
-                  height: '50px',
-                  borderRadius: '45px',
-                  backgroundColor: 'var(--sec)',
-                  color: '#000000',
-                  fontSize: '20px'
-                }}
-                data-aos="fade-right"
-              >
-                Login
-              </Button>
+  type="submit" // Ensures it triggers the form submission
+  variant="contained"
+  color="primary"
+  fullWidth
+  style={{
+    marginTop: '16px',
+    height: '50px',
+    borderRadius: '45px',
+    backgroundColor: 'var(--sec)',
+    color: '#000000',
+    fontSize: '20px'
+  }}
+  data-aos="fade-right"
+>
+  Login
+</Button>
 
               <Typography
                 gutterBottom

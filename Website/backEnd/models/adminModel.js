@@ -1,7 +1,7 @@
 const { db } = require('../config/admin_config');
 
 class AdminModel {
-  async saveCourse(academicYear, semester, curriculum, row, rowIndex) {
+  async saveSchedule(academicYear, semester, curriculum, row, rowIndex) {
     try {
       if (!row || row.length === 0) return;
 
@@ -49,9 +49,10 @@ class AdminModel {
       throw new Error('Failed to save course data');
     }
   }
+
   async getAllSchedules() {  // Renamed for consistency
     try {
-      const scheduleRef = db.ref('schedule_testing/academic_years/');
+      const scheduleRef = db.ref('schedule_test/academic_years/');
       const snapshot = await scheduleRef.get();
 
       if (!snapshot.exists()) {
@@ -83,9 +84,9 @@ class AdminModel {
                   });
                 });
               }
+              
             });
           }
-
           return {
             semesterKey,
             instructors: Object.values(instructors),
@@ -97,6 +98,129 @@ class AdminModel {
       throw new Error('Failed to fetch schedules');
     }
   }
+
+  async getAllUser() {
+    try {
+      const facultyRef = db.ref('users/faculty');
+      const adminRef = db.ref('users/admin');
+  
+      // Fetch faculty and admin data in parallel
+      const [facultySnapshot, adminSnapshot] = await Promise.all([
+        facultyRef.get(),
+        adminRef.get()
+      ]);
+  
+      const facultyData = facultySnapshot.exists() ? facultySnapshot.val() : {};
+      const adminData = adminSnapshot.exists() ? adminSnapshot.val() : {};
+  
+      // Convert faculty and admin data into a unified array
+      const facultyList = Object.entries(facultyData).map(([id, data]) => ({
+        id,
+        role: 'faculty',
+        ...data
+      }));
+  
+      const adminList = Object.entries(adminData).map(([id, data]) => ({
+        id,
+        role: 'admin',
+        ...data
+      }));
+  
+      // Combine both lists
+      return [...facultyList, ...adminList];
+  
+    } catch (error) {
+      console.error('❌ Error fetching users (faculty & admins):', error);
+      throw new Error('Failed to fetch user data');
+    }
   }
+  
+async getUserById(userId) {
+  try {
+  
+    const facultyRef = db.ref(`users/faculty/${userId}`);
+    const adminRef = db.ref(`users/admin/${userId}`);
+
+    const [facultySnapshot, adminSnapshot] = await Promise.all([
+      facultyRef.get(),
+      adminRef.get()
+    ]);
+
+    if (facultySnapshot.exists()) {
+      return { id: userId, role: 'faculty', ...facultySnapshot.val() };
+    }
+
+    if (adminSnapshot.exists()) {
+      return { id: userId, role: 'admin', ...adminSnapshot.val() };
+    }
+
+    return null;
+
+  } catch (error) {
+    console.error(`❌ Error fetching user with ID ${userId}:`, error);
+    throw new Error('Failed to fetch user data');
+  }
+}
+
+async deleteUser(userId) {
+  try {
+    const facultyRef = db.ref(`users/faculty/${userId}`);
+    const adminRef = db.ref(`users/admin/${userId}`);
+
+    const [facultySnapshot, adminSnapshot] = await Promise.all([
+      facultyRef.get(),
+      adminRef.get()
+    ]);
+
+    if (facultySnapshot.exists()) {
+      await facultyRef.remove();
+      console.log(`✅ Faculty user ${userId} deleted successfully.`);
+      return { message: `Faculty user ${userId} deleted successfully.` };
+    }
+
+    if (adminSnapshot.exists()) {
+      await adminRef.remove();
+      console.log(`✅ Admin user ${userId} deleted successfully.`);
+      return { message: `Admin user ${userId} deleted successfully.` };
+    }
+
+    throw new Error(`User ${userId} not found.`);
+  } catch (error) {
+    console.error(`❌ Error deleting user with ID ${userId}:`, error);
+    throw new Error('Failed to delete user');
+  }
+}
+
+async editUser(userId, updatedData) {
+  try {
+    const facultyRef = db.ref(`users/faculty/${userId}`);
+    const adminRef = db.ref(`users/admin/${userId}`);
+
+    const [facultySnapshot, adminSnapshot] = await Promise.all([
+      facultyRef.get(),
+      adminRef.get()
+    ]);
+
+    if (facultySnapshot.exists()) {
+      await facultyRef.update(updatedData);
+      console.log(`✅ Faculty user ${userId} updated successfully.`);
+      return { message: `Faculty user ${userId} updated successfully.` };
+    }
+
+    if (adminSnapshot.exists()) {
+      await adminRef.update(updatedData);
+      console.log(`✅ Admin user ${userId} updated successfully.`);
+      return { message: `Admin user ${userId} updated successfully.` };
+    }
+
+    throw new Error(`User ${userId} not found.`);
+  } catch (error) {
+    console.error(`❌ Error updating user with ID ${userId}:`, error);
+    throw new Error('Failed to update user');
+  }
+}
+
+}
+
 
 module.exports = new AdminModel();

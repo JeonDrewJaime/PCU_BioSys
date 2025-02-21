@@ -13,9 +13,6 @@ class AdminView {
         message: errorMessage
       };
     }
-
-    
   }
-  
-  module.exports = AdminView;
+module.exports = AdminView;
   

@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 import { styled } from '@mui/system';
 import { useDropzone } from 'react-dropzone';
 import { format, parse } from 'date-fns';
-import { handleSaveExcelContent } from '../../APIs/adminAPI';
+import { saveExcelData} from '../../APIs/adminAPI';
 import folder from '../assets/folder.png';
 import CloseIcon from '@mui/icons-material/Close';
 
