@@ -1,0 +1,6 @@
+SET UP NI BACKEND( DO THIS COMMANDS IN YOUR TERMINAL)
+1. cd website
+2. cd backend
+3. node server.js
+4. Pindutin mo yung split screen icon sa terminal mo then npm run dev mo na siya and dapat the localhost is "5173" lang. 
+5.  feel free to design my shitty layout, buo tiwala ko sa designing skills mo. Ask mo lang ako kapag may nanotice kang unfamiliar bugs or concept. keri mo yan . I love you
