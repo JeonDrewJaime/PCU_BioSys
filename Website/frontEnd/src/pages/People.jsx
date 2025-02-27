@@ -322,7 +322,7 @@ const getRowStyle = (attendanceData) => {
 
   return (
     <>
-    <Paper sx={{ padding: 2 }}>
+    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Search sx={{ mr: 1 }} />
         <TextField
@@ -358,20 +358,20 @@ const getRowStyle = (attendanceData) => {
                   variant="contained"
                   onClick={() => setOpenDialog(true)}
                   sx={{
-                    mx: 1,
-                    borderRadius: '45px',
-                    height: '40px',
-                    width: '200px',
-                    backgroundColor: '#E4E4F1',
-                    borderColor: '#012763',
-                    color: '#012763',
+                    borderRadius: "45px",
+                    height: "40px",
+                    width: "200px",
+                    backgroundColor: "#EFF6FB",
+                    border: "1px solid #041129",
+                    color: "#041129",
                     fontWeight: 600,
+                    boxShadow: "none",
                   }}
                 >
                   Add People
                 </Button>
       </Box>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none", }}>
         <Table>
           <TableHead>
             <TableRow>

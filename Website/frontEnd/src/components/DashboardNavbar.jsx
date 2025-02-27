@@ -171,7 +171,7 @@ function DashboardNavbar(props) {
 
   return (
     
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', backgroundColor:"#f5f5fb", height:"100vh" }}>
       <GlobalStyles/>
       <CssBaseline />
       <AppBar

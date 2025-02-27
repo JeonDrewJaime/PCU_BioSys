@@ -70,12 +70,13 @@ const ScheduleManagement = () => {
 
   return (
     <>
-       <FormControl sx={{ minWidth: 200, marginRight: 2 }}>
+    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}>
+    <Box sx={{ display: "flex", alignItems: "center", mb: "20px" }}>
+  {/* Select Inputs (Aligned Left) */}
+  <Box sx={{ display: "flex", gap: 2 }}>
+    <FormControl sx={{ minWidth: 150 }} size="small">
       <InputLabel>Academic Year</InputLabel>
-      <Select
-        value={selectedYear}
-        onChange={(e) => setSelectedYear(e.target.value)}
-      >
+      <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
         <MenuItem value="">All</MenuItem>
         {academicYears.map((year, index) => (
           <MenuItem key={index} value={year.acadYear}>
@@ -85,42 +86,44 @@ const ScheduleManagement = () => {
       </Select>
     </FormControl>
 
-    <FormControl sx={{ minWidth: 200 }}>
+    <FormControl sx={{ minWidth: 150 }} size="small">
       <InputLabel>Semester</InputLabel>
-      <Select
-        value={selectedSemester}
-        onChange={(e) => setSelectedSemester(e.target.value)}
-      >
+      <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
         <MenuItem value="">All</MenuItem>
-        {academicYears
-          .flatMap((year) => year.semesters)
-          .map((semester, index) => (
-            <MenuItem key={index} value={semester.semesterKey}>
-              {semester.semesterKey}
-            </MenuItem>
-          ))}
+        {academicYears.flatMap((year) => year.semesters).map((semester, index) => (
+          <MenuItem key={index} value={semester.semesterKey}>
+            {semester.semesterKey}
+          </MenuItem>
+        ))}
       </Select>
     </FormControl>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => setOpenAddScheduleDialog(true)}
-        sx={{
-          mb: '20px',
-          borderRadius: '45px',
-          height: '40px',
-          width: '200px',
-          backgroundColor: '#E4E4F1',
-          borderColor: '#012763',
-          color: '#012763',
-          fontWeight: 600,
-        }}
-      >
-        Add Schedule
-      </Button>
+  </Box>
+
+  {/* Button (Docked Right) */}
+  <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "flex-end" }}>
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={() => setOpenAddScheduleDialog(true)}
+      sx={{
+        borderRadius: "45px",
+        height: "40px",
+        width: "200px",
+        backgroundColor: "#EFF6FB",
+        border: "1px solid #041129",
+        color: "#041129",
+        fontWeight: 600,
+        boxShadow: "none",
+      }}
+    >
+      Add Schedule
+    </Button>
+  </Box>
+</Box>
+
 
       <Box>
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none", }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -252,6 +255,7 @@ const ScheduleManagement = () => {
           <AddSchedule />
         </DialogContent>
       </Dialog>
+      </Paper>
     </>
   );
 };

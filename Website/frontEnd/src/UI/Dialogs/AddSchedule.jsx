@@ -160,14 +160,14 @@ function AddSchedule() {
           variant="contained"
           onClick={() => setOpenDialog(true)}
           sx={{
-            mb: '20px',
-            borderRadius: '45px',
-            height: '40px',
-            width: '200px',
-            backgroundColor: '#E4E4F1',
-            borderColor: '#012763',
-            color: '#012763',
+            borderRadius: "45px",
+            height: "40px",
+            width: "200px",
+            backgroundColor: "#eaf2dd",
+            border: "1px solid #405f14",
+            color: "#405f14",
             fontWeight: 600,
+            boxShadow: "none",
           }}
         >
           Upload Excel File
@@ -178,15 +178,15 @@ function AddSchedule() {
           color="primary"
           onClick={handleSaveToDatabase}
           sx={{
-            mb: '20px',
-            borderRadius: '45px',
-            height: '40px',
-            width: '200px',
-            backgroundColor: '#E4E4F1',
-            borderColor: '#012763',
-            color: '#012763',
-            fontWeight: 600,
-          }}
+        borderRadius: "45px",
+        height: "40px",
+        width: "200px",
+        backgroundColor: "#EFF6FB",
+        border: "1px solid #041129",
+        color: "#041129",
+        fontWeight: 600,
+        boxShadow: "none",
+      }}
         >
           Save to Database
         </Button>

@@ -36,6 +36,13 @@ function Footer() {
              Sunday - Closed <br/>
               </Typography>
 
+              <Typography
+                
+                sx={{ color: 'white', fontWeight: 50, fontSize: '14px', marginTop: '16px' }}
+              >
+             © 2025 BIOSYS. Developed for Philippine Christian University. All rights reserved.
+              </Typography>
+
 
 
       

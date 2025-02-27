@@ -324,103 +324,81 @@ function Home() {
         </Box>
     </Box> 
 
-    <Box sx={{
-      minHeight: "70vh",  
-      display: 'flex',
-      background: `linear-gradient(rgba(29, 29, 29, 0.8), rgb(80, 80, 80, 0.8)), url(${pcubg})`, 
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',                   
-      justifyContent: 'center',           
-      alignItems: 'center',              
-      padding: '45px',                    
-      gap: '25px',                       
-      flexDirection: { xs: 'column', md: 'row' },
-      overflow: "hidden"
-    }}>
-      
-      {/* Card Component */}
-      <Card data-aos="zoom-in" data-aos-delay="700" sx={{ maxWidth: 350, minHeight: 450, backgroundColor: "white" }}>
-        <CardActionArea>
-          <CardMedia
-            component="img"
-            height="240"
-            image={card1} 
-            alt="Faculty Attendance"
-          />
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div" align='start' sx={{fontSize: { xs: '20px', sm: '25px', md: '27px', lg: '30px' },
-          fontWeight:600,
-          mt: 3, mb: 1,
-          
+            <div 
+          data-aos="zoom-out" 
+          data-aos-duration="2000" 
+        >
+ 
+          <Box sx={{ 
+          width: '100%',
+          textAlign: 'center', 
+          py: 5, 
+          background: `linear-gradient(rgba(29, 29, 29, 0.8), rgb(80, 80, 80, 0.8)), url(${pcubg})`, 
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+      }}>
+
+          {/* Features Title */}
+          <Typography 
+            variant="h4" 
+            data-aos="fade-up"
+            data-aos-delay="300"
+            sx={{
+              color: "white", 
+              fontWeight: "bold", 
+              textTransform: "uppercase",
+              letterSpacing: 1.5,
+              mb: 4 
+            }}>
+            Features
+          </Typography>
+
+          {/* Cards Container */}
+          <Box sx={{
+              display: 'flex',
+              flexWrap: 'wrap', 
+              justifyContent: 'center',           
+              alignItems: 'center',              
+              gap: '25px',                       
+              overflow: "hidden",
+              px: 3, 
           }}>
-            Biometric Attendance Tracking
-            </Typography>
-            <Typography variant="body2" align='start' sx={{ color: 'text.secondary', mb: 6, }}>
-            Utilizes fingerprint or facial recognition to accurately 
-            record faculty attendance, ensuring a secure and tamper-proof
-             system. This eliminates manual errors and prevents proxy 
-             logins, ensuring only authorized faculty members can 
-             check in and out.
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Card>
 
-      <Card data-aos="zoom-in" data-aos-delay="700" sx={{ maxWidth: 350, minHeight: 450, backgroundColor: "white" }}>
-        <CardActionArea>
-          <CardMedia
-            component="img"
-            height="240"
-            image={card2} 
-            alt="Faculty Attendance"
-          />
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div" align='start' sx={{fontSize: { xs: '20px', sm: '25px', md: '27px', lg: '30px' },
-          fontWeight:600,
-          mt: 3, mb: 1,
-          
-          }}>
-            Automated Attendance Reports
-            </Typography>
-            <Typography variant="body2" align='start' sx={{ color: 'text.secondary', mb: 6, }}>
-            Automatically compiles attendance data into real-time reports, 
-            allowing administrators to track attendance trends, identify absences,
-             and evaluate punctuality. This streamlines record-keeping and 
-             ensures accurate documentation for performance assessment.
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Card>
+            {/* Card Components */}
+            {[card1, card2, card3].map((card, index) => (
+              <Card key={index} data-aos="zoom-in" data-aos-delay="700" sx={{ maxWidth: 350, minHeight: 450, backgroundColor: "white" }}>
+                <CardActionArea>
+                  <CardMedia
+                    component="img"
+                    height="240"
+                    image={card} 
+                    alt={`Feature ${index + 1}`}
+                  />
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="div" align='start' 
+                      sx={{
+                        fontSize: { xs: '20px', sm: '25px', md: '27px', lg: '30px' },
+                        fontWeight:600,
+                        mt: 3, mb: 1,
+                      }}>
+                      {index === 0 ? "Biometric Attendance Tracking" : 
+                      index === 1 ? "Automated Attendance Reports" : 
+                      "Real-Time Status Monitoring"}
+                    </Typography>
+                    <Typography variant="body2" align='start' sx={{ color: 'text.secondary', mb: 6 }}>
+                      {index === 0 ? "Utilizes fingerprint or facial recognition to accurately record faculty attendance, ensuring a secure and tamper-proof system." :
+                      index === 1 ? "Automatically compiles attendance data into real-time reports, allowing administrators to track attendance trends and evaluate punctuality." :
+                      "Enables administrators to access up-to-date faculty attendance records, showing who is present, absent, or has yet to check in."}
+                    </Typography>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
 
-      <Card data-aos="zoom-in" data-aos-delay="700" sx={{ maxWidth: 350, minHeight: 450, backgroundColor: "white" }}>
-        <CardActionArea>
-          <CardMedia
-            component="img"
-            height="240"
-            image={card3} 
-            alt="Faculty Attendance"
-          />
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div" align='start' sx={{fontSize: { xs: '20px', sm: '25px', md: '27px', lg: '30px' },
-          fontWeight:600,
-          mt: 3, mb: 1,
-          
-          }}>
-            Real-Time Status Monitoring
-            </Typography>
-            <Typography variant="body2" align='start' sx={{ color: 'text.secondary', mb: 6, }}>
-            Enables administrators to access up-to-date faculty attendance records, 
-            showing who is present, absent, or has yet to check in. The system 
-            provides a centralized dashboard for real-time monitoring, allowing 
-            for quick verification of attendance without relying on manual logs.
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Card>
-
-    </Box>
-
+          </Box>
+      </Box>
+      </div>
     </div>
   );
 }
