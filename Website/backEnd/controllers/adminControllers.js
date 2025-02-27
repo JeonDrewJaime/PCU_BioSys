@@ -27,6 +27,28 @@ class AdminController {
     }
   }
 
+  async deleteInstructorByName(req, res) {
+    try {
+      const { instructorName } = req.params;
+  
+      if (!instructorName) {
+        return res.status(400).json(AdminView.formatErrorResponse('Instructor name is required.'));
+      }
+  
+      const result = await AdminModel.deleteInstructorByName(instructorName);
+  
+      if (!result.success) {
+        return res.status(404).json(AdminView.formatErrorResponse('Instructor not found.'));
+      }
+  
+      return res.status(200).json(AdminView.formatSuccessResponse('Instructor deleted successfully.', result));
+    } catch (error) {
+      console.error(`❌ Error deleting instructor ${req.params.instructorName}:`, error);
+      return res.status(500).json(AdminView.formatErrorResponse('Failed to delete instructor.'));
+    }
+  }
+  
+  
   async deleteAcademicYear(req, res) {
     try {
       const { academicYear } = req.params;

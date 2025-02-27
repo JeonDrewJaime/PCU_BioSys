@@ -14,6 +14,53 @@ class AdminModel {
     }
   }
   
+  async deleteInstructorByName(instructorName) {
+    try {
+      const scheduleRef = db.ref('schedule_test/academic_years/');
+      const snapshot = await scheduleRef.get();
+  
+      if (!snapshot.exists()) {
+        return { success: false, message: 'No schedules found' };
+      }
+  
+      const updates = {};
+      const data = snapshot.val();
+      let found = false;
+  
+      Object.keys(data).forEach((academicYear) => {
+        const semesters = data[academicYear].semesters || {};
+  
+        Object.keys(semesters).forEach((semester) => {
+          const courses = semesters[semester].courses || {};
+  
+          Object.keys(courses).forEach((courseIndex) => {
+            const course = courses[courseIndex];
+  
+            if (course.instructors) {
+              Object.keys(course.instructors).forEach((instIndex) => {
+                if (course.instructors[instIndex].name === instructorName) {
+                  found = true;
+                  updates[`schedule_test/academic_years/${academicYear}/semesters/${semester}/courses/${courseIndex}/instructors/${instIndex}`] = null;
+                }
+              });
+            }
+          });
+        });
+      });
+  
+      if (!found) {
+        return { success: false, message: 'Instructor not found' };
+      }
+  
+      await db.ref().update(updates);
+      return { success: true, message: `Instructor ${instructorName} deleted successfully.` };
+    } catch (error) {
+      console.error(`❌ Error deleting instructor ${instructorName}:`, error);
+      throw new Error('Failed to delete instructor');
+    }
+  }
+  
+  
   async saveSchedule(academicYear, semester, curriculum, row, rowIndex) {
     try {
       if (!row || row.length === 0) return;

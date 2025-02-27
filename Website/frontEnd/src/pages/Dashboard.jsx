@@ -179,7 +179,7 @@ const Dashboard = () => {
   return (
     <div style={{ padding: "20px" }}>
    
-   <Typography variant="h4" gutterBottom>
+   <Typography variant="h4" gutterBottom sx = {{color: "black"}}>
         Key Performance Indicator
       </Typography>
 <Grid container>
@@ -187,24 +187,24 @@ const Dashboard = () => {
   <Grid item xs={12} md={4}>
     <Card>
       <CardContent>
-        <Typography variant="h6">Total Present</Typography>
-        <Typography variant="h4">{users.reduce((sum, user) => sum + user.presentDays, 0)}</Typography>
+        <Typography variant="h6"  sx = {{color: "black"}}>Total Present</Typography>
+        <Typography variant="h4"  sx = {{color: "black"}}>{users.reduce((sum, user) => sum + user.presentDays, 0)}</Typography>
       </CardContent>
     </Card>
   </Grid>
   <Grid item xs={12} md={4}>
     <Card>
       <CardContent>
-        <Typography variant="h6">Total Absent</Typography>
-        <Typography variant="h4">{users.reduce((sum, user) => sum + user.absentDays, 0)}</Typography>
+        <Typography variant="h6"  sx = {{color: "black"}}>Total Absent</Typography>
+        <Typography variant="h4"  sx = {{color: "black"}}>{users.reduce((sum, user) => sum + user.absentDays, 0)}</Typography>
       </CardContent>
     </Card>
   </Grid>
   <Grid item xs={12} md={4}>
     <Card>
       <CardContent>
-        <Typography variant="h6">Total Late</Typography>
-        <Typography variant="h4">{users.reduce((sum, user) => sum + user.lateCount, 0)}</Typography>
+        <Typography variant="h6"  sx = {{color: "black"}}>Total Late</Typography>
+        <Typography variant="h4"  sx = {{color: "black"}}>{users.reduce((sum, user) => sum + user.lateCount, 0)}</Typography>
       </CardContent>
     </Card>
   </Grid>
@@ -231,9 +231,6 @@ const Dashboard = () => {
   </Select>
 </FormControl>
 <Grid container spacing={2}>
-
-
-
 
   <Grid item xs={12} md={8}>
     <Box sx={{ height: 300, marginBottom: 4 }}>

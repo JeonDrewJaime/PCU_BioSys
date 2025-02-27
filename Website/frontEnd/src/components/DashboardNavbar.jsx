@@ -23,7 +23,7 @@ import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import People from '../pages/People'
 import KeyPerformanceIndicator from '../pages/KeyPerformanceIndicator';
-import Reports from '../pages/Reports'
+
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import Popover from '@mui/material/Popover';
@@ -111,7 +111,7 @@ function DashboardNavbar(props) {
       case 'Reports':
         return  <Reports/>
       default:
-        return 
+        return <Dashboard/>
     }
   };
 

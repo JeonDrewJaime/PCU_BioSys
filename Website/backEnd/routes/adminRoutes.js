@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/schedule/save-excel', AdminController.saveSchedule);
 router.get('/schedule', AdminController.getSchedule);
 router.delete('/schedule/:academicYear', AdminController.deleteAcademicYear);
+router.delete('/instructors/:instructorName', AdminController.deleteInstructorByName);
 
 // User Routes
 router.get('/users', AdminController.getAllUsers);
