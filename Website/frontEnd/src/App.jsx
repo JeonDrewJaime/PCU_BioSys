@@ -29,9 +29,12 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <Routes>
-          <Route path="/" element={ <HomeNavbar />} />
-     
-          <Route path="/dashboard" element = {<DashboardNavbar /> } />
+          <Route path="/" element={<HomeNavbar />} />
+          <Route
+            path="/dashboard"
+            element={user ? <DashboardNavbar /> : <Navigate to="/login" />}
+          />
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <HomeNavbar/>} />
         </Routes>
       </Router>
     </ThemeProvider>

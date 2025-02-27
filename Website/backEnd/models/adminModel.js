@@ -1,6 +1,19 @@
-const { db } = require('../config/admin_config');
+const { db, auth} = require('../config/admin_config');
 
 class AdminModel {
+
+  async deleteAcademicYear(academicYear) {
+    try {
+      const academicYearRef = db.ref(`schedule_test/academic_years/${academicYear}`);
+      await academicYearRef.remove();
+      console.log(`✅ Academic year ${academicYear} deleted successfully.`);
+      return { message: `Academic year ${academicYear} deleted successfully.` };
+    } catch (error) {
+      console.error(`❌ Error deleting academic year ${academicYear}:`, error);
+      throw new Error('Failed to delete academic year');
+    }
+  }
+  
   async saveSchedule(academicYear, semester, curriculum, row, rowIndex) {
     try {
       if (!row || row.length === 0) return;
@@ -174,17 +187,20 @@ async deleteUser(userId) {
 
     if (facultySnapshot.exists()) {
       await facultyRef.remove();
-      console.log(`✅ Faculty user ${userId} deleted successfully.`);
-      return { message: `Faculty user ${userId} deleted successfully.` };
+      console.log(`✅ Faculty user ${userId} deleted from database.`);
     }
 
     if (adminSnapshot.exists()) {
       await adminRef.remove();
-      console.log(`✅ Admin user ${userId} deleted successfully.`);
-      return { message: `Admin user ${userId} deleted successfully.` };
+      console.log(`✅ Admin user ${userId} deleted from database.`);
     }
 
-    throw new Error(`User ${userId} not found.`);
+    // Delete user from Firebase Authentication
+    await auth.deleteUser(userId);
+    console.log(`✅ User ${userId} deleted from Firebase Authentication.`);
+
+    return { message: `User ${userId} deleted successfully from database and authentication.` };
+    
   } catch (error) {
     console.error(`❌ Error deleting user with ID ${userId}:`, error);
     throw new Error('Failed to delete user');

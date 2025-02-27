@@ -8,8 +8,8 @@ import * as XLSX from 'xlsx';
 import { styled } from '@mui/system';
 import { useDropzone } from 'react-dropzone';
 import { format, parse } from 'date-fns';
-import { saveExcelData} from '../../APIs/adminAPI';
-import folder from '../assets/folder.png';
+import { saveExcelData} from '../../../APIs/adminAPI';
+import folder from '../../assets/folder.png';
 import CloseIcon from '@mui/icons-material/Close';
 
 const Container = styled('div')(({ theme }) => ({
@@ -47,7 +47,6 @@ function AddSchedule() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [searchQuery, setSearchQuery] = useState('');
-
 
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -110,7 +109,7 @@ function AddSchedule() {
 
   const handleSaveToDatabase = () => {
     setLoading(true);
-    handleSaveExcelContent(columns, rows)
+    saveExcelData(columns, rows)
       .then(() => {
         setSnackbarMessage('Content saved to the database successfully.');
         setSnackbarSeverity('success');

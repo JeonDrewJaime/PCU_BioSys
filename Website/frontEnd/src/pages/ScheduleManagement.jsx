@@ -5,8 +5,10 @@ import {
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import AddSchedule from './AddSchedule';
-import { fetchScheduleData } from '../../APIs/adminAPI'; // Import API function
+import AddSchedule from '../UI/Dialogs/AddSchedule';
+import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
+import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI'; // Import API function
+import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 
 const ScheduleManagement = () => {
   const [academicYears, setAcademicYears] = useState([]);
@@ -15,7 +17,26 @@ const ScheduleManagement = () => {
   const [openRows, setOpenRows] = useState({});
   const [openInstructorRows, setOpenInstructorRows] = useState({});
   const [openAddScheduleDialog, setOpenAddScheduleDialog] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
 
+  const handleDeleteAcademicYear = async (academicYear) => {
+    try {
+      await deleteAcademicYear(academicYear);
+      setAcademicYears((prev) => prev.filter((year) => year.acadYear !== academicYear));
+    } catch (error) {
+      console.error('Error deleting academic year:', error);
+    }
+  };
+  
+  const filteredData = academicYears
+  .filter((year) => (selectedYear ? year.acadYear === selectedYear : true))
+  .map((year) => ({
+    ...year,
+    semesters: year.semesters.filter((semester) =>
+      selectedSemester ? semester.semesterKey === selectedSemester : true
+    ),
+  }));
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -49,6 +70,37 @@ const ScheduleManagement = () => {
 
   return (
     <>
+       <FormControl sx={{ minWidth: 200, marginRight: 2 }}>
+      <InputLabel>Academic Year</InputLabel>
+      <Select
+        value={selectedYear}
+        onChange={(e) => setSelectedYear(e.target.value)}
+      >
+        <MenuItem value="">All</MenuItem>
+        {academicYears.map((year, index) => (
+          <MenuItem key={index} value={year.acadYear}>
+            {year.acadYear}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+
+    <FormControl sx={{ minWidth: 200 }}>
+      <InputLabel>Semester</InputLabel>
+      <Select
+        value={selectedSemester}
+        onChange={(e) => setSelectedSemester(e.target.value)}
+      >
+        <MenuItem value="">All</MenuItem>
+        {academicYears
+          .flatMap((year) => year.semesters)
+          .map((semester, index) => (
+            <MenuItem key={index} value={semester.semesterKey}>
+              {semester.semesterKey}
+            </MenuItem>
+          ))}
+      </Select>
+    </FormControl>
       <Button
         variant="contained"
         color="primary"
@@ -75,11 +127,13 @@ const ScheduleManagement = () => {
                 <TableCell>Academic Year</TableCell>
                 <TableCell>Semester</TableCell>
                 <TableCell>Instructors</TableCell>
+                <TableCell>Actions</TableCell>
+
               </TableRow>
             </TableHead>
             <TableBody>
-              {academicYears.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) =>
-                year.semesters.map((semester, semIndex) => (
+            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) =>
+        year.semesters.map((semester, semIndex) => (
                   <React.Fragment key={`${yearIndex}-${semIndex}`}>
                     <TableRow>
                       <TableCell>
@@ -90,13 +144,23 @@ const ScheduleManagement = () => {
                       </TableCell>
                       <TableCell>{semester.semesterKey}</TableCell>
                       <TableCell>{semester.instructors.length}</TableCell>
+                      <TableCell>
+  <IconButton
+    variant="contained"
+    color="error"
+    onClick={() => handleDeleteAcademicYear(year.acadYear)}
+  >
+    <Delete/>
+  </IconButton>
+</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell colSpan={3} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                    <TableCell colSpan={3} sx={{ px: 1}}>
                         <Collapse in={openRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
                           <Table>
                             <TableBody>
-                              {semester.instructors.map((instructor, instIndex) => (
+                            {semester.instructors.filter(instructor => instructor.name && instructor.name !== 'Unknown Instructor').map((instructor, instIndex) => (
+
                                 <React.Fragment key={instIndex}>
                                   <TableRow>
                                     <TableCell>
@@ -107,7 +171,7 @@ const ScheduleManagement = () => {
                                     </TableCell>
                                   </TableRow>
                                   <TableRow>
-                                    <TableCell colSpan={3}>
+                                  <TableCell colSpan={3} sx={{ p: 0}}>
                                       <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
                                         <Table>
                                           <TableHead>

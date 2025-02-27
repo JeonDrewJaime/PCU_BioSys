@@ -8,8 +8,8 @@ import * as Yup from 'yup';
 import Swal from 'sweetalert2';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
-import { auth, database } from '../../utils/firebase-config';
-import pcubg from '../assets/pcubg.jpg';
+import { auth, database } from '../../../utils/firebase-config';
+import pcubg from '../../assets/pcubg.jpg';
 
 const steps = ['Account Details', 'Personal Information', 'Password Setup'];
 

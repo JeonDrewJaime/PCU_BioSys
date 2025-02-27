@@ -28,8 +28,10 @@ import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import Popover from '@mui/material/Popover';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { fetchUserById } from '../../APIs/adminAPI';
+
 import Swal from 'sweetalert2';
-import AddSchedule from '../pages/AddSchedule';
+import AddSchedule from '../UI/Dialogs/AddSchedule';
 import Dashboard from '../pages/Dashboard';
 import GlobalStyles from '../../utils/GlobalStyles';
 import ScheduleManagement from '../pages/ScheduleManagement';
@@ -47,6 +49,7 @@ function DashboardNavbar(props) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [selectedComponent, setSelectedComponent] = React.useState('Inbox');
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [user, setUser] = React.useState({ name: "Loading...", role: "Loading..." });
   const navigate = useNavigate(); // Initialize navigation
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -112,6 +115,28 @@ function DashboardNavbar(props) {
     }
   };
 
+  React.useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userData = await fetchUserById(currentUser.uid);
+          if (userData) {
+            setUser({ name: `${userData.firstname} ${userData.lastname}`, role: userData.role });
+          } else {
+            setUser({ name: "Unknown", role: "N/A" });
+          }
+        } else {
+          setUser({ name: "Guest", role: "Unknown" });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+  
+    fetchUserData();
+  }, []);
+  
   const drawer = (
     <div>
       <Toolbar />
@@ -129,8 +154,7 @@ function DashboardNavbar(props) {
           { text: 'Dashboard', icon: <SpaceDashboardIcon/> },
           { text: 'People', icon: <PeopleIcon/> },
           { text: 'Schedule Management', icon: <CalendarMonthIcon/> },
-          { text: 'Key Performance Indicator', icon: <QueryStatsIcon/> },
-          { text: 'Reports', icon: <DraftsIcon /> },
+       
         ].map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton onClick={() => setSelectedComponent(item.text)}>
@@ -176,23 +200,19 @@ function DashboardNavbar(props) {
               marginLeft: 'auto',
             }}
           >
-            <IconButton sx={{ color: '#666666' }}>
-              <Badge badgeContent={4} color="primary" overlap="circular">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
+          
             <IconButton
               onClick={handleProfileClick}
               sx={{ display: 'flex', alignItems: 'center', textTransform: 'none', ml: 2 }}
             >
               <Avatar sx={{ mr: 1, width: 32, height: 32 }} />
               <Box sx={{ textAlign: 'left' }}>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'black' }}>
-                  John Doe
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'black' }}>
-                  Admin
-                </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'black' }}>
+  {user.name}
+</Typography>
+<Typography variant="body2" sx={{ color: 'black' }}>
+  {user.role}
+</Typography>
               </Box>
             </IconButton>
           </Box>

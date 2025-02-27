@@ -27,6 +27,22 @@ class AdminController {
     }
   }
 
+  async deleteAcademicYear(req, res) {
+    try {
+      const { academicYear } = req.params;
+
+      if (!academicYear) {
+        return res.status(400).json(AdminView.formatErrorResponse('Academic year is required.'));
+      }
+
+      const result = await AdminModel.deleteAcademicYear(academicYear);
+      return res.status(200).json(AdminView.formatSuccessResponse('Academic year deleted successfully.', result));
+    } catch (error) {
+      console.error(`❌ Error deleting academic year ${req.params.academicYear}:`, error);
+      return res.status(500).json(AdminView.formatErrorResponse('Failed to delete academic year.'));
+    }
+  }
+  
   async getSchedule(req, res) {
     try {
       const scheduleData = await AdminModel.getAllSchedules();

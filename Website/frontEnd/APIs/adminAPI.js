@@ -66,8 +66,6 @@ export const fetchUserById = async (userId) => {
     console.error(`❌ Error fetching user with ID ${userId}:`, error);
     throw new Error(error.response?.data?.message || 'Failed to fetch user data.');
   }
-
-
 };
 
 export const deleteUser = async (userId) => {
@@ -80,7 +78,6 @@ export const deleteUser = async (userId) => {
   }
 };
 
-
 export const editUser = async (userId, updatedData) => {
   try {
     const { data } = await adminAPI.put(`/edit/${userId}`, updatedData);
@@ -88,6 +85,21 @@ export const editUser = async (userId, updatedData) => {
   } catch (error) {
     console.error(`❌ Error updating user with ID ${userId}:`, error);
     throw new Error(error.response?.data?.message || 'Failed to update user.');
+  }
+};
+
+/**
+ * Delete a specific academic year
+ * @param {string} academicYear - The academic year to delete
+ * @returns {Promise<Object>} Resolves with the API response
+ */
+export const deleteAcademicYear = async (academicYear) => {
+  try {
+    const { data } = await adminAPI.delete(`/schedule/${academicYear}`);
+    return data;
+  } catch (error) {
+    console.error(`❌ Error deleting academic year ${academicYear}:`, error);
+    throw new Error(error.response?.data?.message || 'Failed to delete academic year.');
   }
 };
 
