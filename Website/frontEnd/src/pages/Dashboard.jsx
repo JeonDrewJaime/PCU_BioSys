@@ -98,7 +98,7 @@ const Dashboard = () => {
     const trend = values[values.length - 1] - values[0];
   
     if (selectedMetric === "all") {
-      return `Average Attendance Rate: ${average.toFixed(2)}%. Trend is ${trend >= 0 ? "upward 📈" : "downward 📉"}.`;
+      return ` Trend is ${trend >= 0 ? "upward 📈" : "downward 📉"}.`;
     } else {
       const metricLabels = {
         attendanceRate: "Attendance Rate",

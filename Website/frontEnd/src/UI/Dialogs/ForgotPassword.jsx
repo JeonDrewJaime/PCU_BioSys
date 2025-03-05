@@ -33,7 +33,7 @@ function ForgotPassword({ open, onClose }) {
       sx={{ '& .MuiDialog-paper': { width: 400 } }} // force specific width
     >
       <Box display="flex" justifyContent="space-between" alignItems="center" paddingX={2} paddingTop={1}>
-        <DialogTitle sx={{ flexGrow: 1, p: 0 }}>Reset Password</DialogTitle>
+        <DialogTitle sx={{ flexGrow: 1, p: 0, color: "black" }}>Reset Password</DialogTitle>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>

@@ -233,17 +233,20 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
   {editingRow === rowIndex ? (
     cellIndex === 9 ? (
       <FormControl fullWidth size="small">
-        <Select
-          value={cell}
-          onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
-        >
-          {users.map(user => (
-        <MenuItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
-        {user.firstname} {user.lastname}
-      </MenuItem>
+      <Select
+        value={cell}
+        onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+      >
+        {users
+          .filter(user => user.role !== 'Admin') // <-- Filter out Admin users
+          .map(user => (
+            <MenuItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
+              {user.firstname} {user.lastname}
+            </MenuItem>
           ))}
-        </Select>
-      </FormControl>
+      </Select>
+    </FormControl>
+    
     ) : (
       <TextField
         value={cell}
@@ -259,37 +262,52 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
 ))}
 
              
-                  {rowIndex >= 2 && (
-                    <TableCell>
-                     
-                      {editingRow === rowIndex ? (
-                        <>
-                        <IconButton onClick={handleSaveRow} color="primary">
-                          <SaveIcon />
-                        </IconButton>
-                        <IconButton
-  onClick={() => {
-    setSelectedRowIndex(rowIndex);
-    setOpenCreateUserDialog(true);  // Open the CreateUser dialog
-  }}
-  color="primary"
->
-  <PersonAddIcon />
-</IconButton>
+<TableCell>
+  {rowIndex < 2 ? (
+    // Rows 0 and 1 - Editable but no delete button
+    editingRow === rowIndex ? (
+      <IconButton onClick={handleSaveRow} color="primary">
+        <SaveIcon />
+      </IconButton>
+    ) : (
+      <IconButton onClick={() => handleEditRow(rowIndex)} color="primary">
+        <EditIcon />
+      </IconButton>
+    )
+  ) : rowIndex === 2 ? (
+    // Row 2 - No edit or delete (read-only)
+    null
+  ) : (
+    // Rows 3 and beyond - Editable and deletable
+    <>
+      {editingRow === rowIndex ? (
+        <>
+          <IconButton onClick={handleSaveRow} color="primary">
+            <SaveIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              setSelectedRowIndex(rowIndex);
+              setOpenCreateUserDialog(true);
+            }}
+            color="primary"
+          >
+            <PersonAddIcon />
+          </IconButton>
+        </>
+      ) : (
+        <IconButton onClick={() => handleEditRow(rowIndex)} color="primary">
+          <EditIcon />
+        </IconButton>
+      )}
+      <IconButton onClick={() => handleDeleteRow(rowIndex)} color="error">
+        <DeleteIcon />
+      </IconButton>
+    </>
+  )}
+</TableCell>
 
 
- </>
-                        
-                      ) : (
-                        <IconButton onClick={() => handleEditRow(rowIndex)} color="primary">
-                          <EditIcon />
-                        </IconButton>
-                      )}
-                      <IconButton onClick={() => handleDeleteRow(rowIndex)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
             </TableBody>
