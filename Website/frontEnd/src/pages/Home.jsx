@@ -24,6 +24,8 @@ import CardActionArea from '@mui/material/CardActionArea';
 AOS.init();
 
 function Home() {
+  const [isDownloadPage, setIsDownloadPage] = React.useState(false);
+
   const slides = [
     { 
       image: hero1, 

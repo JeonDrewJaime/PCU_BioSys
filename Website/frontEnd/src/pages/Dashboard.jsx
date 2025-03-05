@@ -38,7 +38,6 @@ import Loader from "./Loader";
 
 
 
-
 const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [overallAttendanceRate, setOverallAttendanceRate] = useState(null);
@@ -255,11 +254,16 @@ const Dashboard = () => {
   if (error) return <Typography color="error">Error: {error}</Typography>;
 
 
-  const top3BestAttendance = [...users]
+ // Filter out admins from users
+const filteredUsers = users.filter(user => user.role !== "Admin");
+
+// Top 3 Best Attendance (excluding admins)
+const top3BestAttendance = [...filteredUsers]
   .sort((a, b) => (b.attendanceRate || 0) - (a.attendanceRate || 0))
   .slice(0, 3);
 
-  const top3HighestAbsentRate = [...users]
+// Top 3 Highest Absent Rate (excluding admins)
+const top3HighestAbsentRate = [...filteredUsers]
   .map(user => ({
     ...user,
     absentRate: user.totalCheckIns > 0 ? (user.absentDays / user.totalCheckIns) * 100 : 0
@@ -278,9 +282,8 @@ const Dashboard = () => {
       Welcome back! Here's a quick look at your latest updates and insights. Let's get things done!
       </Typography>
       <Grid container spacing={2} sx={{ mb: 1.8 }}>
-
-      <Grid container spacing={2} sx={{ mb: 1.8 }}>
-  <Grid item xs={12} md={4} data-aos="fade-up">
+      <Grid container spacing={2} sx={{ mb: 1.8, ml: 0.5}}>
+  <Grid item xs={12} md={4} data-aos="fade-up" >
     <Card sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#d4eeda", boxShadow: "none", }}>
       <CardContent>
         <Typography variant="h6" sx={{ color: "#2A6534" }}>Total Present</Typography>

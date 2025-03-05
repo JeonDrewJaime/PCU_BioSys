@@ -32,26 +32,66 @@ const UserReportDialog = ({ open, onClose, user }) => {
 
   const filterAttendanceData = () => {
     if (!user?.attendance) return [];
-
-    let dataMap = new Map();
+  
     const today = dayjs();
-
+    let dataMap = new Map();
+  
+    if (filter === "week") {
+      const startOfWeek = today.startOf("week"); // Sunday
+      const endOfWeek = today.endOf("week");     // Saturday
+  
+      // Initialize all days of the week with 0 attendance
+      for (let i = 0; i < 7; i++) {
+        const date = startOfWeek.add(i, "day").format("YYYY-MM-DD");
+        const label = startOfWeek.add(i, "day").format("MMM D");
+  
+        dataMap.set(date, {
+          period: label,
+          Present: 0,
+          Late: 0,
+          Absent: 0,
+        });
+      }
+  
+      // Loop through attendance records and fill in data for matching days
+      Object.entries(user.attendance).forEach(([date, details]) => {
+        const recordDate = dayjs(date);
+        if (recordDate.isBefore(startOfWeek) || recordDate.isAfter(endOfWeek)) {
+          return; // Skip records outside this week
+        }
+  
+        let present = 0, lates = 0, absences = 0;
+  
+        Object.values(details).forEach((record) => {
+          if (record.late_status === "On Time") present++;
+          if (record.late_status === "Late") lates++;
+          if (record.late_status === "Absent") absences++;
+        });
+  
+        if (dataMap.has(date)) {
+          const entry = dataMap.get(date);
+          entry.Present += present;
+          entry.Late += lates;
+          entry.Absent += absences;
+        }
+      });
+  
+      return Array.from(dataMap.values());
+    }
+  
+    // Original month/year filter (keep these the same)
     Object.entries(user.attendance).forEach(([date, details]) => {
-      let present = 0,
-        lates = 0,
-        absences = 0;
-
+      let present = 0, lates = 0, absences = 0;
+  
       Object.values(details).forEach((record) => {
         if (record.late_status === "On Time") present++;
         if (record.late_status === "Late") lates++;
         if (record.late_status === "Absent") absences++;
       });
-
+  
       let key;
-      if (filter === "week") {
-        const weekNumber = Math.ceil(dayjs(date).date() / 7); // Group by week number in the month
-        key = `Week ${weekNumber}`;
-      } else if (filter === "month") {
+  
+      if (filter === "month") {
         if (dayjs(date).isAfter(today.subtract(30, "day"))) {
           key = dayjs(date).format("MMM D");
         } else {
@@ -62,20 +102,21 @@ const UserReportDialog = ({ open, onClose, user }) => {
       } else {
         key = date;
       }
-
+  
       if (!dataMap.has(key)) {
         dataMap.set(key, { period: key, Present: 0, Late: 0, Absent: 0 });
       }
-
-      let entry = dataMap.get(key);
+  
+      const entry = dataMap.get(key);
       entry.Present += present;
       entry.Late += lates;
       entry.Absent += absences;
-      dataMap.set(key, entry);
     });
-
+  
     return Array.from(dataMap.values());
   };
+  
+  
 
   const calculateImprovement = (data) => {
     return data.map((entry, index, array) => {

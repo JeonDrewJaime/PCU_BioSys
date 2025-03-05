@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Typography, TextField,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box, CircularProgress,
@@ -11,6 +11,9 @@ import { format, parse } from 'date-fns';
 import { saveExcelData} from '../../../APIs/adminAPI';
 import folder from '../../assets/folder.png';
 import CloseIcon from '@mui/icons-material/Close';
+import { fetchAllUsers } from '../../../APIs/adminAPI';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CreateUser from './CreateUser';
 
 const Container = styled('div')(({ theme }) => ({
   padding: '20px',
@@ -47,7 +50,24 @@ function AddSchedule( { onClose }) {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState([]);
+  const [openCreateUserDialog, setOpenCreateUserDialog] = useState(false);
 
+  const [openAssignDialog, setOpenAssignDialog] = useState(false);
+const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which row is being assigned
+
+
+  useEffect(() => {
+    fetchAllUsers()
+      .then(setUsers)
+      .catch(() => setUsers([]));
+  }, [])
+  const getUniqueValuesForColumn = (columnIndex) => {
+    const values = rows.map(row => row[columnIndex]).filter(Boolean);
+    return [...new Set(values)];
+  };
+  
+  
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
   
@@ -100,7 +120,8 @@ function AddSchedule( { onClose }) {
   }, [columns]);
   
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .xls' });
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [], 'application/vnd.ms-excel': [] } });
+
 
   const handleDeleteRow = (index) => {
     setRows(rows.filter((_, i) => i !== index));
@@ -165,15 +186,6 @@ function AddSchedule( { onClose }) {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Sort</InputLabel>
-          <Select displayEmpty>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
-            <MenuItem value="Faculty">Faculty</MenuItem>
-          </Select>
-        </FormControl>
-
         <Button
           variant="contained"
           onClick={() => setOpenDialog(true)}
@@ -216,29 +228,58 @@ function AddSchedule( { onClose }) {
             <TableBody>
               {filteredRows.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
-                  {row.map((cell, cellIndex) => (
-                    <TableCell key={cellIndex}>
-                      {editingRow === rowIndex ? (
-                        <TextField
-                          value={cell}
-                          onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
-                          size="small"
-                        />
-                      ) : (
-                        cell
-                      )}
-                    </TableCell>
-                  ))}
+               {row.map((cell, cellIndex) => (
+                <TableCell key={cellIndex}>
+  {editingRow === rowIndex ? (
+    cellIndex === 9 ? (
+      <FormControl fullWidth size="small">
+        <Select
+          value={cell}
+          onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+        >
+          {users.map(user => (
+        <MenuItem key={user.id} value={`${user.firstname} ${user.lastname}`}>
+        {user.firstname} {user.lastname}
+      </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    ) : (
+      <TextField
+        value={cell}
+        onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+        size="small"
+      />
+    )
+  ) : (
+    cell
+  )}
+</TableCell>
+
+))}
+
              
                   {rowIndex >= 2 && (
                     <TableCell>
-                        
+                     
                       {editingRow === rowIndex ? (
-                        
+                        <>
                         <IconButton onClick={handleSaveRow} color="primary">
                           <SaveIcon />
-                    
                         </IconButton>
+                        <IconButton
+  onClick={() => {
+    setSelectedRowIndex(rowIndex);
+    setOpenCreateUserDialog(true);  // Open the CreateUser dialog
+  }}
+  color="primary"
+>
+  <PersonAddIcon />
+</IconButton>
+
+
+ </>
+                        
                       ) : (
                         <IconButton onClick={() => handleEditRow(rowIndex)} color="primary">
                           <EditIcon />
@@ -307,7 +348,18 @@ function AddSchedule( { onClose }) {
   </Alert>
 </Snackbar>
 
+
+
+<Dialog open={openCreateUserDialog} onClose={() => setOpenCreateUserDialog(false)} maxWidth="sm" fullWidth>
+ 
+  <DialogContent>
+    <CreateUser onClose={() => setOpenCreateUserDialog(false)} />
+  </DialogContent>
+</Dialog>
+
     </Container>
+
+    
   );
 }
 

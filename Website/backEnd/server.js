@@ -6,13 +6,10 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
-const corsOptions = {
-  origin: 'http://localhost:5173', 
-};
+// Allow requests from any origin (open CORS policy)
+app.use(cors()); // This allows all origins
 
-app.use(cors(corsOptions));
 app.use(bodyParser.json());
-
 
 app.use('/admin', adminRoutes);
 

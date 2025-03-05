@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Box, TextField, Button, Typography, Card, CardContent, FormControlLabel, Checkbox } from '@mui/material';
+import React, { useEffect, useState} from 'react';
+import { Box, TextField, Button, Typography, Card, CardContent, FormControlLabel, Checkbox, Dialog, DialogContent, DialogTitle, DialogActions} from '@mui/material';
 import { useFormik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import AOS from 'aos';
@@ -10,13 +10,36 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../utils/firebase-config';
 import pcubg from '../assets/pcubg.jpg';
 import SignUp from './SignUp';
+import ForgotPassword from '../UI/Dialogs/ForgotPassword';
+
+const handleForgotPassword = async () => {
+  if (!resetEmail) {
+    Swal.fire('Error', 'Please enter your email.', 'error');
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, resetEmail);
+    Swal.fire('Success', 'Password reset link sent to your email.', 'success');
+    setOpenForgotPassword(false);
+    setResetEmail('');
+  } catch (error) {
+    Swal.fire('Error', error.message, 'error');
+  }
+};
+
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email').required('Email is required'),
   password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
   rememberMe: Yup.boolean(),
 });
 
+
 function Login({ setActiveComponent }) {
+
+  const [openForgotPassword, setOpenForgotPassword] = useState(false);
+const [resetEmail, setResetEmail] = useState('');
+
+
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
@@ -105,10 +128,21 @@ function Login({ setActiveComponent }) {
               helperText={formik.touched.password && formik.errors.password}
             />
 
-            <FormControlLabel
-              control={<Checkbox name="rememberMe" checked={formik.values.rememberMe} onChange={formik.handleChange} />}
-              label="Remember Me"
-            />
+<Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
+  <FormControlLabel
+    control={<Checkbox name="rememberMe" checked={formik.values.rememberMe} onChange={formik.handleChange} />}
+    label="Remember Me"
+  />
+<Button
+  variant="text"
+  sx={{ textTransform: 'none', fontSize: 14, color: 'var(--pri)', textAlign: 'right' }}
+  onClick={() => setOpenForgotPassword(true)}
+>
+  Forgot Password?
+</Button>
+
+</Box>
+
 
 <Button
               type="submit"
@@ -140,6 +174,11 @@ function Login({ setActiveComponent }) {
 
         </CardContent>
       </Card>
+      <ForgotPassword
+  open={openForgotPassword}
+  onClose={() => setOpenForgotPassword(false)}
+/>
+
     </Box>
   );
 }

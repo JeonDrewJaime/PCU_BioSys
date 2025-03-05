@@ -103,4 +103,20 @@ export const deleteAcademicYear = async (academicYear) => {
   }
 };
 
+
+/**
+ * Delete an instructor by name
+ * @param {string} instructorName - The name of the instructor to delete
+ * @returns {Promise<Object>} Resolves with the API response
+ */
+export const deleteInstructorByName = async (instructorName) => {
+  try {
+    const { data } = await adminAPI.delete(`/instructors/${instructorName}`);
+    return data;
+  } catch (error) {
+    console.error(`❌ Error deleting instructor with name ${instructorName}:`, error);
+    throw new Error(error.response?.data?.message || 'Failed to delete instructor.');
+  }
+};
+
 export default adminAPI;

@@ -10,6 +10,7 @@ import 'aos/dist/aos.css';
 import UserReportDialog from "../UI/Dialogs/UserDialog";
 import { Star, StarBorder } from "@mui/icons-material";
 import {
+  Chip,
   Typography,
   Tooltip,
   Table,
@@ -23,7 +24,7 @@ import {
   Collapse,
   Box,
   TextField,
-  Chip,
+CircularProgress,
   FormControl,
   MenuItem,
   InputLabel,
@@ -76,7 +77,7 @@ const handleOpenReportDialog = async (user) => {
   try {
     const snapshot = await get(attendanceRef);
     const attendanceData = snapshot.exists() ? snapshot.val() : {};
-
+    const sortedDates = Object.keys(attendanceData).sort((a, b) => new Date(b) - new Date(a));
     setSelectedUser((prev) => ({
       ...prev,
       attendance: attendanceData, // Attach attendance data to selected user
@@ -87,6 +88,39 @@ const handleOpenReportDialog = async (user) => {
   }
 };
 
+const validatedCount = async () => {
+  let count = 0;
+
+  const snapshot = await get(attendanceRef);
+
+  if (snapshot.exists()) {
+    const attendanceData = snapshot.val();
+
+    // Loop through each date (like 2025-03-05)
+    for (const date in attendanceData) {
+      const subjects = attendanceData[date];
+
+      // Loop through each subject (like "ITEC1201 - COMPUTER PROGRAMMING 2 LAB")
+      for (const subject in subjects) {
+        const record = subjects[subject];
+
+        // Check main status
+        if (record.status === "Validated") {
+          count++;
+        }
+
+        // Check all validate_x.status fields
+        for (let i = 1; i <= 3; i++) {
+          if (record[`validate_${i}`]?.status === "Validated") {
+            count++;
+          }
+        }
+      }
+    }
+  }
+
+  return count;
+};
 const renderStars = (attendanceData) => {
   const maxStars = 5;
   if (!attendanceData) return null;
@@ -174,6 +208,12 @@ const getRowStyle = (attendanceData) => {
       );
     }
   );
+  
+  const calculateTotalHours = (attendanceData) => {
+    return Object.values(attendanceData || {}).reduce((total, details) => {
+      return total + (parseFloat(details.total_hours) || 0);
+    }, 0).toFixed(2);
+  };
   
   useEffect(() => {
     const fetchData = async () => {
@@ -335,6 +375,51 @@ const getRowStyle = (attendanceData) => {
     }
   };
 
+  const getValidatedCount = (details) => {
+    let count = 0;
+  
+    for (let i = 1; i <= 3; i++) {
+      if (details[`validate_${i}`]?.status === "Validated") {
+        count++;
+      }
+    }
+  
+    const percentage = Math.round((count / 3) * 100); // Rounded percentage
+  
+    const getColor = () => {
+      if (percentage === 100) return "success";
+      if (percentage >= 50) return "warning";
+      return "error";
+    };
+  
+    return (
+      <Box position="relative" display="inline-flex">
+        <CircularProgress
+          variant="determinate"
+          value={percentage}
+          color={getColor()}
+          size={50}
+          thickness={5}
+        />
+        <Box
+          top={0}
+          left={0}
+          bottom={0}
+          right={0}
+          position="absolute"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Typography variant="caption" fontWeight="bold">
+            {percentage}%
+          </Typography>
+        </Box>
+      </Box>
+    );
+  };
+  
+  
   return (
     <>
      
@@ -398,7 +483,8 @@ const getRowStyle = (attendanceData) => {
           <TableHead>
             <TableRow>
               <TableCell></TableCell>
-              <TableCell>Name</TableCell>
+              <TableCell>First Name</TableCell>
+              <TableCell>Last Name</TableCell>
               <TableCell>Department</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
@@ -420,16 +506,28 @@ const getRowStyle = (attendanceData) => {
                     </Tooltip>
                   </TableCell>
                   <TableCell>
-                    {editingRow === person.id ? (
-                      <TextField
-                        value={editedData.firstname}
-                        onChange={(e) => handleInputChange(e, "firstname")}
-                        fullWidth
-                      />
-                    ) : (
-                      `${person.firstname} ${person.lastname}`
-                    )}
-                  </TableCell>
+  {editingRow === person.id ? (
+    <TextField
+      value={editedData.firstname}
+      onChange={(e) => handleInputChange(e, "firstname")}
+      fullWidth
+    />
+  ) : (
+    person.firstname
+  )}
+</TableCell>
+
+<TableCell>
+  {editingRow === person.id ? (
+    <TextField
+      value={editedData.lastname}
+      onChange={(e) => handleInputChange(e, "lastname")}
+      fullWidth
+    />
+  ) : (
+    person.lastname
+  )}
+</TableCell>
                   <TableCell>
   {editingRow === person.id ? (
     <FormControl fullWidth>
@@ -438,10 +536,9 @@ const getRowStyle = (attendanceData) => {
         value={editedData.department}
         onChange={(e) => handleInputChange(e, "department")}
       >
-        <MenuItem value="Computer Science">Computer Science</MenuItem>
-        <MenuItem value="Mathematics">Mathematics</MenuItem>
-        <MenuItem value="Physics">Physics</MenuItem>
-        <MenuItem value="Engineering">Engineering</MenuItem>
+      <MenuItem value="Computer Science">Computer Science</MenuItem>
+        <MenuItem value="Information Technology">Information Technology</MenuItem>
+        <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
       </Select>
     </FormControl>
   ) : (
@@ -519,59 +616,66 @@ const getRowStyle = (attendanceData) => {
                     <TableCell colSpan={7}>
                       
                       <Collapse in timeout="auto" unmountOnExit>
-                        <Box>
-                          <strong>Attendance Dates:</strong>
-                          {Object.keys(expandedRows[person.id].data || {}).map((date) => (
-                            <Box key={date}>
-                              <Tooltip title = "View Record">
-                              <IconButton onClick={() => toggleDate(person.id, date)}>
-                                {expandedDates[`${person.id}-${date}`] ? <ExpandLess /> : <ExpandMore />}
-                              </IconButton>
-                              </Tooltip>
-                              {date}
-                              <Collapse in={!!expandedDates[`${person.id}-${date}`]} timeout="auto" unmountOnExit>
-                                <Box sx={{ marginLeft: 4 }}>
-                                  <TableContainer component={Paper}  data-aos="fade-up" >
-                                    <Table>
-                                      <TableHead>
-                                        <TableRow>
-                                          <TableCell>Course</TableCell>
-                                          <TableCell>Time In</TableCell>
-                                          <TableCell>Time Out</TableCell>
-                                          <TableCell>Status</TableCell>
-                                          <TableCell>Hours</TableCell>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        {expandedDates[`${person.id}-${date}`]?.data &&
-                                          Object.entries(expandedDates[`${person.id}-${date}`].data).map(
-                                            ([course, details]) => (
-                                              <TableRow key={course}>
-                                                <TableCell>{course}</TableCell>
-                                                <TableCell>{details.time_in}</TableCell>
-                                                <TableCell>{details.time_out}</TableCell>
-                                                <TableCell>{getStatusChip(details.late_status)}</TableCell>
-                                                <TableCell>{details.total_hours}</TableCell>
-                                              </TableRow>
-                                            )
-                                          )}
-<TableRow>
-    <TableCell colSpan={4} align="right" sx={{ fontWeight: "bold" }}>
-      Total Hours:
-    </TableCell>
-    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>
-    
-    </TableCell>
-  </TableRow>
+                      <Box>
+  <strong>Attendance Dates:</strong>
+  {Object.keys(expandedRows[person.id].data || {})
+    .sort((a, b) => new Date(b) - new Date(a)) // Sort dates in descending order
+    .map((date) => (
+      <Box key={date}>
+        <Tooltip title="View Record">
+          <IconButton onClick={() => toggleDate(person.id, date)}>
+            {expandedDates[`${person.id}-${date}`] ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </Tooltip>
+        {date}
+        <Collapse in={!!expandedDates[`${person.id}-${date}`]} timeout="auto" unmountOnExit>
+          <Box sx={{ marginLeft: 4 }}>
+            <TableContainer component={Paper} data-aos="fade-up">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Course</TableCell>
+                    <TableCell>Time In</TableCell>
+                    <TableCell>Time Out</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Verification</TableCell>
+                    <TableCell>Hours</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {expandedDates[`${person.id}-${date}`]?.data &&
+                    Object.entries(expandedDates[`${person.id}-${date}`].data).map(
+                      ([course, details]) => (
+                        <TableRow key={course}>
+                          <TableCell>{course}</TableCell>
+                          <TableCell>{details.time_in}</TableCell>
+                          <TableCell>{details.time_out}</TableCell>
+                          <TableCell>{getStatusChip(details.late_status)}</TableCell>
+                          <TableCell>{getValidatedCount(details)}</TableCell>
 
-                                      </TableBody>
-                                    </Table>
-                                  </TableContainer>
-                                </Box>
-                              </Collapse>
-                            </Box>
-                          ))}
-                        </Box>
+
+
+                          <TableCell>{details.total_hours}</TableCell>
+                        </TableRow>
+                      )
+                    )}
+                  <TableRow>
+                    <TableCell colSpan={5} align="right" sx={{ fontWeight: "bold" }}>
+                      Total Hours:
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>
+  {calculateTotalHours(expandedDates[`${person.id}-${date}`]?.data)}
+</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </Collapse>
+      </Box>
+    ))}
+</Box>
+
                       </Collapse>
                     </TableCell>
                   </TableRow>

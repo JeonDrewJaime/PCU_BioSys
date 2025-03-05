@@ -8,9 +8,9 @@ AOS.init();
 
 function About() {
   const developers = [
-    { name: 'Jeon Drew Jaime', role: 'try', avatar: '../src/assets/jeon.png' },
-    { name: 'Prince Meco Francisco', role: 'try', avatar: '../src/assets/meco.jpg' },
-    { name: 'Andrea Teves', role: 'try', avatar: '../src/assets/andeng.jpg' },
+    { name: 'Jeon Drew Jaime', role: 'ABCD', avatar: '../src/assets/jeon.png' },
+    { name: 'Prince Meco Francisco', role: 'Bading', avatar: '../src/assets/meco.jpg' },
+    { name: 'Andrea Teves', role: 'Sobrang Latina', avatar: '../src/assets/andeng.jpg' },
     
   ];
 

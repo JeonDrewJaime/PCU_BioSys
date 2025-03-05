@@ -7,8 +7,9 @@ import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddSchedule from '../UI/Dialogs/AddSchedule';
 import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
-import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI'; // Import API function
+import { fetchScheduleData, deleteAcademicYear, deleteInstructorByName } from '../../APIs/adminAPI'; // Import API function
 import { MenuItem, Select, FormControl, InputLabel, Typography} from '@mui/material';
+import ForgotPassword from '../UI/Dialogs/ForgotPassword';
 
 const ScheduleManagement = () => {
   const [academicYears, setAcademicYears] = useState([]);
@@ -26,6 +27,17 @@ const ScheduleManagement = () => {
       setAcademicYears((prev) => prev.filter((year) => year.acadYear !== academicYear));
     } catch (error) {
       console.error('Error deleting academic year:', error);
+    }
+  };
+  
+  const handleDeleteInstructor = async (instructorName) => {
+    try {
+      await deleteInstructorByName(instructorName);
+      // After deleting, refresh the schedule data to reflect changes
+      const updatedData = await fetchScheduleData();
+      setAcademicYears(updatedData);
+    } catch (error) {
+      console.error(`Error deleting instructor ${instructorName}:`, error);
     }
   };
   
@@ -176,12 +188,16 @@ const ScheduleManagement = () => {
 
                                 <React.Fragment key={instIndex}>
                                   <TableRow>
-                                    <TableCell>
-                                      <IconButton onClick={() => handleInstructorClick(instructor.name)}>
-                                        <ExpandMoreIcon />
-                                      </IconButton>
-                                      {instructor.name}
-                                    </TableCell>
+                                  <TableCell>
+    <IconButton onClick={() => handleInstructorClick(instructor.name)}>
+      <ExpandMoreIcon />
+    </IconButton>
+    {instructor.name}
+  </TableCell>
+  <TableCell align="right">
+
+  </TableCell>
+
                                   </TableRow>
                                   <TableRow>
                                   <TableCell colSpan={3} sx={{ p: 0}}>
