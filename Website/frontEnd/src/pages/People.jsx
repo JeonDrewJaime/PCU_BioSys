@@ -3,10 +3,15 @@ import adminAPI from "../../APIs/adminAPI";
 import { database, ref, get } from "../../utils/firebase-config";
 import { getAuth, deleteUser as deleteAuthUser } from "firebase/auth";
 import CloseIcon from '@mui/icons-material/Close';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
 
 import UserReportDialog from "../UI/Dialogs/UserDialog";
 import { Star, StarBorder } from "@mui/icons-material";
 import {
+  Typography,
+  Tooltip,
   Table,
   TableBody,
   TableCell,
@@ -34,7 +39,16 @@ import Swal from "sweetalert2";
 import CreateUser from "../UI/Dialogs/CreateUser";
 import SummarizeIcon from '@mui/icons-material/Summarize';
 
+
 function People() {
+  useEffect(() => {
+    AOS.init({
+      duration: 1000, // Animation duration (in ms)
+      offset: 100,    // Offset (in px) before animation triggers
+      once: true,     // Whether animation should happen only once
+    });
+  }, []);
+  
   const [people, setPeople] = useState([]);
   const [editingRow, setEditingRow] = useState(null);
   const [editedData, setEditedData] = useState({});
@@ -47,6 +61,8 @@ function People() {
 const [selectedUserId, setSelectedUserId] = useState(null);
 const [selectedColor, setSelectedColor] = useState("");
 const [selectedUser, setSelectedUser] = useState(null);
+const [currentUser, setCurrentUser] = useState(null);
+
 
 
 const handleColorChange = (event) => {
@@ -87,7 +103,7 @@ const renderStars = (attendanceData) => {
     }
   });
 
-  // Score calculation: More weight on absences affecting stars
+ 
   const attendanceScore = (presentDays + (lateDays * 0.5)) / totalDays;
   const filledStars = Math.min(maxStars, Math.round(attendanceScore * maxStars));
 
@@ -103,7 +119,6 @@ const renderStars = (attendanceData) => {
     </>
   );
 };
-
 
 const getStarCount = (attendanceData) => {
   const maxStars = 5;
@@ -300,7 +315,7 @@ const getRowStyle = (attendanceData) => {
   const toggleDate = async (personId, date) => {
     setExpandedDates((prev) => ({
       ...prev,
-      [`${personId}-${date}`]: prev[`${personId}-${date}`] ? null : { loading: true, data: null, totalHours: 0 },
+      [`${personId}-${date}`]: prev[`${personId}-${date}`] ? null : { loading: true, data: null },
     }));
   
     if (!expandedDates[`${personId}-${date}`]) {
@@ -308,11 +323,11 @@ const getRowStyle = (attendanceData) => {
       try {
         const snapshot = await get(attendanceDetailRef);
         const attendanceData = snapshot.exists() ? snapshot.val() : {};
-        const totalHours = Object.values(attendanceData).reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+       
   
         setExpandedDates((prev) => ({
           ...prev,
-          [`${personId}-${date}`]: { loading: false, data: attendanceData, totalHours },
+          [`${personId}-${date}`]: { loading: false, data: attendanceData },
         }));
       } catch (error) {
         console.error("❌ Error fetching attendance details:", error);
@@ -322,7 +337,14 @@ const getRowStyle = (attendanceData) => {
 
   return (
     <>
-    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}>
+     
+   <Typography variant="h4" gutterBottom sx = {{color: "#041129", fontWeight: "bold"}}>
+        People
+      </Typography>
+      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px"}}>
+     Here’s a snapshot of your employees' recent performance metrics and important updates. Stay on top of your team’s progress.
+      </Typography>
+    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}  data-aos="fade-up" >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Search sx={{ mr: 1 }} />
         <TextField
@@ -388,11 +410,14 @@ const getRowStyle = (attendanceData) => {
             {filteredPeople.map((person) => (
               <React.Fragment key={person.id}>
                 <TableRow 
+                 data-aos="fade-right" 
   style={getRowStyle(person.attendance)}>
                   <TableCell>
+                  <Tooltip title = "View Attendance">
                     <IconButton onClick={() => toggleRow(person.id)}>
                       {expandedRows[person.id] ? <ExpandLess /> : <ExpandMore />}
                     </IconButton>
+                    </Tooltip>
                   </TableCell>
                   <TableCell>
                     {editingRow === person.id ? (
@@ -469,15 +494,21 @@ const getRowStyle = (attendanceData) => {
                       </>
                     ) : (
                       <>
+                         <Tooltip title="Edit">
                         <IconButton onClick={() => handleEditUser(person.id)} color="primary">
                           <Edit />
                         </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
                         <IconButton onClick={() => handleDeleteUser(person.id)} color="error">
                           <Delete />
                         </IconButton>
+                        </Tooltip>
+                        <Tooltip title="View Report">
                         <IconButton onClick={() => handleOpenReportDialog(person)} color="info">
   <SummarizeIcon />
 </IconButton>
+</Tooltip>
 
                       </>
                     )}
@@ -486,18 +517,21 @@ const getRowStyle = (attendanceData) => {
                 {expandedRows[person.id] && (
                   <TableRow>
                     <TableCell colSpan={7}>
+                      
                       <Collapse in timeout="auto" unmountOnExit>
                         <Box>
                           <strong>Attendance Dates:</strong>
                           {Object.keys(expandedRows[person.id].data || {}).map((date) => (
                             <Box key={date}>
+                              <Tooltip title = "View Record">
                               <IconButton onClick={() => toggleDate(person.id, date)}>
                                 {expandedDates[`${person.id}-${date}`] ? <ExpandLess /> : <ExpandMore />}
                               </IconButton>
+                              </Tooltip>
                               {date}
                               <Collapse in={!!expandedDates[`${person.id}-${date}`]} timeout="auto" unmountOnExit>
                                 <Box sx={{ marginLeft: 4 }}>
-                                  <TableContainer component={Paper}>
+                                  <TableContainer component={Paper}  data-aos="fade-up" >
                                     <Table>
                                       <TableHead>
                                         <TableRow>
@@ -526,7 +560,7 @@ const getRowStyle = (attendanceData) => {
       Total Hours:
     </TableCell>
     <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>
-      {expandedDates[`${person.id}-${date}`]?.totalHours || 0}
+    
     </TableCell>
   </TableRow>
 

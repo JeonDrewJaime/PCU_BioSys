@@ -8,6 +8,7 @@ import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import DraftsIcon from '@mui/icons-material/Drafts';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'; // Import the ico
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -22,8 +23,7 @@ import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import People from '../pages/People'
-import KeyPerformanceIndicator from '../pages/KeyPerformanceIndicator';
-
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import Popover from '@mui/material/Popover';
@@ -39,18 +39,47 @@ import logo from '../assets/pcu_logo_nobg_white.png'
 import { useNavigate } from 'react-router-dom'; // Import for navigation
 import { signOut } from "firebase/auth";
 import { auth } from "../../utils/firebase-config"; // Import your Firebase auth instance
+import Profile from '../pages/Profile';
+import Loader from '../pages/Loader';
 
 const drawerWidth = 240;
 const drawerBgColor = '#012763';
 
+function getInitials(name) {
+  if (!name) return "U"; // Fallback if name isn't loaded yet
+  const nameParts = name.split(" ");
+  const initials = nameParts.map(part => part.charAt(0)).join('');
+  return initials.toUpperCase();
+}
+
 function DashboardNavbar(props) {
   
+
+  const [loading, setLoading] = React.useState(true);
+
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [selectedComponent, setSelectedComponent] = React.useState('Inbox');
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [user, setUser] = React.useState({ name: "Loading...", role: "Loading..." });
   const navigate = useNavigate(); // Initialize navigation
+  const menuItems = [
+    { text: 'Dashboard', icon: <SpaceDashboardIcon/> },
+   
+  ];
+  React.useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 5000); // 5 seconds
+    return () => clearTimeout(timer);
+}, []);
+  if (user.role === 'Admin') {
+    menuItems.push({ text: 'People', icon: <PeopleIcon/> });
+    menuItems.push({ text: 'Schedule Management', icon: <CalendarMonthIcon/> });
+
+  }
+
+  if (user.role === 'Faculty') {
+    menuItems.push({ text: 'Profile', icon: <AccountBoxIcon/>});
+  }
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -99,21 +128,21 @@ function DashboardNavbar(props) {
   const popoverId = open ? 'simple-popover' : undefined;
 
   const renderContent = () => {
+  
+
     switch (selectedComponent) {
-      case 'Dashboard':
-        return <Dashboard/>
-      case 'People':
-        return <People/>;
-      case 'Schedule Management':
-        return <ScheduleManagement/>
-      case 'Key Performance Indicator':
-        return <KeyPerformanceIndicator/>
-      case 'Reports':
-        return  <Reports/>
-      default:
-        return <Dashboard/>
+        case 'Dashboard':
+            return <Dashboard />;
+        case 'People':
+            return <People />;
+        case 'Schedule Management':
+            return <ScheduleManagement />;
+        case 'Profile':
+            return <Profile />;
+        default:
+            return <Dashboard />;
     }
-  };
+};
 
   React.useEffect(() => {
     const fetchUserData = async () => {
@@ -150,20 +179,15 @@ function DashboardNavbar(props) {
       </Box>
       <Divider />
       <List sx={{ color: 'white' }}>
-        {[
-          { text: 'Dashboard', icon: <SpaceDashboardIcon/> },
-          { text: 'People', icon: <PeopleIcon/> },
-          { text: 'Schedule Management', icon: <CalendarMonthIcon/> },
-       
-        ].map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton onClick={() => setSelectedComponent(item.text)}>
-              <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+  {menuItems.map((item) => (
+    <ListItem key={item.text} disablePadding>
+      <ListItemButton onClick={() => setSelectedComponent(item.text)}>
+        <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+        <ListItemText primary={item.text} />
+      </ListItemButton>
+    </ListItem>
+  ))}
+</List>
     </div>
   );
 
@@ -171,7 +195,7 @@ function DashboardNavbar(props) {
 
   return (
     
-    <Box sx={{ display: 'flex', backgroundColor:"#f5f5fb", height:"100vh" }}>
+    <Box sx={{ display: 'flex' }}>
       <GlobalStyles/>
       <CssBaseline />
       <AppBar
@@ -194,28 +218,31 @@ function DashboardNavbar(props) {
           </IconButton>
 
           <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              marginLeft: 'auto',
-            }}
-          >
-          
-            <IconButton
-              onClick={handleProfileClick}
-              sx={{ display: 'flex', alignItems: 'center', textTransform: 'none', ml: 2 }}
-            >
-              <Avatar sx={{ mr: 1, width: 32, height: 32 }} />
-              <Box sx={{ textAlign: 'left' }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'black' }}>
-  {user.name}
-</Typography>
-<Typography variant="body2" sx={{ color: 'black' }}>
-  {user.role}
-</Typography>
-              </Box>
-            </IconButton>
-          </Box>
+    sx={{
+        display: 'flex',
+        alignItems: 'center',
+        marginLeft: 'auto',
+    }}
+>
+    <IconButton
+        onClick={handleProfileClick}
+        sx={{ display: 'flex', alignItems: 'center', textTransform: 'none', ml: 2 }}
+    >
+        <Avatar sx={{ mr: 1, width: 35, height: 35 }}>
+            {getInitials(user.name)}
+        </Avatar>
+         <KeyboardArrowDownIcon sx={{ color: 'black' }} />  {/* <-- Dropdown icon here */}
+        <Box sx={{ textAlign: 'left', mr: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'black' }}>
+                {user.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'black' }}>
+                {user.role}
+            </Typography>
+        </Box>
+       
+    </IconButton>
+</Box>
         </Toolbar>
       </AppBar>
       <Popover
@@ -272,7 +299,7 @@ function DashboardNavbar(props) {
       </Box>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, backgroundColor: "#f5f5fb", height: "100vh" }}
       >
         <Toolbar />
         {renderContent()}

@@ -37,7 +37,7 @@ const DropZoneContainer = styled('div')(({ theme }) => ({
   },
 }));
 
-function AddSchedule() {
+function AddSchedule( { onClose }) {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -50,8 +50,20 @@ function AddSchedule() {
 
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
+  
     if (!file) return;
-
+  
+    // Explicit check for file extension
+    const validExtensions = ['.xlsx', '.xls'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  
+    if (!validExtensions.includes(fileExtension)) {
+      setSnackbarMessage('Invalid file type. Please upload an Excel file (.xlsx, .xls).');
+      setSnackbarSeverity('error');
+      setOpenSnackbar(true);
+      return;  // Stop processing
+    }
+  
     const reader = new FileReader();
     reader.onload = (e) => {
       setLoading(true);
@@ -60,7 +72,7 @@ function AddSchedule() {
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+  
       setTimeout(() => {
         if (jsonData.length > 0) {
           const formattedData = jsonData.map(row => 
@@ -76,7 +88,7 @@ function AddSchedule() {
               return cell;
             })
           );
-
+  
           setColumns(jsonData[0]);
           setRows(formattedData);
           setOpenDialog(false);
@@ -86,6 +98,7 @@ function AddSchedule() {
     };
     reader.readAsArrayBuffer(file);
   }, [columns]);
+  
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: '.xlsx, .xls' });
 
@@ -114,7 +127,11 @@ function AddSchedule() {
         setSnackbarMessage('Content saved to the database successfully.');
         setSnackbarSeverity('success');
         setOpenSnackbar(true);
-        setOpenDialog(false);
+  
+        // Close the component/dialog after saving
+        setTimeout(() => {
+          onClose();   // <== this will close the component
+        }, 1000);
       })
       .catch(() => {
         setSnackbarMessage('There was an issue saving to the database.');
@@ -125,6 +142,7 @@ function AddSchedule() {
         setLoading(false);
       });
   };
+  
   
 
   const handleCloseSnackbar = () => {
@@ -274,11 +292,21 @@ function AddSchedule() {
         </DialogContent>
       </Dialog>
 
-      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      <Snackbar
+  open={openSnackbar}
+  autoHideDuration={6000}
+  onClose={handleCloseSnackbar}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }} // This positions it at the top center
+>
+  <Alert
+    onClose={handleCloseSnackbar}
+    severity={snackbarSeverity}
+    sx={{ width: '100%' }}
+  >
+    {snackbarMessage}
+  </Alert>
+</Snackbar>
+
     </Container>
   );
 }

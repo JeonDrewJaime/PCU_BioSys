@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddSchedule from '../UI/Dialogs/AddSchedule';
 import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
 import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI'; // Import API function
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { MenuItem, Select, FormControl, InputLabel, Typography} from '@mui/material';
 
 const ScheduleManagement = () => {
   const [academicYears, setAcademicYears] = useState([]);
@@ -67,36 +67,46 @@ const ScheduleManagement = () => {
   const handleCloseAddScheduleDialog = () => {
     setOpenAddScheduleDialog(false);
   };
+  const uniqueAcademicYears = [...new Set(academicYears.map(year => year.acadYear))];
 
+  // Extract unique semesters across all years
+  const uniqueSemesters = [...new Set(academicYears.flatMap(year => year.semesters.map(sem => sem.semesterKey)))];
   return (
     <>
+    <Typography variant="h4" gutterBottom sx = {{color: "#041129", fontWeight: "bold"}}>
+        Schedules
+      </Typography>
+      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px"}}>
+      Here’s a quick view of your team’s upcoming schedules and assignments. Stay organized and ensure smooth operations.
+      </Typography>
     <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}>
     <Box sx={{ display: "flex", alignItems: "center", mb: "20px" }}>
   {/* Select Inputs (Aligned Left) */}
   <Box sx={{ display: "flex", gap: 2 }}>
-    <FormControl sx={{ minWidth: 150 }} size="small">
-      <InputLabel>Academic Year</InputLabel>
-      <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-        <MenuItem value="">All</MenuItem>
-        {academicYears.map((year, index) => (
-          <MenuItem key={index} value={year.acadYear}>
-            {year.acadYear}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+  <FormControl sx={{ minWidth: 150 }} size="small">
+  <InputLabel>Academic Year</InputLabel>
+  <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+    <MenuItem value="">All</MenuItem>
+    {uniqueAcademicYears.map((year, index) => (
+      <MenuItem key={index} value={year}>
+        {year}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
 
-    <FormControl sx={{ minWidth: 150 }} size="small">
-      <InputLabel>Semester</InputLabel>
-      <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
-        <MenuItem value="">All</MenuItem>
-        {academicYears.flatMap((year) => year.semesters).map((semester, index) => (
-          <MenuItem key={index} value={semester.semesterKey}>
-            {semester.semesterKey}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+<FormControl sx={{ minWidth: 150 }} size="small">
+  <InputLabel>Semester</InputLabel>
+  <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
+    <MenuItem value="">All</MenuItem>
+    {uniqueSemesters.map((semester, index) => (
+      <MenuItem key={index} value={semester}>
+        {semester}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
   </Box>
 
   {/* Button (Docked Right) */}
@@ -125,7 +135,7 @@ const ScheduleManagement = () => {
       <Box>
         <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none", }}>
           <Table>
-            <TableHead>
+            <TableHead sx = {{backgroundColor:"#CEE3F3"}}>
               <TableRow>
                 <TableCell>Academic Year</TableCell>
                 <TableCell>Semester</TableCell>

@@ -125,7 +125,6 @@ function Login({ setActiveComponent }) {
             >
               Login
             </Button>
-
           </form>
 
           <Typography align="center" sx={{ color: '#606369', fontSize: 14, mt: 3 }}>

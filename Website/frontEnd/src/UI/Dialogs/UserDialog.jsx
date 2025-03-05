@@ -11,6 +11,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Grid,
   Typography,
   MenuItem,
   Select,
@@ -93,97 +94,190 @@ const UserReportDialog = ({ open, onClose, user }) => {
 
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
-      <DialogTitle>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" >
+      <DialogTitle sx={{bgcolor: "#012763", color: "#ffffff", fontWeight: "bold", fontSize: "24px"}}>
         User Report - {user?.firstname || "N/A"} {user?.lastname || ""}
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ p: 2 }}>
-          <Typography>
+         <Box sx={{ p: 2, }}>
+          <Typography sx={{fontSize: "16px", color: "#ffffff",}}>
             <strong>Email:</strong> {user?.email || "N/A"}
           </Typography>
-          <Typography>
+          <Typography sx={{fontSize: "16px", color: "#ffffff",}}>
             <strong>Role:</strong> {user?.role || "N/A"}
           </Typography>
-          <Typography>
+          <Typography sx={{fontSize: "16px", color: "#ffffff",}}>
             <strong>Department:</strong> {user?.department || "N/A"}
           </Typography>
+          </Box>
+      </DialogTitle>
+      
+      <DialogContent sx={{backgroundColor:"#f5f5fb",}}>
 
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Filter By</InputLabel>
-            <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <MenuItem value="week">Weekly</MenuItem>
-              <MenuItem value="month">Monthly</MenuItem>
-              <MenuItem value="year">Yearly</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormGroup row sx={{ mt: 2 }}>
-            <FormControlLabel
-              control={<Checkbox checked={showPresent} onChange={() => setShowPresent(!showPresent)} />}
-              label="Present"
-            />
-            <FormControlLabel
-              control={<Checkbox checked={showLate} onChange={() => setShowLate(!showLate)} />}
-              label="Late"
-            />
-            <FormControlLabel
-              control={<Checkbox checked={showAbsent} onChange={() => setShowAbsent(!showAbsent)} />}
-              label="Absent"
-            />
-          </FormGroup>
-
-          <Typography variant="h6" sx={{ mt: 3 }}>
+         
+          <Typography variant="h6" sx={{ mt: 2, fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
             Attendance Overview
           </Typography>
-          {attendanceData.length > 0 ? (
-            <Box sx={{ width: "100%", height: 300 }}>
-              <LineChart
-                dataset={attendanceData}
-                xAxis={[{ scaleType: "band", dataKey: "period" }]}
-                series={[
-                  showPresent && { dataKey: "Present", color: "#4caf50", showMark: true, area: true },
-                  showLate && { dataKey: "Late", color: "#ff9800", showMark: true, area: true },
-                  showAbsent && { dataKey: "Absent", color: "#f44336", showMark: true, area: true },
-                ].filter(Boolean)}
-                height={300}
-              />
-            </Box>
-          ) : (
-            <Typography sx={{ mt: 2, color: "gray" }}>No attendance data available.</Typography>
-          )}
 
-          <Typography variant="h6" sx={{ mt: 3 }}>
-            Attendance Records
-          </Typography>
 
-          {attendanceData.length > 0 ? (
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Period</strong></TableCell>
-                    {showPresent && <TableCell><strong>Present</strong></TableCell>}
-                    {showLate && <TableCell><strong>Late</strong></TableCell>}
-                    {showAbsent && <TableCell><strong>Absent</strong></TableCell>}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {attendanceData.map((entry) => (
-                    <TableRow key={entry.period}>
-                      <TableCell>{entry.period}</TableCell>
-                      {showPresent && <TableCell>{entry.Present}</TableCell>}
-                      {showLate && <TableCell>{entry.Late}</TableCell>}
-                      {showAbsent && <TableCell>{entry.Absent}</TableCell>}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Typography sx={{ mt: 2, color: "gray" }}>No attendance records available.</Typography>
-          )}
-        </Box>
+          <Box
+  sx={{
+    border: "1px solid #D6D7D6", // Thin dark gray border
+    padding: 3,
+    borderRadius: 4,
+    backgroundColor: "#fff",
+  }}
+>
+  <Grid container spacing={2} sx={{ mt: 2 }}>
+    {/* Form Group (Left - 4) */}
+    <Grid item xs={12} md={4}>
+      <FormGroup
+        row
+        sx={{
+          border: "1px solid #D6D7D6",
+          borderRadius: 2,
+          backgroundColor: "#fff",
+          boxShadow: "none",
+          minWidth: "300px",
+          p: 1,
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showPresent}
+              onChange={() => setShowPresent(!showPresent)}
+            />
+          }
+          label="Present"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showLate}
+              onChange={() => setShowLate(!showLate)}
+            />
+          }
+          label="Late"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showAbsent}
+              onChange={() => setShowAbsent(!showAbsent)}
+            />
+          }
+          label="Absent"
+        />
+      </FormGroup>
+    </Grid>
+
+    {/* Form Control (Right - 8) */}
+    <Grid item xs={12} md={8}>
+      <FormControl fullWidth>
+        <InputLabel>Filter By</InputLabel>
+        <Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <MenuItem value="week">Weekly</MenuItem>
+          <MenuItem value="month">Monthly</MenuItem>
+          <MenuItem value="year">Yearly</MenuItem>
+        </Select>
+      </FormControl>
+    </Grid>
+  </Grid>
+
+  {attendanceData.length > 0 ? (
+    <Box sx={{ width: "100%", height: 300 }}>
+      <LineChart
+        dataset={attendanceData}
+        xAxis={[{ scaleType: "band", dataKey: "period" }]}
+        series={[
+          showPresent && {
+            dataKey: "Present",
+            color: "#9DBE9F",
+            showMark: true,
+            area: true,
+          },
+          showLate && {
+            dataKey: "Late",
+            color: "#FFB35C",
+            showMark: true,
+            area: true,
+          },
+          showAbsent && {
+            dataKey: "Absent",
+            color: "#D37573",
+            showMark: true,
+            area: true,
+          },
+        ].filter(Boolean)}
+        height={300}
+      />
+    </Box>
+  ) : (
+    <Typography sx={{ mt: 2, color: "gray" }}>
+      No attendance data available.
+    </Typography>
+  )}
+  </Box>
+
+  <Typography
+    variant="h6"
+    sx={{ mt: 3, fontWeight: "bold", marginBottom: 1, color: "#012763" }}
+  >
+    Attendance Records
+  </Typography>
+
+  {attendanceData.length > 0 ? (
+    <TableContainer
+      component={Paper}
+      sx={{
+        mt: 2,
+        border: "1px solid #D6D7D6",
+        borderRadius: 4,
+        backgroundColor: "#fff",
+        boxShadow: "none",
+      }}
+    >
+      <Table>
+        <TableHead>
+          <TableRow sx={{ backgroundColor: "#CEE3F3" }}>
+            <TableCell>
+              <strong>Period</strong>
+            </TableCell>
+            {showPresent && (
+              <TableCell>
+                <strong>Present</strong>
+              </TableCell>
+            )}
+            {showLate && (
+              <TableCell>
+                <strong>Late</strong>
+              </TableCell>
+            )}
+            {showAbsent && (
+              <TableCell>
+                <strong>Absent</strong>
+              </TableCell>
+            )}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {attendanceData.map((entry) => (
+            <TableRow key={entry.period}>
+              <TableCell>{entry.period}</TableCell>
+              {showPresent && <TableCell>{entry.Present}</TableCell>}
+              {showLate && <TableCell>{entry.Late}</TableCell>}
+              {showAbsent && <TableCell>{entry.Absent}</TableCell>}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  ) : (
+    <Typography sx={{ mt: 2, color: "gray" }}>
+      No attendance records available.
+    </Typography>
+  )}
+
+
       </DialogContent>
     </Dialog>
   );

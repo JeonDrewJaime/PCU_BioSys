@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
 import {
   Typography,
   Table,
@@ -30,37 +33,11 @@ import {
   CartesianGrid 
 } from "recharts";
 import indibg from '../assets/indicatorBg.png';
+import Loader from "./Loader";
 
 
 
 
-const analyzeChartData = () => {
-  if (chartData.length === 0) return "No data available for analysis.";
-
-  const dataKey = selectedMetric === "all" ? "attendanceRate" : selectedMetric;
-  const values = chartData.map((entry) => entry[dataKey]).filter(v => v != null);
-
-  if (values.length === 0) return "No valid data to analyze.";
-
-  const average = values.reduce((sum, v) => sum + v, 0) / values.length;
-
-  const trend = values[values.length - 1] - values[0]; // Compare latest value to first value
-
-  if (selectedMetric === "all") {
-    return `Average Attendance Rate: ${average.toFixed(2)}%. Trend is ${trend >= 0 ? "upward 📈" : "downward 📉"}.`;
-  } else {
-    const metricLabels = {
-      attendanceRate: "Attendance Rate",
-      absenteeismRate: "Absenteeism Rate",
-      punctualityRate: "Punctuality Rate",
-      lateArrivalRate: "Late Arrival Rate",
-    };
-
-    const trendText = trend > 0 ? `increased by ${trend.toFixed(2)}% 📈` : `decreased by ${Math.abs(trend).toFixed(2)}% 📉`;
-
-    return `${metricLabels[selectedMetric]} has an average of ${average.toFixed(2)}% and ${trendText}.`;
-  }
-};
 
 const Dashboard = () => {
   const [users, setUsers] = useState([]);
@@ -72,6 +49,44 @@ const Dashboard = () => {
   const [selectedMetric, setSelectedMetric] = useState("attendanceRate");
 
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+  
+      // Simulate fetching data (replace with your real fetch logic)
+      await fetchAttendanceData();
+      const loading = useDelayedLoading(fetchAttendanceData);
+      // Add artificial delay (e.g., 1.5 seconds)
+      setTimeout(() => {
+        setLoading(false);
+      }, 1500);
+    };
+  
+    fetchData();
+  }, []);
+  
+  useEffect(() => {
+    AOS.init({
+      duration: 1000, // Animation duration in ms
+      once: true,     // Animation only happens once
+    });
+  }, []);
+
+  const useDelayedLoading = (fetchFn, delay = 1500) => {
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const loadData = async () => {
+        await fetchFn();
+        setTimeout(() => setLoading(false), delay);
+      };
+      loadData();
+    }, [fetchFn, delay]);
+  
+    return loading;
+  };
+  
+  
   const analyzeChartData = () => {
     if (chartData.length === 0) return "No data available for analysis.";
   
@@ -236,7 +251,7 @@ const Dashboard = () => {
     }));
   };
 
-  if (loading) return <Typography>Loading...</Typography>;
+  
   if (error) return <Typography color="error">Error: {error}</Typography>;
 
 
@@ -253,16 +268,19 @@ const Dashboard = () => {
   .slice(0, 3);
 
   return (
+    
     <div style={{ padding: "20px", }}>
    
    <Typography variant="h4" gutterBottom sx = {{color: "#041129", fontWeight: "bold", mt: -3}}>
         Key Performance Indicator
       </Typography>
-      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px"}}>
+      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px", mb: 4}}>
       Welcome back! Here's a quick look at your latest updates and insights. Let's get things done!
       </Typography>
       <Grid container spacing={2} sx={{ mb: 1.8 }}>
-  <Grid item xs={12} md={4}>
+
+      <Grid container spacing={2} sx={{ mb: 1.8 }}>
+  <Grid item xs={12} md={4} data-aos="fade-up">
     <Card sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#d4eeda", boxShadow: "none", }}>
       <CardContent>
         <Typography variant="h6" sx={{ color: "#2A6534" }}>Total Present</Typography>
@@ -273,7 +291,7 @@ const Dashboard = () => {
     </Card>
   </Grid>
 
-  <Grid item xs={12} md={4}>
+  <Grid item xs={12} md={4} data-aos="fade-up" data-aos-delay="200">
     <Card sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fbdbdb", boxShadow: "none" }}>
       <CardContent>
         <Typography variant="h6" sx={{ color: "#7A0002" }}>Total Absent</Typography>
@@ -284,7 +302,7 @@ const Dashboard = () => {
     </Card>
   </Grid>
 
-  <Grid item xs={12} md={4}>
+  <Grid item xs={12} md={4} data-aos="fade-up" data-aos-delay="400">
     <Card sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#ffeacc", boxShadow: "none", }}>
       <CardContent>
         <Typography variant="h6" sx={{ color: "#643002" }}>Total Late</Typography>
@@ -296,18 +314,24 @@ const Dashboard = () => {
   </Grid>
 </Grid>
 
+</Grid>
+
 
 
  {/* mid parttttttttttttt---------------------------------------- */}
 <Grid container spacing={2}>
   {/* Left Side - Chart Section (9/12 width) */}
   <Grid item xs={12} md={9}>
-    <Box sx={{
-      border: "1px solid #D6D7D6", // Thin dark gray border
-      padding: 3,
-      borderRadius: 4,
-      backgroundColor: "#fff", // Flat style background
-    }}>
+  <Box
+  sx={{
+    border: "1px solid #D6D7D6",
+    padding: 3,
+    borderRadius: 4,
+    backgroundColor: "#fff",
+  }}
+  data-aos="zoom-in"
+>
+
       {/* Filter & Data Type Select */}
       <Box sx={{ display: 'flex', gap: 2, marginBottom: 2 }}>
         <FormControl sx={{ minWidth: 120 }}>
@@ -375,7 +399,7 @@ const Dashboard = () => {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-    }}>
+    }}data-aos="flip-up">
       <Typography variant="h6" align="center" sx={{ fontWeight: "bold", color: "#012763",  }}>
         Indicator Analysis
       </Typography>
@@ -398,7 +422,8 @@ const Dashboard = () => {
         <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
           🏅 Top 3 Best Attendance
         </Typography>
-        <TableContainer component="div" sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fff" }}>
+        <TableContainer component="div" sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fff" }} data-aos="fade-left">
+
           <Table size="small">
             <TableHead>
               <TableRow sx={{ backgroundColor: "#d4eeda" }}>
@@ -425,7 +450,8 @@ const Dashboard = () => {
         <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
           🚨 Top 3 Highest Absent Rate
         </Typography>
-        <TableContainer component="div" sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fff" }}>
+        <TableContainer component="div" sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fff" }} data-aos="fade-right">
+
           <Table size="small">
             <TableHead>
               <TableRow sx={{ backgroundColor: "#fbdbdb" }}>
