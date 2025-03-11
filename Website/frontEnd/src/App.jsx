@@ -9,6 +9,12 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "../utils/theme";
 import "../fonts.css";
 
+// ✅ Import React Query Dependencies
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// ✅ Initialize Query Client
+const queryClient = new QueryClient();
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,16 +33,22 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomeNavbar />} />
-          <Route
-            path="/dashboard"
-            element={user ? <DashboardNavbar /> : <Navigate to="/login" />}
-          />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <HomeNavbar/>} />
-        </Routes>
-      </Router>
+      {/* ✅ Wrap your entire application with QueryClientProvider */}
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomeNavbar />} />
+            <Route
+              path="/dashboard"
+              element={user ? <DashboardNavbar /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/login"
+              element={user ? <Navigate to="/dashboard" /> : <HomeNavbar />}
+            />
+          </Routes>
+        </Router>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

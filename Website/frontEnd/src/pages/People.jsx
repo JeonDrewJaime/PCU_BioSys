@@ -86,39 +86,6 @@ const handleOpenReportDialog = async (user) => {
   }
 };
 
-const validatedCount = async () => {
-  let count = 0;
-
-  const snapshot = await get(attendanceRef);
-
-  if (snapshot.exists()) {
-    const attendanceData = snapshot.val();
-
-    // Loop through each date (like 2025-03-05)
-    for (const date in attendanceData) {
-      const subjects = attendanceData[date];
-
-      // Loop through each subject (like "ITEC1201 - COMPUTER PROGRAMMING 2 LAB")
-      for (const subject in subjects) {
-        const record = subjects[subject];
-
-        // Check main status
-        if (record.status === "Validated") {
-          count++;
-        }
-
-        // Check all validate_x.status fields
-        for (let i = 1; i <= 3; i++) {
-          if (record[`validate_${i}`]?.status === "Validated") {
-            count++;
-          }
-        }
-      }
-    }
-  }
-
-  return count;
-};
 const renderStars = (attendanceData) => {
   const maxStars = 5;
   if (!attendanceData) return null;
@@ -206,13 +173,7 @@ const getRowStyle = (attendanceData) => {
       );
     }
   );
-  
-  const calculateTotalHours = (attendanceData) => {
-    return Object.values(attendanceData || {}).reduce((total, details) => {
-      return total + (parseFloat(details.total_hours) || 0);
-    }, 0).toFixed(2);
-  };
-  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -275,25 +236,7 @@ const getRowStyle = (attendanceData) => {
     setEditingRow(null);
     setEditedData({});
   };
-  const getStatusChip = (status) => {
-    let color = "default";
 
-    switch (status?.toLowerCase()) {
-      case "on time":
-        color = "success";
-        break;
-      case "late":
-        color = "warning";
-        break;
-      case "absent":
-        color = "error";
-        break;
-      default:
-        color = "default";
-    }
-
-    return <Chip label={status} color={color} variant="outlined" />;
-  };
   const handleDeleteUser = async (userId) => {
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -373,49 +316,7 @@ const getRowStyle = (attendanceData) => {
     }
   };
 
-  const getValidatedCount = (details) => {
-    let count = 0;
-  
-    for (let i = 1; i <= 3; i++) {
-      if (details[`validate_${i}`]?.status === "Validated") {
-        count++;
-      }
-    }
-  
-    const percentage = Math.round((count / 3) * 100); // Rounded percentage
-  
-    const getColor = () => {
-      if (percentage === 100) return "success";
-      if (percentage >= 50) return "warning";
-      return "error";
-    };
-  
-    return (
-      <Box position="relative" display="inline-flex">
-        <CircularProgress
-          variant="determinate"
-          value={percentage}
-          color={getColor()}
-          size={50}
-          thickness={5}
-        />
-        <Box
-          top={0}
-          left={0}
-          bottom={0}
-          right={0}
-          position="absolute"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Typography variant="caption" fontWeight="bold">
-            {percentage}%
-          </Typography>
-        </Box>
-      </Box>
-    );
-  };
+
   
   
   return (
@@ -472,7 +373,7 @@ const getRowStyle = (attendanceData) => {
               boxShadow: "none",
             }}
           >
-            Add People
+            Add Person
           </Button>
         </Box>
         <Users
@@ -491,9 +392,6 @@ const getRowStyle = (attendanceData) => {
           handleDeleteUser={handleDeleteUser}
           toggleRow={toggleRow}
           toggleDate={toggleDate}
-          getStatusChip={getStatusChip}
-          getValidatedCount={getValidatedCount}
-          calculateTotalHours={calculateTotalHours}
           renderStars={renderStars}
           getRowStyle={getRowStyle}
           handleOpenReportDialog={handleOpenReportDialog}

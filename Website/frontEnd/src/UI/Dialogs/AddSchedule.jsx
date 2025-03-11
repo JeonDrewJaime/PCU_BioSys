@@ -43,7 +43,7 @@ const DropZoneContainer = styled('div')(({ theme }) => ({
 function AddSchedule( { onClose }) {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState(true); // Open dialog immediately
   const [loading, setLoading] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);

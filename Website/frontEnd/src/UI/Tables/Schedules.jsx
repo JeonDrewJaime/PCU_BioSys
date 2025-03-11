@@ -8,9 +8,9 @@ import { ExpandMore as ExpandMoreIcon, Delete } from '@mui/icons-material';
 const Schedules = ({
   filteredData, page, rowsPerPage, openRows, openInstructorRows,
   handleRowClick, handleInstructorClick, handleDeleteAcademicYear, setPage, setRowsPerPage,
-  onSelectRow
+  onSelectRow, selectedRows  // ✅ Now pass selectedRows from parent
 }) => {
-  const [selectedRows, setSelectedRows] = useState([]);
+ 
   const [order, setOrder] = useState('asc');
 
   const handleSort = () => {
@@ -82,10 +82,24 @@ const handleSelectRow = (yearIndex, semIndex) => {
                 <React.Fragment key={`${yearIndex}-${semIndex}`}>
                   <TableRow>
                     <TableCell>
-                      <Checkbox
-                        checked={selectedRows.includes(`${yearIndex}-${semIndex}`)}
-                        onChange={() => handleSelectRow(yearIndex, semIndex)}
-                      />
+                    <Checkbox
+  checked={selectedRows.includes(`${yearIndex}-${semIndex}`)}
+  onChange={() => {
+    const key = `${yearIndex}-${semIndex}`;
+    let updatedSelectedRows = [...selectedRows];
+
+    if (updatedSelectedRows.includes(key)) {
+      updatedSelectedRows = updatedSelectedRows.filter((row) => row !== key);
+    } else {
+      updatedSelectedRows.push(key);
+    }
+
+    onSelectRow(updatedSelectedRows);
+  }}
+/>
+
+
+
                     </TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleRowClick(`${yearIndex}-${semIndex}`)}>
