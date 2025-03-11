@@ -5,8 +5,6 @@ import { getAuth, deleteUser as deleteAuthUser } from "firebase/auth";
 import CloseIcon from '@mui/icons-material/Close';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-
-
 import UserReportDialog from "../UI/Dialogs/UserDialog";
 import { Star, StarBorder } from "@mui/icons-material";
 import {
@@ -39,7 +37,7 @@ import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } fro
 import Swal from "sweetalert2";
 import CreateUser from "../UI/Dialogs/CreateUser";
 import SummarizeIcon from '@mui/icons-material/Summarize';
-
+import Users from "../UI/Tables/Users";
 
 function People() {
   useEffect(() => {
@@ -423,24 +421,24 @@ const getRowStyle = (attendanceData) => {
   return (
     <>
      
-   <Typography variant="h4" gutterBottom sx = {{color: "#041129", fontWeight: "bold"}}>
+     <Typography variant="h4" gutterBottom sx={{ color: "#041129", fontWeight: "bold" }}>
         People
       </Typography>
-      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px"}}>
-     Here’s a snapshot of your employees' recent performance metrics and important updates. Stay on top of your team’s progress.
+      <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
+        Here’s a snapshot of your employees' recent performance metrics and important updates. Stay on top of your team’s progress.
       </Typography>
-    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}  data-aos="fade-up" >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Search sx={{ mr: 1 }} />
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search users..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          size="small"
-        />
-                  <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
+      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <Search sx={{ mr: 1 }} />
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search users..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            size="small"
+          />
+          <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
             <InputLabel>Role</InputLabel>
             <Select value={selectedRole} onChange={handleRoleChange}>
               <MenuItem value="">All</MenuItem>
@@ -449,265 +447,80 @@ const getRowStyle = (attendanceData) => {
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
-  <InputLabel>Rating</InputLabel>
-  <Select value={selectedColor} onChange={handleColorChange}>
-    <MenuItem value="">All</MenuItem>
-    <MenuItem value="#D4EDDA">Excellent</MenuItem>
-    <MenuItem value="#D1ECF1">Very Good</MenuItem>
-    <MenuItem value="#FFF3CD">Good</MenuItem>
-    <MenuItem value="#F8D7DA">Satisfactory</MenuItem>
-    <MenuItem value="#FADBD8">Needs Improvement</MenuItem>
-    <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
-  </Select>
-</FormControl>
+            <InputLabel>Rating</InputLabel>
+            <Select value={selectedColor} onChange={handleColorChange}>
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="#D4EDDA">Excellent</MenuItem>
+              <MenuItem value="#D1ECF1">Very Good</MenuItem>
+              <MenuItem value="#FFF3CD">Good</MenuItem>
+              <MenuItem value="#F8D7DA">Satisfactory</MenuItem>
+              <MenuItem value="#FADBD8">Needs Improvement</MenuItem>
+              <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            onClick={() => setOpenDialog(true)}
+            sx={{
+              borderRadius: "45px",
+              height: "40px",
+              width: "200px",
+              backgroundColor: "#EFF6FB",
+              border: "1px solid #041129",
+              color: "#041129",
+              fontWeight: 600,
+              boxShadow: "none",
+            }}
+          >
+            Add People
+          </Button>
+        </Box>
+        <Users
+          people={filteredPeople}
+          editingRow={editingRow}
+          editedData={editedData}
+          expandedRows={expandedRows}
+          expandedDates={expandedDates}
+          searchQuery={searchQuery}
+          selectedRole={selectedRole}
+          selectedColor={selectedColor}
+          handleEditUser={handleEditUser}
+          handleInputChange={handleInputChange}
+          handleSaveUser={handleSaveUser}
+          handleCancelEdit={handleCancelEdit}
+          handleDeleteUser={handleDeleteUser}
+          toggleRow={toggleRow}
+          toggleDate={toggleDate}
+          getStatusChip={getStatusChip}
+          getValidatedCount={getValidatedCount}
+          calculateTotalHours={calculateTotalHours}
+          renderStars={renderStars}
+          getRowStyle={getRowStyle}
+          handleOpenReportDialog={handleOpenReportDialog}
+        />
+      </Paper>
 
-         <Button
-                  variant="contained"
-                  onClick={() => setOpenDialog(true)}
-                  sx={{
-                    borderRadius: "45px",
-                    height: "40px",
-                    width: "200px",
-                    backgroundColor: "#EFF6FB",
-                    border: "1px solid #041129",
-                    color: "#041129",
-                    fontWeight: 600,
-                    boxShadow: "none",
-                  }}
-                >
-                  Add People
-                </Button>
-      </Box>
-      <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none", }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell></TableCell>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>Department</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Grade</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody >
-            {filteredPeople.map((person) => (
-              <React.Fragment key={person.id}>
-                <TableRow 
-                 data-aos="fade-right" 
-  style={getRowStyle(person.attendance)}>
-                  <TableCell>
-                  <Tooltip title = "View Attendance">
-                    <IconButton onClick={() => toggleRow(person.id)}>
-                      {expandedRows[person.id] ? <ExpandLess /> : <ExpandMore />}
-                    </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>
-  {editingRow === person.id ? (
-    <TextField
-      value={editedData.firstname}
-      onChange={(e) => handleInputChange(e, "firstname")}
-      fullWidth
-    />
-  ) : (
-    person.firstname
-  )}
-</TableCell>
-
-<TableCell>
-  {editingRow === person.id ? (
-    <TextField
-      value={editedData.lastname}
-      onChange={(e) => handleInputChange(e, "lastname")}
-      fullWidth
-    />
-  ) : (
-    person.lastname
-  )}
-</TableCell>
-                  <TableCell>
-  {editingRow === person.id ? (
-    <FormControl fullWidth>
-      <InputLabel>Department</InputLabel>
-      <Select
-        value={editedData.department}
-        onChange={(e) => handleInputChange(e, "department")}
-      >
-      <MenuItem value="Computer Science">Computer Science</MenuItem>
-        <MenuItem value="Information Technology">Information Technology</MenuItem>
-        <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
-      </Select>
-    </FormControl>
-  ) : (
-    person.department
-  )}
-</TableCell>
-
-                  <TableCell>
-                    {editingRow === person.id ? (
-                      <TextField
-                        value={editedData.email}
-                        onChange={(e) => handleInputChange(e, "email")}
-                        fullWidth
-                      />
-                    ) : (
-                      person.email
-                    )}
-                  </TableCell>
-                  <TableCell>
-  {editingRow === person.id ? (
-    <FormControl fullWidth>
-      <InputLabel>Role</InputLabel>
-      <Select
-        value={editedData.role}
-        onChange={(e) => handleInputChange(e, "role")}
-      >
-        <MenuItem value="Faculty">Faculty</MenuItem>
-        <MenuItem value="Admin">Admin</MenuItem>
-       
-      </Select>
-    </FormControl>
-  ) : (
-    person.role
-  )}
-</TableCell>
-<TableCell>
-  {renderStars(person.attendance)}
-</TableCell>
-
-                  <TableCell>
-                    {editingRow === person.id ? (
-                      <>
-                        <IconButton onClick={() => handleSaveUser(person.id)} color="success">
-                          <Save />
-                        </IconButton>
-                        <IconButton onClick={handleCancelEdit} color="warning">
-                          <Cancel />
-                        </IconButton>
-
-                      </>
-                    ) : (
-                      <>
-                         <Tooltip title="Edit">
-                        <IconButton onClick={() => handleEditUser(person.id)} color="primary">
-                          <Edit />
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                        <IconButton onClick={() => handleDeleteUser(person.id)} color="error">
-                          <Delete />
-                        </IconButton>
-                        </Tooltip>
-                        <Tooltip title="View Report">
-                        <IconButton onClick={() => handleOpenReportDialog(person)} color="info">
-  <SummarizeIcon />
-</IconButton>
-</Tooltip>
-
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow >
-                {expandedRows[person.id] && (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      
-                      <Collapse in timeout="auto" unmountOnExit>
-                      <Box>
-  <strong>Attendance Dates:</strong>
-  {Object.keys(expandedRows[person.id].data || {})
-    .sort((a, b) => new Date(b) - new Date(a)) // Sort dates in descending order
-    .map((date) => (
-      <Box key={date}>
-        <Tooltip title="View Record">
-          <IconButton onClick={() => toggleDate(person.id, date)}>
-            {expandedDates[`${person.id}-${date}`] ? <ExpandLess /> : <ExpandMore />}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ color: "black" }}>
+          Add People
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <Close />
           </IconButton>
-        </Tooltip>
-        {date}
-        <Collapse in={!!expandedDates[`${person.id}-${date}`]} timeout="auto" unmountOnExit>
-          <Box sx={{ marginLeft: 4 }}>
-            <TableContainer component={Paper} data-aos="fade-up">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Course</TableCell>
-                    <TableCell>Time In</TableCell>
-                    <TableCell>Time Out</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Verification</TableCell>
-                    <TableCell>Hours</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {expandedDates[`${person.id}-${date}`]?.data &&
-                    Object.entries(expandedDates[`${person.id}-${date}`].data).map(
-                      ([course, details]) => (
-                        <TableRow key={course}>
-                          <TableCell>{course}</TableCell>
-                          <TableCell>{details.time_in}</TableCell>
-                          <TableCell>{details.time_out}</TableCell>
-                          <TableCell>{getStatusChip(details.late_status)}</TableCell>
-                          <TableCell>{getValidatedCount(details)}</TableCell>
+        </DialogTitle>
+        <DialogContent>
+          <CreateUser />
+        </DialogContent>
+      </Dialog>
 
-
-
-                          <TableCell>{details.total_hours}</TableCell>
-                        </TableRow>
-                      )
-                    )}
-                  <TableRow>
-                    <TableCell colSpan={5} align="right" sx={{ fontWeight: "bold" }}>
-                      Total Hours:
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>
-  {calculateTotalHours(expandedDates[`${person.id}-${date}`]?.data)}
-</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        </Collapse>
-      </Box>
-    ))}
-</Box>
-
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
-
-    <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="xs">
-  <DialogTitle sx = {{color: "black"}}>
-    Add People
-    <IconButton
-      aria-label="close"
-      onClick={() => setOpenDialog(false)}
-      sx={{ position: 'absolute', right: 8, top: 8 }}
-    >
-      <Close />
-    </IconButton>
-  </DialogTitle>
-  <DialogContent>
-  <CreateUser/>
-  </DialogContent>
-</Dialog>
-
-    <UserReportDialog
-  open={reportDialogOpen}
-  onClose={() => setReportDialogOpen(false)}
-  user={selectedUser}
-/>
+      <UserReportDialog
+        open={reportDialogOpen}
+        onClose={() => setReportDialogOpen(false)}
+        user={selectedUser}
+      />
     </>
   );
 }

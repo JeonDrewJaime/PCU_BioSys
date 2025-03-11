@@ -52,8 +52,7 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
   
-      // Simulate fetching data (replace with your real fetch logic)
-      await fetchAttendanceData();
+
       const loading = useDelayedLoading(fetchAttendanceData);
       // Add artificial delay (e.g., 1.5 seconds)
       setTimeout(() => {

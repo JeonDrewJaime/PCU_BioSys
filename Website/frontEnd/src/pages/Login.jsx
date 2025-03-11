@@ -10,7 +10,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../utils/firebase-config';
 import pcubg from '../assets/pcubg.jpg';
 import SignUp from './SignUp';
-import ForgotPassword from '../UI/Dialogs/ForgotPassword';
+import ForgotPassword from '../UI/Dialogs/ForgotPassword'
 
 const handleForgotPassword = async () => {
   if (!resetEmail) {

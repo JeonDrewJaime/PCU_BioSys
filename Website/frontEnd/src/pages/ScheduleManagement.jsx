@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, TablePagination, Collapse, IconButton, Button, Dialog, DialogContent, DialogTitle
+  Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddSchedule from '../UI/Dialogs/AddSchedule';
-import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
-import { fetchScheduleData, deleteAcademicYear, deleteInstructorByName } from '../../APIs/adminAPI'; // Import API function
-import { MenuItem, Select, FormControl, InputLabel, Typography} from '@mui/material';
-import ForgotPassword from '../UI/Dialogs/ForgotPassword';
+import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI';
+import Schedules from '../UI/Tables/Schedules';
+import { downloadExcelSchedule } from '../../utils/downloadExcel';
+import { downloadPDFSchedule } from '../../utils/downloadPDF';
 
 const ScheduleManagement = () => {
   const [academicYears, setAcademicYears] = useState([]);
@@ -20,6 +18,7 @@ const ScheduleManagement = () => {
   const [openAddScheduleDialog, setOpenAddScheduleDialog] = useState(false);
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const handleDeleteAcademicYear = async (academicYear) => {
     try {
@@ -29,240 +28,178 @@ const ScheduleManagement = () => {
       console.error('Error deleting academic year:', error);
     }
   };
-  
-  const handleDeleteInstructor = async (instructorName) => {
-    try {
-      await deleteInstructorByName(instructorName);
-      // After deleting, refresh the schedule data to reflect changes
-      const updatedData = await fetchScheduleData();
-      setAcademicYears(updatedData);
-    } catch (error) {
-      console.error(`Error deleting instructor ${instructorName}:`, error);
-    }
-  };
-  
+
   const filteredData = academicYears
-  .filter((year) => (selectedYear ? year.acadYear === selectedYear : true))
-  .map((year) => ({
-    ...year,
-    semesters: year.semesters.filter((semester) =>
-      selectedSemester ? semester.semesterKey === selectedSemester : true
-    ),
-  }));
+    .filter((year) => (selectedYear ? year.acadYear === selectedYear : true))
+    .map((year) => ({
+      ...year,
+      semesters: year.semesters.filter((semester) =>
+        selectedSemester ? semester.semesterKey === selectedSemester : true
+      ),
+    }));
+
+  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await fetchScheduleData(); // Fetch from API
+        const data = await fetchScheduleData();
         setAcademicYears(data);
       } catch (error) {
         console.error('Error fetching schedule data:', error);
       }
     };
-
     fetchData();
   }, []);
 
-  const handleRowClick = (index) => {
-    setOpenRows((prevState) => ({
-      ...prevState,
-      [index]: !prevState[index],
-    }));
-  };
-
-  const handleInstructorClick = (instructorName) => {
-    setOpenInstructorRows((prevState) => ({
-      ...prevState,
-      [instructorName]: !prevState[instructorName],
-    }));
-  };
-
+  // Close Add Schedule Dialog
   const handleCloseAddScheduleDialog = () => {
     setOpenAddScheduleDialog(false);
   };
-  const uniqueAcademicYears = [...new Set(academicYears.map(year => year.acadYear))];
+  const handleSelectedRows = (rows) => {
 
-  // Extract unique semesters across all years
+    setSelectedRows(rows);
+  };
+  // Unique Academic Years and Semesters
+  const uniqueAcademicYears = [...new Set(academicYears.map(year => year.acadYear))];
   const uniqueSemesters = [...new Set(academicYears.flatMap(year => year.semesters.map(sem => sem.semesterKey)))];
+
   return (
     <>
-    <Typography variant="h4" gutterBottom sx = {{color: "#041129", fontWeight: "bold"}}>
+      <Typography variant="h4" gutterBottom sx={{ color: "#041129", fontWeight: "bold" }}>
         Schedules
       </Typography>
-      <Typography gutterBottom sx = {{color: "#041129",mt: -1, mb: 2,fontSize: "16px"}}>
-      Here’s a quick view of your team’s upcoming schedules and assignments. Stay organized and ensure smooth operations.
+      <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
+        Here’s a quick view of your team’s upcoming schedules and assignments. Stay organized and ensure smooth operations.
       </Typography>
-    <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none", }}>
-    <Box sx={{ display: "flex", alignItems: "center", mb: "20px" }}>
-  {/* Select Inputs (Aligned Left) */}
-  <Box sx={{ display: "flex", gap: 2 }}>
-  <FormControl sx={{ minWidth: 150 }} size="small">
-  <InputLabel>Academic Year</InputLabel>
-  <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-    <MenuItem value="">All</MenuItem>
-    {uniqueAcademicYears.map((year, index) => (
-      <MenuItem key={index} value={year}>
-        {year}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
 
-<FormControl sx={{ minWidth: 150 }} size="small">
-  <InputLabel>Semester</InputLabel>
-  <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
-    <MenuItem value="">All</MenuItem>
-    {uniqueSemesters.map((semester, index) => (
-      <MenuItem key={index} value={semester}>
-        {semester}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: "20px" }}>
+          {/* Filters */}
+          <Box sx={{ display: "flex", gap: 2 }}>
 
-  </Box>
+          <Checkbox
+  indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.flatMap(y => y.semesters).length}
+  checked={selectedRows.length === filteredData.flatMap(y => y.semesters).length}
+  onChange={(e) => {
+    const allRows = e.target.checked 
+      ? filteredData.flatMap((y, yi) => 
+          y.semesters.map((_, si) => `${yi}-${si}`))
+      : [];
+    setSelectedRows(allRows);
+    onSelectRow(allRows.map(k => {
+      const [yi, si] = k.split('-');
+      return { 
+        acadYear: filteredData[yi].acadYear, 
+        semesterKey: filteredData[yi].semesters[si].semesterKey, 
+        instructors: filteredData[yi].semesters[si].instructors 
+      };
+    }));
+  }}
+/>
 
-  {/* Button (Docked Right) */}
-  <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "flex-end" }}>
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={() => setOpenAddScheduleDialog(true)}
-      sx={{
-        borderRadius: "45px",
-        height: "40px",
-        width: "200px",
-        backgroundColor: "#EFF6FB",
-        border: "1px solid #041129",
-        color: "#041129",
-        fontWeight: 600,
-        boxShadow: "none",
-      }}
-    >
-      Add Schedule
-    </Button>
-  </Box>
-</Box>
+            <FormControl sx={{ minWidth: 150 }} size="small">
+              <InputLabel>Academic Year</InputLabel>
+              <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+                <MenuItem value="">All</MenuItem>
+                {uniqueAcademicYears.map((year, index) => (
+                  <MenuItem key={index} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            <FormControl sx={{ minWidth: 150 }} size="small">
+              <InputLabel>Semester</InputLabel>
+              <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
+                <MenuItem value="">All</MenuItem>
+                {uniqueSemesters.map((semester, index) => (
+                  <MenuItem key={index} value={semester}>
+                    {semester}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-      <Box>
-        <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none", }}>
-          <Table>
-            <TableHead sx = {{backgroundColor:"#CEE3F3"}}>
-              <TableRow>
-                <TableCell>Academic Year</TableCell>
-                <TableCell>Semester</TableCell>
-                <TableCell>Instructors</TableCell>
-                <TableCell>Actions</TableCell>
-
-              </TableRow>
-            </TableHead>
-            <TableBody>
-            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) =>
-        year.semesters.map((semester, semIndex) => (
-                  <React.Fragment key={`${yearIndex}-${semIndex}`}>
-                    <TableRow>
-                      <TableCell>
-                        <IconButton onClick={() => handleRowClick(`${yearIndex}-${semIndex}`)}>
-                          <ExpandMoreIcon />
-                        </IconButton>
-                        {year.acadYear}
-                      </TableCell>
-                      <TableCell>{semester.semesterKey}</TableCell>
-                      <TableCell>{semester.instructors.length}</TableCell>
-                      <TableCell>
-  <IconButton
+          {/* Add Schedule Button */}
+          <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "flex-end" }}>
+          <Button
     variant="contained"
-    color="error"
-    onClick={() => handleDeleteAcademicYear(year.acadYear)}
+    color="secondary"
+    onClick={() => downloadPDFSchedule(selectedRows)} 
+    disabled={selectedRows.length === 0}
+    sx={{
+      borderRadius: "45px",
+      height: "40px",
+      backgroundColor: selectedRows.length > 0 ? "#FFEFEF" : "#F0F0F0",
+      border: "1px solid #041129",
+      color: "#041129",
+      fontWeight: 600,
+      boxShadow: "none",
+    }}
   >
-    <Delete/>
-  </IconButton>
-</TableCell>
-                    </TableRow>
-                    <TableRow>
-                    <TableCell colSpan={3} sx={{ px: 1}}>
-                        <Collapse in={openRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
-                          <Table>
-                            <TableBody>
-                            {semester.instructors.filter(instructor => instructor.name && instructor.name !== 'Unknown Instructor').map((instructor, instIndex) => (
+    Download PDF
+  </Button>
 
-                                <React.Fragment key={instIndex}>
-                                  <TableRow>
-                                  <TableCell>
-    <IconButton onClick={() => handleInstructorClick(instructor.name)}>
-      <ExpandMoreIcon />
-    </IconButton>
-    {instructor.name}
-  </TableCell>
-  <TableCell align="right">
+  <Button 
+  variant="contained" 
+  color="success" 
+  onClick={() => downloadExcelSchedule(selectedRows)} 
+  disabled={selectedRows.length === 0}
+  sx={{
+    borderRadius: "45px",
+    height: "40px",
+    backgroundColor: selectedRows.length > 0 ? "#4CAF50" : "#F0F0F0", // Green when enabled, gray when disabled
+    border: "1px solid #041129",
+    color: selectedRows.length > 0 ? "#fff" : "#041129", // White text when enabled
+    fontWeight: 600,
+    boxShadow: "none",
+    transition: "background-color 0.3s",
+    "&:hover": {
+      backgroundColor: selectedRows.length > 0 ? "#388E3C" : "#F0F0F0"
+    }
+  }}
+>
+  Download Excel
+</Button>
 
-  </TableCell>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpenAddScheduleDialog(true)}
+              sx={{
+                borderRadius: "45px",
+                height: "40px",
+                width: "200px",
+                backgroundColor: "#EFF6FB",
+                border: "1px solid #041129",
+                color: "#041129",
+                fontWeight: 600,
+                boxShadow: "none",
+              }}
+            >
+              Add Schedule
+            </Button>
+          </Box>
+        </Box>
 
-                                  </TableRow>
-                                  <TableRow>
-                                  <TableCell colSpan={3} sx={{ p: 0}}>
-                                      <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
-                                        <Table>
-                                          <TableHead>
-                                            <TableRow>
-                                              <TableCell>Course Code</TableCell>
-                                              <TableCell>Description</TableCell>
-                                              <TableCell>Curriculum</TableCell>
-                                              <TableCell>Section</TableCell>
-                                              <TableCell>Room</TableCell>
-                                              <TableCell>Day</TableCell>
-                                              <TableCell>Start Time</TableCell>
-                                              <TableCell>End Time</TableCell>
-                                              <TableCell>Total Units</TableCell>
-                                            </TableRow>
-                                          </TableHead>
-                                          <TableBody>
-                                            {instructor.courses.map((course, cIdx) => (
-                                              <TableRow key={cIdx}>
-                                                <TableCell>{course.courseCode}</TableCell>
-                                                <TableCell>{course.courseDescription}</TableCell>
-                                                <TableCell>{course.curriculum}</TableCell>
-                                                <TableCell>{course.schedule.section || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.room || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.day || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
-                                        </Table>
-                                      </Collapse>
-                                    </TableCell>
-                                  </TableRow>
-                                </React.Fragment>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Schedules
+  filteredData={filteredData} // ✅ Updated to use filtered data
+  page={page}
+  rowsPerPage={rowsPerPage}
+  openRows={openRows}
+  openInstructorRows={openInstructorRows}
+  handleRowClick={(index) => setOpenRows((prev) => ({ ...prev, [index]: !prev[index] }))}
+  handleInstructorClick={(name) => setOpenInstructorRows((prev) => ({ ...prev, [name]: !prev[name] }))}
+  handleDeleteAcademicYear={handleDeleteAcademicYear}
+  setPage={setPage}
+  setRowsPerPage={setRowsPerPage}
+  onSelectRow={handleSelectedRows}
+/>
+      </Paper>
 
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={academicYears.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={(event, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(parseInt(event.target.value, 10));
-            setPage(0);
-          }}
-        />
-      </Box>
-
+      {/* Add Schedule Dialog */}
       <Dialog open={openAddScheduleDialog} onClose={handleCloseAddScheduleDialog} maxWidth="xl" fullWidth>
         <DialogTitle>
           <IconButton
@@ -278,11 +215,11 @@ const ScheduleManagement = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <AddSchedule />
+          <AddSchedule onClose={handleCloseAddScheduleDialog} />
         </DialogContent>
       </Dialog>
-      </Paper>
     </>
   );
 };
+
 export default ScheduleManagement;
