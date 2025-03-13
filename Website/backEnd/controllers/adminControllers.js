@@ -2,6 +2,27 @@ const AdminModel = require('../models/adminModel');
 const AdminView = require('../views/adminView');
 
 class AdminController {
+
+  async getInstructorSchedule(req, res) {
+    try {
+      const { instructorName } = req.params;
+
+      if (!instructorName) {
+        return res.status(400).json(AdminView.formatErrorResponse('Instructor name is required.'));
+      }
+
+      const result = await AdminModel.getInstructorSchedule(instructorName);
+
+      if (!result.success) {
+        return res.status(404).json(AdminView.formatErrorResponse('Instructor schedule not found.'));
+      }
+
+      return res.status(200).json(AdminView.formatSuccessResponse('Instructor schedule fetched successfully.', result.schedules));
+    } catch (error) {
+      console.error(`❌ Error fetching schedule for instructor ${req.params.instructorName}:`, error);
+      return res.status(500).json(AdminView.formatErrorResponse('Failed to fetch instructor schedule.'));
+    }
+  }
   async saveSchedule(req, res) {
     try {
       const { columns, rows } = req.body;

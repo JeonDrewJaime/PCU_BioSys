@@ -13,6 +13,8 @@ const adminAPI = axios.create({
  * Fetch schedule data from the API
  * @returns {Promise<Array>} Resolves with the schedule data
  */
+
+
 export const fetchScheduleData = async () => {
   try {
     const { data } = await adminAPI.get('/schedule');
@@ -39,6 +41,20 @@ export const saveExcelData = async (columns, rows) => {
   }
 };
 
+/**
+ * Fetch instructor schedule by name
+ * @param {string} instructorName - The name of the instructor
+ * @returns {Promise<Object>} Resolves with the instructor's schedule data
+ */
+export const fetchInstructorSchedule = async (instructorName) => {
+  try {
+    const { data } = await adminAPI.get(`/instructor-schedule/${instructorName}`);
+    return data?.data || null;
+  } catch (error) {
+    console.error(`❌ Error fetching schedule for instructor ${instructorName}:`, error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch instructor schedule.');
+  }
+};
 /**
  * Fetch all users (faculty & admin)
  * @returns {Promise<Array>} Resolves with the list of users

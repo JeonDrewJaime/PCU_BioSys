@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox
+  Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox, Menu, 
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddSchedule from '../UI/Dialogs/AddSchedule';
 import Schedules from '../UI/Tables/Schedules';
@@ -9,6 +10,7 @@ import { downloadExcelSchedule } from '../../utils/downloadExcel';
 import { downloadPDFSchedule } from '../../utils/downloadPDF';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI';
+import { FileDownload } from '@mui/icons-material';
 
 const ScheduleManagement = () => {
   const [page, setPage] = useState(0);
@@ -19,6 +21,8 @@ const ScheduleManagement = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
+  
+const [anchorEl, setAnchorEl] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -27,6 +31,14 @@ const ScheduleManagement = () => {
     queryFn: fetchScheduleData
   });
 
+  
+const handleExportClick = (event) => {
+  setAnchorEl(event.currentTarget);
+};
+
+const handleClose = () => {
+  setAnchorEl(null);
+};
   const deleteMutation = useMutation({
     mutationFn: deleteAcademicYear,
     onSuccess: () => {
@@ -104,74 +116,97 @@ const ScheduleManagement = () => {
               ))}
             </Select>
           </FormControl>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              const selectedData = selectedRows.map((key) => {
-                const [yearIndex, semIndex] = key.split('-');
-                const year = filteredData[yearIndex];
-                const semester = year.semesters[semIndex];
-            
-                return {
-                  acadYear: year.acadYear,
-                  semesterKey: semester.semesterKey,
-                  instructors: semester.instructors
-                };
-              });
-            
-              downloadPDFSchedule(selectedData);
-            }}
-            disabled={selectedRows.length === 0}
-            sx={{
-              borderRadius: "45px",
-              height: "40px",
-              backgroundColor: selectedRows.length > 0 ? "#FFEFEF" : "#F0F0F0",
-              border: "1px solid #041129",
-              color: "#041129",
-              fontWeight: 600,
-              boxShadow: "none",
-            }}
-          >
-            Download PDF
-          </Button>
+          <IconButton
+  onClick={() => {
+    selectedRows.forEach((key) => {
+      const [yearIndex, semIndex] = key.split('-');
+      const year = filteredData[yearIndex];
+      const semester = year.semesters[semIndex];
+      
+      handleDeleteAcademicYear({
+        acadYear: year.acadYear,
+        semesterKey: semester.semesterKey
+      });
+    });
+    setSelectedRows([]);
+  }}
+  disabled={selectedRows.length === 0}
+  sx={{
+    border: "1px solid #041129",
+    color: selectedRows.length > 0 ? "#D32F2F" : "#041129",
+    boxShadow: "none",
+    backgroundColor: selectedRows.length > 0 ? "#FFEBEE" : "#F0F0F0"
+  }}
+>
+  <Delete />
+</IconButton>
+<Button
+  variant="contained"
+  color="primary"
+  onClick={handleExportClick}
+  disabled={selectedRows.length === 0}
+  startIcon={<FileDownload />}
+  sx={{
+    borderRadius: "45px",
+    height: "40px",
+    backgroundColor: selectedRows.length > 0 ? "#4CAF50" : "#F0F0F0",
+    border: "1px solid #041129",
+    color: selectedRows.length > 0 ? "#fff" : "#041129",
+    fontWeight: 600,
+    boxShadow: "none",
+    transition: "background-color 0.3s",
+    "&:hover": {
+      backgroundColor: selectedRows.length > 0 ? "#388E3C" : "#F0F0F0"
+    }
+  }}
+>
+  Export
+</Button>
 
-          <Button
-            variant="contained"
-            color="success"
-           onClick={() => {
-  const selectedData = selectedRows.map((key) => {
-    const [yearIndex, semIndex] = key.split('-');
-    const year = filteredData[yearIndex];
-    const semester = year.semesters[semIndex];
+{/* ✅ Dropdown Menu */}
+<Menu
+  anchorEl={anchorEl}
+  open={Boolean(anchorEl)}
+  onClose={handleClose}
+>
+  <MenuItem onClick={() => {
+    handleClose();
+    const selectedData = selectedRows.map((key) => {
+      const [yearIndex, semIndex] = key.split('-');
+      const year = filteredData[yearIndex];
+      const semester = year.semesters[semIndex];
 
-    return {
-      acadYear: year.acadYear,
-      semesterKey: semester.semesterKey,
-      instructors: semester.instructors
-    };
-  });
+      return {
+        acadYear: year.acadYear,
+        semesterKey: semester.semesterKey,
+        instructors: semester.instructors
+      };
+    });
 
-  downloadExcelSchedule(selectedData);
-}}
+    downloadExcelSchedule(selectedData);
+  }}>
+    Download Excel
+  </MenuItem>
 
-            disabled={selectedRows.length === 0}
-            sx={{
-              borderRadius: "45px",
-              height: "40px",
-              backgroundColor: selectedRows.length > 0 ? "#4CAF50" : "#F0F0F0",
-              border: "1px solid #041129",
-              color: selectedRows.length > 0 ? "#fff" : "#041129",
-              fontWeight: 600,
-              boxShadow: "none",
-              transition: "background-color 0.3s",
-              "&:hover": {
-                backgroundColor: selectedRows.length > 0 ? "#388E3C" : "#F0F0F0"
-              }
-            }}
-          >
-            Download Excel
-          </Button>
+  <MenuItem onClick={() => {
+    handleClose();
+    const selectedData = selectedRows.map((key) => {
+      const [yearIndex, semIndex] = key.split('-');
+      const year = filteredData[yearIndex];
+      const semester = year.semesters[semIndex];
+
+      return {
+        acadYear: year.acadYear,
+        semesterKey: semester.semesterKey,
+        instructors: semester.instructors
+      };
+    });
+
+    downloadPDFSchedule(selectedData);
+  }}>
+    Download PDF
+  </MenuItem>
+</Menu>
 
           <Button
             variant="contained"

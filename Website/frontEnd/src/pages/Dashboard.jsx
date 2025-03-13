@@ -23,14 +23,16 @@ import {
 } from "@mui/material";
 import { fetchAllUsers } from "../../APIs/adminAPI";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  CartesianGrid 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  CartesianGrid, 
+  LineChart, 
+  Line 
 } from "recharts";
 import indibg from '../assets/indicatorBg.png';
 import Loader from "./Loader";
@@ -44,15 +46,13 @@ const Dashboard = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeFilter, setTimeFilter] = useState("weekly");
+  const [timeFilter, setTimeFilter] = useState("monthly");
   const [selectedMetric, setSelectedMetric] = useState("attendanceRate");
 
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-  
-
       const loading = useDelayedLoading(fetchAttendanceData);
       // Add artificial delay (e.g., 1.5 seconds)
       setTimeout(() => {
@@ -211,23 +211,18 @@ const Dashboard = () => {
   }, [timeFilter]);
 
   const filterDataByTime = (data, filter) => {
-    const now = new Date();
     const groupedData = {};
-
+  
     data.forEach((entry) => {
       const entryDate = new Date(entry.date);
       let key;
-
-      if (filter === "weekly") {
-        if (entryDate >= new Date(now.setDate(now.getDate() - 7))) {
-          key = entry.date;
-        }
-      } else if (filter === "monthly") {
-        key = entryDate.toLocaleString("default", { month: "long" });
+  
+      if (filter === "monthly") {
+        key = entryDate.toLocaleString("default", { month: "long", year: "numeric" });
       } else if (filter === "yearly") {
         key = entryDate.getFullYear().toString();
       }
-
+  
       if (key) {
         if (!groupedData[key]) {
           groupedData[key] = { date: key, attendanceRate: 0, absenteeismRate: 0, punctualityRate: 0, lateArrivalRate: 0, count: 0 };
@@ -239,15 +234,18 @@ const Dashboard = () => {
         groupedData[key].count++;
       }
     });
-
-    return Object.values(groupedData).map((entry) => ({
-      date: entry.date,
-      attendanceRate: entry.attendanceRate / entry.count,
-      absenteeismRate: entry.absenteeismRate / entry.count,
-      punctualityRate: entry.punctualityRate / entry.count,
-      lateArrivalRate: entry.lateArrivalRate / entry.count,
-    }));
+  
+    return Object.values(groupedData)
+      .map((entry) => ({
+        date: entry.date,
+        attendanceRate: entry.attendanceRate / entry.count,
+        absenteeismRate: entry.absenteeismRate / entry.count,
+        punctualityRate: entry.punctualityRate / entry.count,
+        lateArrivalRate: entry.lateArrivalRate / entry.count,
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));  // Ensure chronological order
   };
+  
 
   
   if (error) return <Typography color="error">Error: {error}</Typography>;
@@ -256,11 +254,19 @@ const Dashboard = () => {
  // Filter out admins from users
 const filteredUsers = users.filter(user => user.role !== "Admin");
 
+
 // Top 3 Best Attendance (excluding admins)
 const top3BestAttendance = [...filteredUsers]
   .sort((a, b) => (b.attendanceRate || 0) - (a.attendanceRate || 0))
   .slice(0, 3);
 
+  const top3HighestLateRate = [...filteredUsers]
+  .map(user => ({
+    ...user,
+    lateRate: user.totalCheckIns > 0 ? (user.lateCount / user.totalCheckIns) * 100 : 0
+  }))
+  .sort((a, b) => b.lateRate - a.lateRate)
+  .slice(0, 3);
 // Top 3 Highest Absent Rate (excluding admins)
 const top3HighestAbsentRate = [...filteredUsers]
   .map(user => ({
@@ -318,9 +324,6 @@ const top3HighestAbsentRate = [...filteredUsers]
 
 </Grid>
 
-
-
- {/* mid parttttttttttttt---------------------------------------- */}
 <Grid container spacing={2}>
   {/* Left Side - Chart Section (9/12 width) */}
   <Grid item xs={12} md={9}>
@@ -339,7 +342,7 @@ const top3HighestAbsentRate = [...filteredUsers]
         <FormControl sx={{ minWidth: 120 }}>
           <InputLabel>Filter</InputLabel>
           <Select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
-            <MenuItem value="weekly">Weekly</MenuItem>
+    
             <MenuItem value="monthly">Monthly</MenuItem>
             <MenuItem value="yearly">Yearly</MenuItem>
           </Select>
@@ -359,29 +362,41 @@ const top3HighestAbsentRate = [...filteredUsers]
 
       {/* Chart Container */}
       <Box sx={{ height: 220 }}>
-  <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%">
+  {selectedMetric === "all" ? (
+    <BarChart data={chartData}>
+      <XAxis dataKey="date" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
+      <Bar dataKey="attendanceRate" fill="#4CAF50" name="Attendance Rate (%)" />
+      <Bar dataKey="absenteeismRate" fill="#F44336" name="Absenteeism Rate (%)" />
+      <Bar dataKey="punctualityRate" fill="#2196F3" name="Punctuality Rate (%)" />
+      <Bar dataKey="lateArrivalRate" fill="#FFC107" name="Late Arrival Rate (%)" />
+    </BarChart>
+  ) : (
     <LineChart data={chartData}>
       <XAxis dataKey="date" />
       <YAxis />
       <Tooltip />
       <Legend />
-      {/* Horizontal Grid Lines */}
       <CartesianGrid strokeDasharray="3 3" stroke="#ddd" />
-      
-      {(selectedMetric === "all" || selectedMetric === "attendanceRate") && (
+      {selectedMetric === "attendanceRate" && (
         <Line type="monotone" dataKey="attendanceRate" stroke="#4CAF50" name="Attendance Rate (%)" />
       )}
-      {(selectedMetric === "all" || selectedMetric === "absenteeismRate") && (
+      {selectedMetric === "absenteeismRate" && (
         <Line type="monotone" dataKey="absenteeismRate" stroke="#F44336" name="Absenteeism Rate (%)" />
       )}
-      {(selectedMetric === "all" || selectedMetric === "punctualityRate") && (
+      {selectedMetric === "punctualityRate" && (
         <Line type="monotone" dataKey="punctualityRate" stroke="#2196F3" name="Punctuality Rate (%)" />
       )}
-      {(selectedMetric === "all" || selectedMetric === "lateArrivalRate") && (
+      {selectedMetric === "lateArrivalRate" && (
         <Line type="monotone" dataKey="lateArrivalRate" stroke="#FFC107" name="Late Arrival Rate (%)" />
       )}
     </LineChart>
-  </ResponsiveContainer>
+  )}
+</ResponsiveContainer>
 </Box>
 
     </Box>
@@ -420,7 +435,7 @@ const top3HighestAbsentRate = [...filteredUsers]
   <Grid item xs={12}>
     <Grid container spacing={2}>
       {/* Top 3 Best Attendance */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
           🏅 Top 3 Best Attendance
         </Typography>
@@ -448,7 +463,7 @@ const top3HighestAbsentRate = [...filteredUsers]
       </Grid>
 
       {/* Top 3 Highest Absent Rate */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
           🚨 Top 3 Highest Absent Rate
         </Typography>
@@ -474,17 +489,39 @@ const top3HighestAbsentRate = [...filteredUsers]
           </Table>
         </TableContainer>
       </Grid>
+
+      {/* Top 3 Highest Late Rate */}
+<Grid item xs={12} md={4}>
+  <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1, color: "#012763" }}>
+    ⏳ Top 3 Highest Late Rate
+  </Typography>
+  <TableContainer component="div" sx={{ border: "1px solid #D6D7D6", borderRadius: 4, backgroundColor: "#fff" }} data-aos="fade-left">
+    <Table size="small">
+      <TableHead>
+        <TableRow sx={{ backgroundColor: "#ffeacc" }}>
+          <TableCell sx={{ color: "#643002", fontWeight: "bold" }}>Rank</TableCell>
+          <TableCell sx={{ color: "#643002", fontWeight: "bold" }}>Name</TableCell>
+          <TableCell sx={{ color: "#643002", fontWeight: "bold" }}>Late Rate</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {top3HighestLateRate.map((user, index) => (
+          <TableRow key={index}>
+            <TableCell>{index + 1}</TableCell>
+            <TableCell>{user.firstname} {user.lastname}</TableCell>
+            <TableCell>{user.lateRate?.toFixed(2)}%</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Grid>
     </Grid>
   </Grid>
 </Grid>
-
-
-
-
 
     </div>
   );
 };
 
 export default Dashboard;
-

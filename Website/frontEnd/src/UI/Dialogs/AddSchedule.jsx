@@ -51,9 +51,7 @@ function AddSchedule( { onClose }) {
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
-  const [openCreateUserDialog, setOpenCreateUserDialog] = useState(false);
-
-  const [openAssignDialog, setOpenAssignDialog] = useState(false);
+  const [openCreateUserDialog, setOpenCreateUserDialog] = useState(false)
 const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which row is being assigned
 
 
@@ -62,12 +60,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
       .then(setUsers)
       .catch(() => setUsers([]));
   }, [])
-  const getUniqueValuesForColumn = (columnIndex) => {
-    const values = rows.map(row => row[columnIndex]).filter(Boolean);
-    return [...new Set(values)];
-  };
-  
-  
+
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
   
@@ -141,17 +134,31 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
     setRows(updatedRows);
   };
 
+  const isValidFirstColumn = () => {
+    if (rows.length < 2) return false;
+    const yearPattern = /^\d{4}-\d{4}$/; // Matches format YYYY-YYYY
+    const validSemesters = ["1st Sem", "2nd Sem"];
+  
+    return yearPattern.test(rows[0][0]) && validSemesters.includes(rows[1][0]);
+  };
+  
+  
   const handleSaveToDatabase = () => {
+    if (!isValidFirstColumn()) {
+      setSnackbarMessage('The first column of the first and second rows must be numbers.');
+      setSnackbarSeverity('error');
+      setOpenSnackbar(true);
+      return;
+    }
+  
     setLoading(true);
     saveExcelData(columns, rows)
       .then(() => {
         setSnackbarMessage('Content saved to the database successfully.');
         setSnackbarSeverity('success');
         setOpenSnackbar(true);
-  
-        // Close the component/dialog after saving
         setTimeout(() => {
-          onClose();   // <== this will close the component
+          onClose();
         }, 1000);
       })
       .catch(() => {
@@ -206,6 +213,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
         <Button
           variant="contained"
           color="primary"
+          disabled={!isValidFirstColumn()}
           onClick={handleSaveToDatabase}
           sx={{
         borderRadius: "45px",
@@ -275,7 +283,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
       </IconButton>
     )
   ) : rowIndex === 2 ? (
-    // Row 2 - No edit or delete (read-only)
+
     null
   ) : (
     // Rows 3 and beyond - Editable and deletable
@@ -306,8 +314,6 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
     </>
   )}
 </TableCell>
-
-
                 </TableRow>
               ))}
             </TableBody>
@@ -365,19 +371,13 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
     {snackbarMessage}
   </Alert>
 </Snackbar>
-
-
-
 <Dialog open={openCreateUserDialog} onClose={() => setOpenCreateUserDialog(false)} maxWidth="sm" fullWidth>
  
   <DialogContent>
     <CreateUser onClose={() => setOpenCreateUserDialog(false)} />
   </DialogContent>
 </Dialog>
-
     </Container>
-
-    
   );
 }
 

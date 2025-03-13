@@ -8,21 +8,11 @@ import 'aos/dist/aos.css';
 import UserReportDialog from "../UI/Dialogs/UserDialog";
 import { Star, StarBorder } from "@mui/icons-material";
 import {
-  Chip,
   Typography,
-  Tooltip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   IconButton,
-  Collapse,
   Box,
   TextField,
-CircularProgress,
   FormControl,
   MenuItem,
   InputLabel,
@@ -31,6 +21,7 @@ CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
+  Checkbox
 
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
@@ -47,7 +38,9 @@ function People() {
       once: true,     // Whether animation should happen only once
     });
   }, []);
-  
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [people, setPeople] = useState([]);
   const [editingRow, setEditingRow] = useState(null);
   const [editedData, setEditedData] = useState({});
@@ -63,6 +56,20 @@ const [selectedUser, setSelectedUser] = useState(null);
 const [currentUser, setCurrentUser] = useState(null);
 
 
+const handleDepartmentChange = (event) => {
+  setSelectedDepartment(event.target.value);
+};
+
+const handleSelectAllRows = () => {
+  const newSelectAll = !selectAll;
+  setSelectAll(newSelectAll);
+  
+  if (newSelectAll) {
+    setSelectedRows(filteredPeople.map(person => person.id)); // Select all users
+  } else {
+    setSelectedRows([]); // Deselect all
+  }
+};
 
 const handleColorChange = (event) => {
   setSelectedColor(event.target.value);
@@ -169,6 +176,7 @@ const getRowStyle = (attendanceData) => {
           (field) => field && field.toLowerCase().includes(searchQuery.toLowerCase())
         ) &&
         (selectedRole === "" || person.role === selectedRole) &&
+        (selectedDepartment === "" || person.department === selectedDepartment) &&
         (selectedColor === "" || rowColor === selectedColor) // Compare row color
       );
     }
@@ -317,8 +325,45 @@ const getRowStyle = (attendanceData) => {
   };
 
 
+  const handleDeleteSelectedUsers = async () => {
+    if (selectedRows.length === 0) return;
   
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `You are about to delete ${selectedRows.length} user(s). This action cannot be undone!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete them!",
+    });
   
+    if (result.isConfirmed) {
+      try {
+        // Delete users one by one
+        for (const userId of selectedRows) {
+          await adminAPI.delete(`/delete/${userId}`);
+          const auth = getAuth();
+          if (auth.currentUser && auth.currentUser.uid === userId) {
+            await deleteAuthUser(auth.currentUser);
+          }
+        }
+  
+        // Update UI after deletion
+        setPeople((prev) => prev.filter((user) => !selectedRows.includes(user.id)));
+        setSelectedRows([]); // Clear selection
+  
+        Swal.fire("Deleted!", "Selected users have been removed.", "success");
+      } catch (error) {
+        console.error("❌ Error deleting users:", error);
+        Swal.fire("Error!", "Failed to delete selected users.", "error");
+      }
+    }
+  };
+  
+  const handleRowSelection = (selectedIds) => {
+    setSelectedRows(selectedIds);
+  };
   return (
     <>
      
@@ -330,6 +375,12 @@ const getRowStyle = (attendanceData) => {
       </Typography>
       <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Checkbox
+        checked={selectAll}
+        onChange={handleSelectAllRows}
+        inputProps={{ "aria-label": "select all users" }}
+      />
+      <Typography variant="body1">Select All</Typography>
           <Search sx={{ mr: 1 }} />
           <TextField
             fullWidth
@@ -339,6 +390,15 @@ const getRowStyle = (attendanceData) => {
             onChange={handleSearchChange}
             size="small"
           />
+          <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
+  <InputLabel>Department</InputLabel>
+  <Select value={selectedDepartment} onChange={handleDepartmentChange}>
+    <MenuItem value="">All</MenuItem>
+    <MenuItem value="Computer Science">Computer Science</MenuItem>
+    <MenuItem value="Information Technology">Information Technology</MenuItem>
+    <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
+  </Select>
+</FormControl>
           <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
             <InputLabel>Role</InputLabel>
             <Select value={selectedRole} onChange={handleRoleChange}>
@@ -359,6 +419,16 @@ const getRowStyle = (attendanceData) => {
               <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
             </Select>
           </FormControl>
+          <Button
+    variant="contained"
+    color="error"
+    onClick={handleDeleteSelectedUsers}
+    disabled={selectedRows.length === 0} // Disable when no rows are selected
+    sx={{ ml: 2 }}
+  >
+    <Delete />
+    Delete Selected
+  </Button>
           <Button
             variant="contained"
             onClick={() => setOpenDialog(true)}
@@ -395,6 +465,10 @@ const getRowStyle = (attendanceData) => {
           renderStars={renderStars}
           getRowStyle={getRowStyle}
           handleOpenReportDialog={handleOpenReportDialog}
+          onRowSelectionChange={handleRowSelection} 
+          selectAll={selectAll} 
+          selectedRows={selectedRows} 
+          setSelectedRows={setSelectedRows} 
         />
       </Paper>
 

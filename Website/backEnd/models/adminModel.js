@@ -79,7 +79,7 @@ class AdminModel {
 
       console.log(`Saved: ${academicYear} > ${semester} > Course ${rowIndex}: ${courseCode}`);
 
-      // Save instructors and schedule
+
       for (let instIndex = 0; instIndex < instructors.length; instIndex++) {
         const instructor = instructors[instIndex];
         const instructorRef = db.ref(
@@ -110,6 +110,58 @@ class AdminModel {
     }
   }
 
+
+  async getInstructorSchedule(instructorName) {
+    try {
+      const scheduleRef = db.ref('schedule_test/academic_years/');
+      const snapshot = await scheduleRef.get();
+  
+      if (!snapshot.exists()) {
+        return { success: false, message: 'No schedules found' };
+      }
+  
+      const data = snapshot.val();
+      const instructorSchedules = [];
+  
+      Object.keys(data).forEach((academicYear) => {
+        const semesters = data[academicYear].semesters || {};
+  
+        Object.keys(semesters).forEach((semester) => {
+          const courses = semesters[semester].courses || {};
+  
+          Object.keys(courses).forEach((courseIndex) => {
+            const course = courses[courseIndex];
+  
+            if (course.instructors) {
+              Object.values(course.instructors).forEach((instructor) => {
+                if (instructor.name === instructorName) {
+                  instructorSchedules.push({
+                    academicYear,
+                    semester,
+                    courseTitle: course.course_description || 'Unknown Course',
+                    units: instructor.schedule?.total_units || 'Unknown Units',
+                    days: instructor.schedule?.day || 'Unknown Day',
+                    timeIn: instructor.schedule?.start_time || 'Unknown Start Time',
+                    timeOut: instructor.schedule?.end_time || 'Unknown End Time',
+                  });
+                }
+              });
+            }
+          });
+        });
+      });
+  
+      if (instructorSchedules.length === 0) {
+        return { success: false, message: 'Instructor schedule not found' };
+      }
+  
+      return { success: true, schedules: instructorSchedules };
+    } catch (error) {
+      console.error(`❌ Error fetching schedule for ${instructorName}:`, error);
+      throw new Error('Failed to fetch instructor schedule');
+    }
+  }
+  
   async getAllSchedules() {  // Renamed for consistency
     try {
       const scheduleRef = db.ref('schedule_test/academic_years/');

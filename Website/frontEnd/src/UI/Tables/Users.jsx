@@ -1,8 +1,9 @@
 import React from "react";
-import { useEffect } from "react";
+import { useEffect, useState} from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
-  Chip,
-  Typography,
+  Menu,
+  Checkbox,
   Tooltip,
   Table,
   TableBody,
@@ -12,10 +13,8 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Collapse,
-  Box,
   TextField,
-  CircularProgress,
+  TableSortLabel,
   FormControl,
   MenuItem,
   InputLabel,
@@ -31,20 +30,29 @@ const Users = ({
   people,
   editingRow,
   editedData,
-  expandedRows,
-  expandedDates,
-  searchQuery,
-  selectedRole,
-  selectedColor,
   handleEditUser,
   handleInputChange,
   handleSaveUser,
   handleCancelEdit,
-  handleDeleteUser,
   renderStars,
   getRowStyle,
   handleOpenReportDialog,
+  onRowSelectionChange
 }) => {
+
+  const [anchorEl, setAnchorEl] = useState(null);
+const [selectedUser, setSelectedUser] = useState(null);
+
+const handleMenuOpen = (event, user) => {
+  setAnchorEl(event.currentTarget);
+  setSelectedUser(user);
+};
+
+const handleMenuClose = () => {
+  setAnchorEl(null);
+  setSelectedUser(null);
+};
+
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -52,49 +60,83 @@ const Users = ({
       once: true,
     });
   }, []);
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  const handleSort = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  };
+
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectRow = (userId) => {
+    setSelectedRows((prev) => {
+      const newSelectedRows = prev.includes(userId)
+        ? prev.filter((id) => id !== userId) // Deselect
+        : [...prev, userId]; // Select
+      
+      onRowSelectionChange(newSelectedRows); // Notify the parent
+      return newSelectedRows;
+    });
+  };
+  const sortedPeople = [...people].sort((a, b) => {
+    const nameA = `${a.firstname} ${a.lastname}`.toLowerCase();
+    const nameB = `${b.firstname} ${b.lastname}`.toLowerCase();
+    return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+  });
 
   return (
     <TableContainer component={Paper} sx={{ border: "1px solid #D6D7D6", boxShadow: "none" }}>
       <Table>
         <TableHead>
-          <TableRow>
-      
-            <TableCell>First Name</TableCell>
-            <TableCell>Last Name</TableCell>
-            <TableCell>Department</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Grade</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
+        <TableRow>
+        <TableCell padding="checkbox">
+  {selectedRows.length > 0 ? `Selected: ${selectedRows.length}` : ""}
+</TableCell>
+          <TableCell>
+        <TableSortLabel active direction={sortOrder} onClick={handleSort}>
+            {editingRow ? "First Name" : "Name"}
+          </TableSortLabel>
+          </TableCell>
+    {editingRow && <TableCell>Last Name</TableCell>}
+    <TableCell>Department</TableCell>
+    <TableCell>Email</TableCell>
+    <TableCell>Role</TableCell>
+    <TableCell>Grade</TableCell>
+    <TableCell>Actions</TableCell>
+  </TableRow>
         </TableHead>
         <TableBody>
-          {people.map((person) => (
+          {sortedPeople.map((person) => (
             <React.Fragment key={person.id}>
               <TableRow data-aos="fade-right" style={getRowStyle(person.attendance)}>
               
-                <TableCell>
-                  {editingRow === person.id ? (
-                    <TextField
-                      value={editedData.firstname}
-                      onChange={(e) => handleInputChange(e, "firstname")}
-                      fullWidth
-                    />
-                  ) : (
-                    person.firstname
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editingRow === person.id ? (
-                    <TextField
-                      value={editedData.lastname}
-                      onChange={(e) => handleInputChange(e, "lastname")}
-                      fullWidth
-                    />
-                  ) : (
-                    person.lastname
-                  )}
-                </TableCell>
+              <TableCell padding="checkbox">
+              <Checkbox
+          checked={selectedRows.includes(person.id)}
+          onChange={() => handleSelectRow(person.id)}
+        />
+</TableCell>
+              <TableCell>
+  {editingRow === person.id ? (
+    <TextField
+      value={editedData.firstname}
+      onChange={(e) => handleInputChange(e, "firstname")}
+      fullWidth
+    />
+  ) : (
+    `${person.firstname} ${person.lastname}`
+  )}
+</TableCell>
+
+{editingRow === person.id && (
+  <TableCell>
+    <TextField
+      value={editedData.lastname}
+      onChange={(e) => handleInputChange(e, "lastname")}
+      fullWidth
+    />
+  </TableCell>
+)}
                 <TableCell>
                   {editingRow === person.id ? (
                     <FormControl fullWidth>
@@ -135,31 +177,35 @@ const Users = ({
                 </TableCell>
                 <TableCell>{renderStars(person.attendance)}</TableCell>
                 <TableCell>
-                  {editingRow === person.id ? (
-                    <>
-                      <IconButton onClick={() => handleSaveUser(person.id)} color="success">
-                        <Save />
-                      </IconButton>
-                      <IconButton onClick={handleCancelEdit} color="warning">
-                        <Cancel />
-                      </IconButton>
-                    </>
-                  ) : (
-                    <>
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => handleEditUser(person.id)} color="primary">
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                     
-                      <Tooltip title="View Report">
-                        <IconButton onClick={() => handleOpenReportDialog(person)} color="info">
-                          <SummarizeIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </>
-                  )}
-                </TableCell>
+  {editingRow === person.id ? (
+    <>
+      <IconButton onClick={() => handleSaveUser(person.id)} color="success">
+        <Save />
+      </IconButton>
+      <IconButton onClick={handleCancelEdit} color="warning">
+        <Cancel />
+      </IconButton>
+    </>
+  ) : (
+    <>
+      <IconButton onClick={(e) => handleMenuOpen(e, person)}>
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl) && selectedUser?.id === person.id}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => { handleEditUser(selectedUser.id); handleMenuClose(); }}>
+          Edit
+        </MenuItem>
+        <MenuItem onClick={() => { handleOpenReportDialog(selectedUser); handleMenuClose(); }}>
+          View Profile
+        </MenuItem>
+      </Menu>
+    </>
+  )}
+</TableCell>
               </TableRow>
 
             </React.Fragment>

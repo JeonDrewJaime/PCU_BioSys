@@ -12,6 +12,7 @@ const Schedules = ({
 }) => {
  
   const [order, setOrder] = useState('asc');
+  const [instructorOrder, setInstructorOrder] = useState('asc');
 
   const handleSort = () => {
     setOrder(order === 'asc' ? 'desc' : 'asc');
@@ -21,31 +22,18 @@ const Schedules = ({
     return order === 'asc'
       ? a.acadYear.localeCompare(b.acadYear)
       : b.acadYear.localeCompare(a.acadYear);
-  });
-const handleSelectRow = (yearIndex, semIndex) => {
-  const key = `${yearIndex}-${semIndex}`;
-  let updatedSelectedRows = [...selectedRows];
-
-  if (updatedSelectedRows.includes(key)) {
-    updatedSelectedRows = updatedSelectedRows.filter((row) => row !== key);
-  } else {
-    updatedSelectedRows.push(key);
-  }
-
-  // ✅ Capture BOTH the Academic Year + Semester
-  onSelectRow(updatedSelectedRows.map((key) => {
-    const [yIndex, sIndex] = key.split('-');
-    const year = filteredData[yIndex]; // Get the academic year
-    const semester = year.semesters[sIndex]; // Get the semester
-    return {
-      acadYear: year.acadYear,
-      semesterKey: semester.semesterKey,
-      instructors: semester.instructors
-    };
+  }).map(year => ({
+    ...year,
+    semesters: year.semesters.map(semester => ({
+      ...semester,
+      instructors: [...semester.instructors].sort((a, b) => {
+        return instructorOrder === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      }),
+    })),
   }));
-  setSelectedRows(updatedSelectedRows);
-};
-
+  
 
   return (
     <Box>
@@ -71,53 +59,104 @@ const handleSelectRow = (yearIndex, semIndex) => {
         Academic Year
       </TableSortLabel>
     </TableCell>
-              <TableCell>Semester</TableCell>
+           
               <TableCell>Instructors</TableCell>
         
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) =>
-              year.semesters.map((semester, semIndex) => (
-                <React.Fragment key={`${yearIndex}-${semIndex}`}>
-                  <TableRow>
-                    <TableCell>
-                    <Checkbox
-  checked={selectedRows.includes(`${yearIndex}-${semIndex}`)}
-  onChange={() => {
-    const key = `${yearIndex}-${semIndex}`;
-    let updatedSelectedRows = [...selectedRows];
+  {sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) => (
+    <React.Fragment key={`${yearIndex}`}>
+      {/* ✅ Academic Year Row */}
+      <TableRow>
+        <TableCell>
+          <Checkbox
+            checked={selectedRows.some((key) => key.startsWith(`${yearIndex}-`))}
+            onChange={() => {
+              const allSemesterKeys = year.semesters.map((_, semIndex) => `${yearIndex}-${semIndex}`);
+              const isAllSelected = allSemesterKeys.every((key) => selectedRows.includes(key));
+              
+              let updatedSelectedRows = [...selectedRows];
+              if (isAllSelected) {
+                updatedSelectedRows = updatedSelectedRows.filter(
+                  (key) => !allSemesterKeys.includes(key)
+                );
+              } else {
+                updatedSelectedRows = [...new Set([...updatedSelectedRows, ...allSemesterKeys])];
+              }
 
-    if (updatedSelectedRows.includes(key)) {
-      updatedSelectedRows = updatedSelectedRows.filter((row) => row !== key);
-    } else {
-      updatedSelectedRows.push(key);
-    }
+              onSelectRow(updatedSelectedRows);
+            }}
+          />
+        </TableCell>
+        <TableCell>
+          <IconButton onClick={() => handleRowClick(`${yearIndex}`)}>
+            <ExpandMoreIcon />
+          </IconButton>
+          {year.acadYear}
+        </TableCell>
 
-    onSelectRow(updatedSelectedRows);
-  }}
-/>
+        
+      </TableRow>
 
+      {/* ✅ Semester Rows (Collapsible under Academic Year) */}
+      <TableRow>
+        <TableCell colSpan={5}>
+          <Collapse in={openRows[`${yearIndex}`]} timeout="auto" unmountOnExit>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Semester</TableCell>
+                  <TableCell>Instructors</TableCell>
+                 
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {year.semesters.map((semester, semIndex) => (
+                  <React.Fragment key={`${yearIndex}-${semIndex}`}>
+                    {/* ✅ Semester Row */}
+                    <TableRow>
+                      <TableCell sx={{ paddingLeft: "40px" }}>
+                        <Checkbox
+                          checked={selectedRows.includes(`${yearIndex}-${semIndex}`)}
+                          onChange={() => {
+                            const key = `${yearIndex}-${semIndex}`;
+                            let updatedSelectedRows = [...selectedRows];
 
+                            if (updatedSelectedRows.includes(key)) {
+                              updatedSelectedRows = updatedSelectedRows.filter((row) => row !== key);
+                            } else {
+                              updatedSelectedRows.push(key);
+                            }
 
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleRowClick(`${yearIndex}-${semIndex}`)}>
-                        <ExpandMoreIcon />
-                      </IconButton>
-                      {year.acadYear}
-                    </TableCell>
-                    <TableCell>{semester.semesterKey}</TableCell>
-                    <TableCell>{semester.instructors.length}</TableCell>
-                  </TableRow>
+                            onSelectRow(updatedSelectedRows);
+                          }}
+                        />
+                        <IconButton onClick={() => handleInstructorClick(`${yearIndex}-${semIndex}`)}>
+                          <ExpandMoreIcon />
+                        </IconButton>
+                        {semester.semesterKey}
+                      </TableCell>
+                      <TableCell>{semester.instructors.length}</TableCell>
+                 
+                    </TableRow>
 
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <Collapse in={openRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
-                        <Table>
+                    {/* ✅ Instructors Collapsible under Semester */}
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <Collapse in={openInstructorRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
+                          <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>Instructor</TableCell>
+                            <TableCell>
+  <TableSortLabel
+    active
+    direction={instructorOrder}
+    onClick={() => setInstructorOrder(instructorOrder === 'asc' ? 'desc' : 'asc')}
+  >
+    Instructors
+  </TableSortLabel>
+  </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -146,6 +185,7 @@ const handleSelectRow = (yearIndex, semIndex) => {
                                             <TableCell>Total Units</TableCell>
                                             <TableCell>Start Time</TableCell>
                                             <TableCell>End Time</TableCell>
+                                            <TableCell>Units</TableCell>
                                           </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -160,7 +200,6 @@ const handleSelectRow = (yearIndex, semIndex) => {
                                               <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
                                               <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
                                               <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
-                  
                                             </TableRow>
                                           ))}
                                         </TableBody>
@@ -171,14 +210,21 @@ const handleSelectRow = (yearIndex, semIndex) => {
                               </React.Fragment>
                             ))}
                           </TableBody>
-                        </Table>
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
-                </React.Fragment>
-              ))
-            )}
-          </TableBody>
+                          </Table>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  ))}
+</TableBody>
+
         </Table>
       </TableContainer>
 
