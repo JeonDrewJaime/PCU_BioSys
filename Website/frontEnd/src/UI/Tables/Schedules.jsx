@@ -59,9 +59,7 @@ const Schedules = ({
         Academic Year
       </TableSortLabel>
     </TableCell>
-           
-              <TableCell>Instructors</TableCell>
-        
+
             </TableRow>
           </TableHead>
           <TableBody>
@@ -185,7 +183,7 @@ const Schedules = ({
                                             <TableCell>Total Units</TableCell>
                                             <TableCell>Start Time</TableCell>
                                             <TableCell>End Time</TableCell>
-                                            <TableCell>Units</TableCell>
+                           
                                           </TableRow>
                                         </TableHead>
                                         <TableBody>

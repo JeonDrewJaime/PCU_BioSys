@@ -125,9 +125,9 @@ const Dashboard = () => {
         let totalOnTime = 0;
         let totalCheckIns = 0;
         let totalLate = 0;
-
+  
         let attendanceByDate = {};
-
+  
         const processedUsers = data.map((user) => {
           let presentDays = 0;
           let workingDays = 0;
@@ -136,60 +136,64 @@ const Dashboard = () => {
           let onTimeCount = 0;
           let lateCount = 0;
           let totalCount = 0;
-
+  
           if (user.attendance) {
-            Object.entries(user.attendance).forEach(([date, courses]) => {
-              scheduledDays++;
-              attendanceByDate[date] = attendanceByDate[date] || {
-                date,
-                presentDays: 0,
-                absentDays: 0,
-                onTimeCount: 0,
-                lateCount: 0,
-                totalCheckIns: 0,
-              };
-
-              Object.values(courses).forEach((details) => {
-                totalCount++;
-                attendanceByDate[date].totalCheckIns++;
-
-                if (details.late_status === "On Time") {
-                  onTimeCount++;
-                  presentDays++;
-                  totalOnTime++;
-                  attendanceByDate[date].onTimeCount++;
-                  attendanceByDate[date].presentDays++;
-                } else if (details.late_status === "Late") {
-                  lateCount++;
-                  presentDays++;
-                  totalLate++;
-                  attendanceByDate[date].lateCount++;
-                  attendanceByDate[date].presentDays++;
-                } else if (details.late_status === "Absent") {
-                  absentDays++;
-                  totalAbsentDays++;
-                  attendanceByDate[date].absentDays++;
-                }
+            Object.entries(user.attendance).forEach(([academicYear, semesters]) => {
+              Object.entries(semesters).forEach(([semester, dates]) => {
+                Object.entries(dates).forEach(([date, courses]) => {
+                  scheduledDays++;
+                  attendanceByDate[date] = attendanceByDate[date] || {
+                    date,
+                    presentDays: 0,
+                    absentDays: 0,
+                    onTimeCount: 0,
+                    lateCount: 0,
+                    totalCheckIns: 0,
+                  };
+  
+                  Object.values(courses).forEach((details) => {
+                    totalCount++;
+                    attendanceByDate[date].totalCheckIns++;
+  
+                    if (details.late_status === "On Time") {
+                      onTimeCount++;
+                      presentDays++;
+                      totalOnTime++;
+                      attendanceByDate[date].onTimeCount++;
+                      attendanceByDate[date].presentDays++;
+                    } else if (details.late_status === "Late") {
+                      lateCount++;
+                      presentDays++;
+                      totalLate++;
+                      attendanceByDate[date].lateCount++;
+                      attendanceByDate[date].presentDays++;
+                    } else if (details.late_status === "Absent") {
+                      absentDays++;
+                      totalAbsentDays++;
+                      attendanceByDate[date].absentDays++;
+                    }
+                  });
+                });
               });
             });
           }
-
+  
           totalPresentDays += presentDays;
           totalWorkingDays += workingDays;
           totalScheduledDays += scheduledDays;
           totalCheckIns += totalCount;
-
+  
           const attendanceRate = totalCount > 0 ? (onTimeCount / totalCount) * 100 : null;
-
+  
           return { ...user, presentDays, absentDays, onTimeCount, lateCount, totalCheckIns: totalCount, attendanceRate };
         });
-
+  
         const sortedUsers = processedUsers.sort((a, b) => (b.attendanceRate || 0) - (a.attendanceRate || 0));
-
+  
         setOverallAttendanceRate(
           totalScheduledDays > 0 ? (totalPresentDays / totalScheduledDays) * 100 : null
         );
-
+  
         const attendanceMetrics = Object.values(attendanceByDate).map((entry) => ({
           date: entry.date,
           attendanceRate: totalScheduledDays > 0 ? (entry.presentDays / totalScheduledDays) * 100 : 0,
@@ -197,7 +201,7 @@ const Dashboard = () => {
           punctualityRate: entry.totalCheckIns > 0 ? (entry.onTimeCount / entry.totalCheckIns) * 100 : 0,
           lateArrivalRate: entry.totalCheckIns > 0 ? (entry.lateCount / entry.totalCheckIns) * 100 : 0,
         }));
-
+  
         setUsers(sortedUsers);
         setChartData(filterDataByTime(attendanceMetrics, timeFilter));
       } catch (err) {
@@ -206,10 +210,10 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     getUsers();
   }, [timeFilter]);
-
+  
   const filterDataByTime = (data, filter) => {
     const groupedData = {};
   
@@ -426,8 +430,6 @@ const top3HighestAbsentRate = [...filteredUsers]
     </Box>
   </Grid>
 </Grid>
-
- {/* mid parttttttttttttt------------------------------------ */}
 
 
 

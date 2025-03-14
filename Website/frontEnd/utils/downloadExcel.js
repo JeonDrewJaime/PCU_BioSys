@@ -2,84 +2,94 @@ import * as XLSX from 'xlsx';
 import { fetchInstructorSchedule } from '../APIs/adminAPI';
 
 
-export const downloadExcel = async (user) => {
-  if (!user) return;
-
+export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
   try {
-    // 🔹 Fetch schedule data from API
     const scheduleData = await fetchInstructorSchedule(`${user.firstname} ${user.lastname}`);
-    console.log("📌 Fetched Schedule Data:", scheduleData);
+    console.log("\ud83d\udccc Fetched Schedule Data:", scheduleData);
 
-    const wb = XLSX.utils.book_new();
+    attendanceData.forEach(({ acadYear, semesters }) => {
+      semesters.forEach(({ semester, dates }) => {
+        if (!selectedItems[`${acadYear}-${semester}`]) return;
 
-    // ✅ User Info & Schedule Sheet
-    const userScheduleSheet = [
-      ["User Attendance Report"],
-      ["Name", `${user?.firstname} ${user?.lastname}`],
-      ["Email", user?.email],
-      ["Role", user?.role],
-      ["Department", user?.department],
-      [], // Empty row for spacing
-      ["Schedule"], // Header for Schedule section
-      ["Academic Year", "Semester", "Course Title", "Days", "Time In", "Time Out", "Units"]
-    ];
+        const workbook = XLSX.utils.book_new();
 
-    if (scheduleData && scheduleData.length > 0) {
-      scheduleData.forEach((schedule) => {
-        userScheduleSheet.push([
-          schedule.academicYear,
-          schedule.semester,
-          schedule.courseTitle,
-          schedule.days,
-          schedule.timeIn,
-          schedule.timeOut,
-          schedule.units
-        ]);
-      });
-    } else {
-      console.warn("⚠️ No schedule data found for instructor:", `${user.firstname} ${user.lastname}`);
-    }
+        // \u2705 General Information Sheet
+        let generalInfoData = [
+          ["Name of Faculty", `${user.firstname} ${user.lastname}`],
+          ["College", user.department],
+          ["Dean", "NORMAN B. RAMOS, Ph.D."], // Hardcoded as per the image
+          ["Address", ""],
+          [],
+          ["School Year", acadYear, "", "", "Semester", semester],
+          [],
+          ["Schedule of Classes"],
+          ["Days", "Time", "Short Name", "Course Title", "Units"],
+        ];
 
-    const wsUserSchedule = XLSX.utils.aoa_to_sheet(userScheduleSheet);
-    XLSX.utils.book_append_sheet(wb, wsUserSchedule, "User Info & Schedule");
+        const filteredSchedule = scheduleData.filter(
+          (schedule) => schedule.academicYear === acadYear && schedule.semester === semester
+        );
 
-    // ✅ Attendance Records Sheet
-    const attendanceData = [
-      ["Date", "Course", "Time In", "Time Out", "Late Status", "Validation Progress", "Total Hours", "Units"],
-    ];
+        filteredSchedule.forEach(schedule => {
+          generalInfoData.push([
+            schedule.days,
+            `${schedule.timeIn} - ${schedule.timeOut}`,
+            schedule.shortName,
+            schedule.courseTitle,
+            schedule.units
+          ]);
+        });
 
-    Object.entries(user?.attendance || {}).forEach(([date, details]) => {
-      Object.entries(details).forEach(([course, record]) => {
-        let validatedCount = 0;
-        for (let i = 1; i <= 3; i++) {
-          if (record[`validate_${i}`]?.status === "Validated") validatedCount++;
-        }
-        const validationProgress = `${Math.round((validatedCount / 3) * 100)}%`;
+        const generalInfoSheet = XLSX.utils.aoa_to_sheet(generalInfoData);
+        XLSX.utils.book_append_sheet(workbook, generalInfoSheet, "General Info");
 
-        attendanceData.push([
-          date,
-          course,
-          record.time_in,
-          record.time_out,
-          record.late_status,
-          validationProgress,
-          record.total_hours,
-          record.units,
-        ]);
+        // \u2705 Attendance Records Sheet
+        let attendanceDataSheet = [
+          ["Date", "Course", "Time In", "Time Out", "Late Status", "Validation Progress", "Total Hours", "Units"],
+        ];
+
+        dates.forEach(({ date, details }) => {
+          if (!selectedItems[`${acadYear}-${semester}-${date}`]) return;
+
+          Object.entries(details).forEach(([course, record]) => {
+            let validatedCount = Object.values(details).filter(d => d.status === "Validated").length;
+            let validationPercentage = Math.round((validatedCount / 3) * 100) || 0;
+
+            attendanceDataSheet.push([
+              date,
+              course,
+              record.time_in || "-",
+              record.time_out || "-",
+              record.late_status || "-",
+              `${validationPercentage}%`,  // \u2705 Include Validation Progress
+              record.total_hours || "-",
+              record.units || "-",
+            ]);
+          });
+        });
+
+        const attendanceSheet = XLSX.utils.aoa_to_sheet(attendanceDataSheet);
+        XLSX.utils.book_append_sheet(workbook, attendanceSheet, "Attendance Records");
+
+        const fileName = `${user.firstname}_${user.lastname}_Attendance_${acadYear}_${semester}.xlsx`;
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+        // \u2705 Create a download link dynamically
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       });
     });
-
-    const wsAttendance = XLSX.utils.aoa_to_sheet(attendanceData);
-    XLSX.utils.book_append_sheet(wb, wsAttendance, "Attendance Records");
-
-    // ✅ Save the Excel file
-    const fileName = `${user.firstname}_${user.lastname}_Attendance.xlsx`;
-    console.log(`💾 Saving file: ${fileName}`);
-    XLSX.writeFile(wb, fileName);
   } catch (error) {
-    console.error("❌ Error downloading Excel:", error);
+    console.error("\u274c Error generating Excel:", error);
   }
 };
+
+
 
 
 export const downloadExcelSchedule = (selectedRows) => {

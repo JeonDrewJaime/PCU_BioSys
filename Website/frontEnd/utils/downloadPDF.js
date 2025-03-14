@@ -1,5 +1,107 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { fetchInstructorSchedule } from '../APIs/adminAPI';
+
+export const downloadPDFDTR = async (user, attendanceData, selectedItems) => {
+  try {
+    const scheduleData = await fetchInstructorSchedule(`${user.firstname} ${user.lastname}`);
+    console.log("📌 Fetched Schedule Data:", scheduleData);
+
+    attendanceData.forEach(({ acadYear, semesters }) => {
+      semesters.forEach(({ semester, dates }) => {
+        if (!selectedItems[`${acadYear}-${semester}`]) return;
+
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("General Information", 105, 10, { align: "center" });
+
+        doc.setFontSize(12);
+        doc.text(`Name: ${user?.firstname} ${user?.lastname}`, 14, 20);
+        doc.text(`Email: ${user?.email}`, 14, 30);
+        doc.text(`Role: ${user?.role}`, 14, 40);
+        doc.text(`Department: ${user?.department}`, 14, 50);
+        doc.text(`Academic Year: ${acadYear}`, 14, 60);
+        doc.text(`Semester: ${semester}`, 14, 70);
+
+        let yOffset = 80;
+
+        // ✅ Filter Schedule for the Selected Academic Year & Semester
+        const filteredSchedule = scheduleData.filter(
+          (schedule) => schedule.academicYear === acadYear && schedule.semester === semester
+        );
+
+        if (filteredSchedule.length > 0) {
+          doc.setFontSize(14);
+          doc.text("Schedule", 14, yOffset);
+          yOffset += 10;
+
+          let scheduleTableData = filteredSchedule.map(schedule => ([
+            schedule.courseTitle,
+            schedule.days,
+            schedule.timeIn,
+            schedule.timeOut,
+            schedule.units
+          ]));
+
+          autoTable(doc, {
+            startY: yOffset,
+            head: [["Course Title", "Days", "Time In", "Time Out", "Units"]],
+            body: scheduleTableData,
+            theme: "grid",
+            styles: { fontSize: 10 },
+          });
+
+          yOffset = doc.lastAutoTable.finalY + 10;
+        } else {
+          console.warn(`⚠️ No schedule found for AY: ${acadYear}, Sem: ${semester}`);
+        }
+
+        // ✅ Attendance Records Table
+        let semesterTableData = [];
+
+        dates.forEach(({ date, details }) => {
+          if (!selectedItems[`${acadYear}-${semester}-${date}`]) return;
+
+          Object.entries(details).forEach(([course, record]) => {
+            // 🔹 **Calculate Validation Progress Percentage**
+            let validatedCount = Object.values(details).filter(d => d.status === "Validated").length;
+            let validationPercentage = Math.round((validatedCount / 3) * 100) || 0; // Avoid NaN if no records
+
+            semesterTableData.push([
+              date,
+              course,
+              record.time_in || "-",
+              record.time_out || "-",
+              record.late_status || "-",
+            
+              `${validationPercentage}%`,  // ✅ Include Validation Progress
+              record.total_hours || "-",
+              record.units || "-",
+            ]);
+          });
+        });
+
+        if (semesterTableData.length > 0) {
+          autoTable(doc, {
+            startY: yOffset,
+            head: [
+              ["Date", "Course", "Time In", "Time Out", "Late Status", "Validation Progress", "Total Hours", "Units"]
+            ],
+            body: semesterTableData,
+            theme: "grid",
+            styles: { fontSize: 10 },
+          });
+        }
+
+        const fileName = `${user.firstname}_${user.lastname}_Attendance_${acadYear}_${semester}.pdf`;
+        doc.save(fileName);
+      });
+    });
+  } catch (error) {
+    console.error("❌ Error generating PDF:", error);
+  }
+};
+
 
 export const downloadPDFSchedule = (selectedRows) => {
   if (selectedRows.length === 0) return;

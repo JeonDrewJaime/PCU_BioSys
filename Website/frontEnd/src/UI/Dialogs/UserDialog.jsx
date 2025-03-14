@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { downloadPDFDTR } from "../../../utils/downloadPDF";
+import { downloadExcelDTR } from "../../../utils/downloadExcel";
 import {
   Dialog,
   DialogTitle,
@@ -71,71 +73,6 @@ const UserReportDialog = ({ open, onClose, user }) => {
     })),
   }));
 
-  const downloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("User Attendance Report", 105, 10, { align: "center" });
-  
-    doc.setFontSize(12);
-    doc.text(`Name: ${user?.firstname} ${user?.lastname}`, 14, 20);
-    doc.text(`Email: ${user?.email}`, 14, 30);
-    doc.text(`Role: ${user?.role}`, 14, 40);
-    doc.text(`Department: ${user?.department}`, 14, 50);
-  
-    let yOffset = 60;
-  
-    attendanceData.forEach(({ acadYear, semesters }) => {
-      if (!selectedItems[acadYear]) return;
-  
-      doc.setFontSize(14);
-      doc.text(`Academic Year: ${acadYear}`, 14, yOffset);
-      yOffset += 7;
-  
-      semesters.forEach(({ semester, dates }) => {
-        // Automatically select all dates if the semester is selected
-        if (!selectedItems[`${acadYear}-${semester}`]) return;
-  
-        doc.setFontSize(12);
-        doc.text(`  Semester: ${semester}`, 14, yOffset);
-        yOffset += 6;
-  
-        let semesterTableData = [];
-  
-        dates.forEach(({ date, details }) => {
-          // Automatically include all attendance records if a semester is selected
-          if (!selectedItems[`${acadYear}-${semester}`] && !selectedItems[`${acadYear}-${semester}-${date}`]) return;
-  
-          Object.entries(details).forEach(([course, record]) => {
-            semesterTableData.push([
-              date,
-              course,
-              record.time_in || "-",
-              record.time_out || "-",
-              record.late_status || "-",
-              `${record.status === "Validated" ? "✅" : "❌"}`, // Indicate validation
-              record.total_hours || "-",
-              record.units || "-",
-            ]);
-          });
-        });
-  
-        if (semesterTableData.length > 0) {
-          autoTable(doc, {
-            startY: yOffset,
-            head: [["Date", "Course", "Time In", "Time Out", "Late Status", "Validation", "Total Hours", "Units"]],
-            body: semesterTableData,
-            theme: "grid",
-            styles: { fontSize: 10 },
-          });
-  
-          yOffset = doc.lastAutoTable.finalY + 10;
-        }
-      });
-    });
-  
-    doc.save(`${user.firstname}_${user.lastname}_Attendance.pdf`);
-  };
-  
 
   const getValidatedCount = (details) => {
     let count = Object.values(details).filter(d => d.status === "Validated").length;
@@ -168,19 +105,23 @@ const UserReportDialog = ({ open, onClose, user }) => {
       </DialogTitle>
 
       <DialogContent>
-        <Button variant="contained" color="primary" onClick={downloadPDF} sx={{ mb: 2 }}>
-          Download Selected as PDF
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={handleSelectAll} sx={{ mb: 2, ml: 2 }}>
-          {selectAll ? "Deselect All" : "Select All"}
-        </Button>
+      <Button variant="contained" color="primary" onClick={() => downloadPDFDTR(user, attendanceData, selectedItems)} sx={{ mb: 2 }}>
+  Download Selected as PDF
+</Button>
 
+<Button variant="contained" color="secondary" onClick={() => downloadExcelDTR(user, attendanceData, selectedItems)}>
+          Download Selected as Excel
+        </Button>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
                 
-                <TableCell>Select</TableCell>
+                <TableCell><Checkbox
+  checked={selectAll}
+  onChange={handleSelectAll}
+  color="primary"
+/></TableCell>
                 <TableCell>Academic Year</TableCell>
               </TableRow>
             </TableHead>
@@ -226,7 +167,7 @@ const UserReportDialog = ({ open, onClose, user }) => {
                           dates.map(({ date, details }) => (
                             <React.Fragment key={`${acadYear}-${semester}-${date}`}>
                               <TableRow>
-                                <TableCell/>
+                                <TableCell/> 
                                 <TableCell sx={{ pl: 8 }}><IconButton onClick={() => toggleExpand(setExpandedDates, date)}>
                                     {expandedDates[date] ? <ExpandLess /> : <ExpandMore />}
                                   </IconButton>{date}  </TableCell>
@@ -235,7 +176,7 @@ const UserReportDialog = ({ open, onClose, user }) => {
 
                               {expandedDates[date] && (
                                 <TableRow>
-                                  <TableCell colSpan={2}>
+                                  <TableCell colSpan={3}>
                                     <Table>
                                       <TableHead>
                                         <TableRow>

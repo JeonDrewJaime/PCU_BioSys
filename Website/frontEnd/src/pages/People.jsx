@@ -399,6 +399,26 @@ const getRowStyle = (attendanceData) => {
     <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
   </Select>
 </FormControl>
+
+<FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
+  <InputLabel>Actions</InputLabel>
+  <Select
+    value=""
+    displayEmpty
+    onChange={(event) => {
+      if (event.target.value === "delete") {
+        handleDeleteUser(selectedRows);
+      }
+    }}
+  >
+    <MenuItem value=""></MenuItem>
+    <MenuItem value="delete" disabled={selectedRows.length === 0}>
+      <Delete sx={{ marginRight: 1 }} />
+      Delete Selected
+    </MenuItem>
+  </Select>
+</FormControl>
+
           <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
             <InputLabel>Role</InputLabel>
             <Select value={selectedRole} onChange={handleRoleChange}>
@@ -419,16 +439,7 @@ const getRowStyle = (attendanceData) => {
               <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
             </Select>
           </FormControl>
-          <Button
-    variant="contained"
-    color="error"
-    onClick={handleDeleteSelectedUsers}
-    disabled={selectedRows.length === 0} // Disable when no rows are selected
-    sx={{ ml: 2 }}
-  >
-    <Delete />
-    Delete Selected
-  </Button>
+
           <Button
             variant="contained"
             onClick={() => setOpenDialog(true)}
