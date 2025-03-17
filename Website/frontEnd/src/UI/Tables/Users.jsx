@@ -85,26 +85,83 @@ const handleMenuClose = () => {
   });
 
   return (
-    <TableContainer component={Paper} sx={{ border: "1px solid #D6D7D6", boxShadow: "none" }}>
-      <Table>
-        <TableHead>
-        <TableRow>
-        <TableCell padding="checkbox">
+    <TableContainer component={Paper} sx={{ border: "1px solid #cccccc", boxShadow: "none",  borderLeft: "1px solid #ffffff", borderRight: "1px solid #ffffff",  }}>
+    <Table >
+      <TableHead sx={{ backgroundColor: "#ffffff" }}>
+      <TableRow >
+      <TableCell
+  sx={{
+    fontWeight: 400,
+    color: "#041129",
+    textAlign: 'center',
+    fontSize: "15px",
+    minWidth: 145, // Adjust this value to increase the width
+    width: 'auto', // Ensures the cell adjusts automatically based on content, but still allows flexibility
+  }}
+>
   {selectedRows.length > 0 ? `Selected: ${selectedRows.length}` : ""}
 </TableCell>
-          <TableCell>
-        <TableSortLabel active direction={sortOrder} onClick={handleSort}>
-            {editingRow ? "First Name" : "Name"}
-          </TableSortLabel>
-          </TableCell>
-    {editingRow && <TableCell>Last Name</TableCell>}
-    <TableCell>Department</TableCell>
-    <TableCell>Email</TableCell>
-    <TableCell>Role</TableCell>
-    <TableCell>Grade</TableCell>
-    <TableCell>Actions</TableCell>
-  </TableRow>
-        </TableHead>
+
+
+        <TableCell   sx={{
+          fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px",
+          
+        }}>
+                
+          <TableSortLabel
+          active
+          direction={sortOrder}
+          onClick={handleSort}
+          sx={{
+            color: "#041129", 
+            "&.MuiTableSortLabel-root": {
+              color: "#041129 !important", 
+            },
+            "& .MuiTableSortLabel-icon": {
+              color: "#041129 !important", 
+            },
+          }}
+        >
+          {editingRow ? "First Name" : "Name"}
+        </TableSortLabel>
+
+        </TableCell>
+
+  {editingRow && <TableCell sx={{ fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px" }}>Last Name</TableCell>}
+  <TableCell sx={{
+          fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"
+        }}>Department</TableCell>
+        
+  <TableCell sx={{
+          fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"
+        }}>Email</TableCell>
+
+  <TableCell sx={{
+          fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"
+        }}>Role</TableCell>
+
+  <TableCell sx={{
+          fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"
+        }}>Grade</TableCell>
+
+  <TableCell></TableCell>
+</TableRow>
+      </TableHead>
+
+
+
         <TableBody>
           {sortedPeople.map((person) => (
             <React.Fragment key={person.id}>

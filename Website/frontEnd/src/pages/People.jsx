@@ -21,7 +21,8 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Checkbox
+  Checkbox,
+  InputAdornment
 
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel, Search, Close } from "@mui/icons-material";
@@ -373,90 +374,123 @@ const getRowStyle = (attendanceData) => {
       <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
         Here’s a snapshot of your employees' recent performance metrics and important updates. Stay on top of your team’s progress.
       </Typography>
+
       <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Checkbox
+      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1,mb: 4, flexWrap: 'wrap' }}>
+      {/* Select All Section */}
+      <Box
+        sx={{
+          border: '1px solid #cccccc',
+          boxShadow: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: 137,
+          borderRadius: '4px',
+          height: '40px',
+          mr: 1,
+        }}
+      >
+       <Checkbox
         checked={selectAll}
         onChange={handleSelectAllRows}
-        inputProps={{ "aria-label": "select all users" }}
+        inputProps={{ 'aria-label': 'select all users' }}
       />
-      <Typography variant="body1">Select All</Typography>
-          <Search sx={{ mr: 1 }} />
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            size="small"
-          />
-          <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
-  <InputLabel>Department</InputLabel>
-  <Select value={selectedDepartment} onChange={handleDepartmentChange}>
-    <MenuItem value="">All</MenuItem>
-    <MenuItem value="Computer Science">Computer Science</MenuItem>
-    <MenuItem value="Information Technology">Information Technology</MenuItem>
-    <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
-  </Select>
-</FormControl>
+      <Typography variant="body1" sx={{ fontSize: '15px' }}>
+        {selectAll ? 'Select None' : 'Select All'}
+      </Typography>
+      </Box>
 
-<FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
-  <InputLabel>Actions</InputLabel>
-  <Select
-    value=""
-    displayEmpty
-    onChange={(event) => {
-      if (event.target.value === "delete") {
-        handleDeleteUser(selectedRows);
-      }
-    }}
-  >
-    <MenuItem value=""></MenuItem>
-    <MenuItem value="delete" disabled={selectedRows.length === 0}>
-      <Delete sx={{ marginRight: 1 }} />
-      Delete Selected
-    </MenuItem>
-  </Select>
-</FormControl>
+      {/* Department Select */}
+      <FormControl sx={{ minWidth: 150, mx: 2, mr: -1, }} size="small">
+        <InputLabel>Department</InputLabel>
+        <Select value={selectedDepartment} onChange={handleDepartmentChange}>
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="Computer Science">Computer Science</MenuItem>
+          <MenuItem value="Information Technology">Information Technology</MenuItem>
+          <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
+        </Select>
+      </FormControl>
 
-          <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
-            <InputLabel>Role</InputLabel>
-            <Select value={selectedRole} onChange={handleRoleChange}>
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="Faculty">Faculty</MenuItem>
-              <MenuItem value="Admin">Admin</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 150, mx: 2 }} size="small">
-            <InputLabel>Rating</InputLabel>
-            <Select value={selectedColor} onChange={handleColorChange}>
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="#D4EDDA">Excellent</MenuItem>
-              <MenuItem value="#D1ECF1">Very Good</MenuItem>
-              <MenuItem value="#FFF3CD">Good</MenuItem>
-              <MenuItem value="#F8D7DA">Satisfactory</MenuItem>
-              <MenuItem value="#FADBD8">Needs Improvement</MenuItem>
-              <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
-            </Select>
-          </FormControl>
+      {/* Role Select */}
+      <FormControl sx={{ minWidth: 150, mx: 2, mr: -1, }} size="small">
+        <InputLabel>Role</InputLabel>
+        <Select value={selectedRole} onChange={handleRoleChange}>
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="Faculty">Faculty</MenuItem>
+          <MenuItem value="Admin">Admin</MenuItem>
+        </Select>
+      </FormControl>
 
-          <Button
-            variant="contained"
-            onClick={() => setOpenDialog(true)}
-            sx={{
-              borderRadius: "45px",
-              height: "40px",
-              width: "200px",
-              backgroundColor: "#EFF6FB",
-              border: "1px solid #041129",
-              color: "#041129",
-              fontWeight: 600,
-              boxShadow: "none",
-            }}
-          >
-            Add Person
-          </Button>
-        </Box>
+      {/* Rating Select */}
+      <FormControl sx={{ minWidth: 150, mx: 2, mr: -1, }} size="small">
+        <InputLabel>Rating</InputLabel>
+        <Select value={selectedColor} onChange={handleColorChange}>
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="#D4EDDA">Excellent</MenuItem>
+          <MenuItem value="#D1ECF1">Very Good</MenuItem>
+          <MenuItem value="#FFF3CD">Good</MenuItem>
+          <MenuItem value="#F8D7DA">Satisfactory</MenuItem>
+          <MenuItem value="#FADBD8">Needs Improvement</MenuItem>
+          <MenuItem value="#F5B7B1">Unsatisfactory</MenuItem>
+        </Select>
+      </FormControl>
+
+      {/* Actions Select */}
+      <FormControl sx={{ minWidth: 150, mx: 2, mr: 1, }} size="small">
+        <InputLabel>Actions</InputLabel>
+        <Select
+          value=""
+          displayEmpty
+          onChange={(event) => {
+            if (event.target.value === 'delete') {
+              handleDeleteUser(selectedRows);
+            }
+          }}
+        >
+          <MenuItem value=""></MenuItem>
+          <MenuItem value="delete" disabled={selectedRows.length === 0}>
+            <Delete sx={{ marginRight: 1,}} />
+            Delete 
+          </MenuItem>
+        </Select>
+      </FormControl>
+
+      {/* Search Field */}
+      <TextField
+        variant="outlined"
+        placeholder="Search users..."
+        value={searchQuery}
+        onChange={handleSearchChange}
+        size="small"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search />
+            </InputAdornment>
+          ),
+        }}
+        sx={{ minWidth: 430, mx: 2, borderRadius: '4px' }}
+      />
+
+      {/* Add User Button */}
+      <Button
+        variant="contained"
+        onClick={() => setOpenDialog(true)}
+        sx={{
+          borderRadius: '45px',
+          height: '40px',
+          width: '200px',
+          backgroundColor: '#cceaff',
+          border: '1px solid #1a4076',
+          color: '#1a4076',
+          fontWeight: 600,
+          boxShadow: 'none',
+          marginLeft: 'auto', // Align the button to the far right
+        }}
+      >
+        Add User
+      </Button>
+    </Box>
         <Users
           people={filteredPeople}
           editingRow={editingRow}

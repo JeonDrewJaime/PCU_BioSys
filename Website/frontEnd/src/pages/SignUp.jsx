@@ -21,19 +21,27 @@ const steps = ['Account Details', 'Personal Information', 'Password Setup'];
 
 const validationSchemas = [
   Yup.object({
-    email: Yup.string().email('Invalid email').required('Email is required'),
+    email: Yup.string()
+      .email('Invalid email')
+      .matches(/^[a-zA-Z0-9._%+-]+@pcu\.edu\.ph$/, 'Email must be a pcu.edu.ph email')
+      .required('Email is required'),
   }),
+  
   Yup.object({
     firstname: Yup.string().required('First name is required'),
     lastname: Yup.string().required('Last name is required'),
     department: Yup.string().required('Department is required'),
   }),
   Yup.object({
-    password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+    password: Yup.string()
+      .min(6, 'Password must be at least 6 characters')
+      .matches(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character')
+      .required('Password is required'),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password'), null], 'Passwords must match')
       .required('Confirm password is required'),
   }),
+  
 ];
 
 function SignUp({ setActiveComponent }) {

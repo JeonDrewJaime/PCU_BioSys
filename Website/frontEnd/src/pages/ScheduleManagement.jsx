@@ -243,7 +243,7 @@ const handleClose = () => {
 />
       </Paper>
 
-      <Dialog open={openAddScheduleDialog} onClose={() => setOpenAddScheduleDialog(false)} maxWidth="xl" fullWidth>
+      <Dialog open={openAddScheduleDialog} onClose={() => setOpenAddScheduleDialog(false)} maxWidth="Lg" fullWidth>
         <DialogTitle>
           <IconButton
             aria-label="close"
