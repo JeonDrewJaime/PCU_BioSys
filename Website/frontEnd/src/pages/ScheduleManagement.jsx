@@ -299,16 +299,16 @@ const handleClose = () => {
       </Paper>
 
       <Dialog open={openAddScheduleDialog} onClose={() => setOpenAddScheduleDialog(false)} maxWidth="Lg" fullWidth>
-        <DialogTitle>
+        <DialogTitle sx={{bgcolor: "#f5f5fb"}}>
           <IconButton
             aria-label="close"
             onClick={() => setOpenAddScheduleDialog(false)}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{ position: 'absolute', right: 8, top: 8, bgcolor: "#f5f5fb" }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{bgcolor: "#f5f5fb"}}>
           <AddSchedule onClose={() => setOpenAddScheduleDialog(false)} />
         </DialogContent>
       </Dialog>

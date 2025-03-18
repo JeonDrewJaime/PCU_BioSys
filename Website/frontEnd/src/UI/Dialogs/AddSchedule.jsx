@@ -559,7 +559,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth  >
         <DialogTitle sx={{ p: 0 }}>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, color:'#041129' }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, color:'#041129'}}>
             <IconButton edge="start" color="inherit" onClick={() => setOpenDialog(false)}>
               <CloseIcon />
             </IconButton>
