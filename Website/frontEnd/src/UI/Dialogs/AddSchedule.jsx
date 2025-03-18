@@ -15,6 +15,7 @@ import { fetchAllUsers } from '../../../APIs/adminAPI';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CreateUser from './CreateUser';
 import ValidationAlert from '../ValidationAlert';
+import msexcel from '../../assets/msExcel.png'
 
 const handleCloseSnackbar = () => {
   setOpenSnackbar(false);
@@ -151,7 +152,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
 
     // Expected Headers
     const expectedHeaders = [
-        "SECTION", "Curri", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS",
+        "SECTION", "CURRICULUM", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS",
         "DAY", "STIME", "ETIME", "ROOM", "INSTRUCTOR"
     ];
 
@@ -259,10 +260,10 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
   );
 
   {rows.length > 0 && (
-    <Box sx={{ marginBottom: 2 }}>
+    <Box sx={{ marginBottom: 2, }}>
       <Alert
         severity={isValidColumn() ? "success" : "error"}
-        sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}
+        sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" ,  backgroundColor: "transparent", }}
       >
         <Typography fontWeight={600}>Validation Results:</Typography>
   
@@ -287,8 +288,8 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
   
   
   return (
-    <Container>
-      <div style={{ display: "flex", gap: 10, marginBottom: 10}}>
+    <Container sx={{bgcolor:"#f5f5fb"}}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 10, }}>
       <TextField 
         label="Search" 
         variant="outlined" 
@@ -332,13 +333,64 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
         >
           Save to Database
         </Button>
+        
       </div>
+
+    
+                    <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column', // Stack the image and text vertically
+                  justifyContent: 'center', // Center everything horizontally
+                  alignItems: 'center', // Center everything vertically
+                  textAlign: 'center', // Ensure text is centered
+                  height: '60vh', // Ensure the parent container takes up the full height of the viewport
+                  px: 2, // Optional padding for some space on the sides
+                }}
+              >
+
+                <Box
+                  component="img"
+                  src={msexcel}
+                  alt="wala"
+                  sx={{
+                    width: { xs: '45%', sm: '35%', md: '23%', lg: '10%' },
+                    height: { xs: '27%', sm: '27%', md: '30%', lg: '27%' },
+                    mt: { xs: -10, sm: -5, md: -3, lg: 3 },
+                    mb: { xs: -7, sm: -6, md: -3, lg: -3 },
+                    margin: '-10% auto 0', // Center the image horizontally and adjust its vertical position
+                  }}
+                />
+
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography sx={{ color: '#3b3c3d', fontWeight: 700, 
+                    fontSize: { xs: '35px', sm: '35px', md: '40px', lg: '55px' }, mt: { xs: 5, sm: 5, md: 3, lg: 3 } }}>
+                    Note for Users
+                  </Typography>
+                  <Typography sx={{ color: '#3b3c3d', fontWeight: 600, mt: '3px', fontSize: { xs: '14px', sm: '18px', md: '25px' } }}>
+                    To upload your schedule, please follow these steps:
+                  </Typography>
+                  <Typography sx={{ color: '#727375', fontWeight: 500, mt: '15px', fontSize: { xs: '12px', sm: '15px' }, mb: { xs: 5, sm: 5, md: 4, lg: 5 } }}>
+                    -<span style={{ textDecoration: 'underline', color: 'blue' }}>
+                      Download the Excel Template
+                    </span>.<br />
+                    -Follow the example data in the template to ensure proper formatting.<br />
+                    -Fill in your own schedule information based on the template structure.<br />
+                    -Save the file and upload it to complete the process.
+                  </Typography>
+                </Box>
+
+              </Box>
+
+      
+           
   
       {filteredRows.length > 0 && (
-
-        <StyledTableContainer component={Paper}>
+<Box sx = {{bgcolor: ""}}>
 <ValidationAlert rows={rows} users={users} isValidColumn={isValidColumn} />
-          <Table>
+        <StyledTableContainer component={Paper}>
+
+          <Table sx={{ border: "1px solid #D6D7D6", borderRadius: 4, boxShadow: "none"}}>
             <TableBody>
               {filteredRows.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
@@ -362,7 +414,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
         }
       }
       const expectedHeaders = [
-        "SECTION", "Curri", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS",
+        "SECTION", "CURRICULUM", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS",
         "DAY", "STIME", "ETIME", "ROOM", "INSTRUCTOR"
     ];
       if (rowIndex === 2 && cell !== expectedHeaders[cellIndex]) {
@@ -502,9 +554,10 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
             </TableBody>
           </Table>
         </StyledTableContainer>
+        </Box>
       )}
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth >
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth  >
         <DialogTitle sx={{ p: 0 }}>
           <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2, color:'#041129' }}>
             <IconButton edge="start" color="inherit" onClick={() => setOpenDialog(false)}>

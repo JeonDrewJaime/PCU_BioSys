@@ -37,7 +37,7 @@ const Schedules = ({
 
   return (
     <Box>
-      <TableContainer component={Paper} sx={{border: "1px solid #D6D7D6", boxShadow: "none"}}>
+      <TableContainer component={Paper}>
         <Table>
           <TableHead sx={{backgroundColor: "#CEE3F3"}}>
             <TableRow>

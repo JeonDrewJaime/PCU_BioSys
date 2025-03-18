@@ -5,7 +5,7 @@ import { fetchInstructorSchedule } from '../APIs/adminAPI';
 export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
   try {
     const scheduleData = await fetchInstructorSchedule(`${user.firstname} ${user.lastname}`);
-    console.log("\ud83d\udccc Fetched Schedule Data:", scheduleData);
+    console.log("📌 Full Schedule Data:", scheduleData); // Display in console
 
     attendanceData.forEach(({ acadYear, semesters }) => {
       semesters.forEach(({ semester, dates }) => {
@@ -13,7 +13,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
 
         const workbook = XLSX.utils.book_new();
 
-        // \u2705 General Information Sheet
+        // ✅ General Information Sheet
         let generalInfoData = [
           ["Name of Faculty", `${user.firstname} ${user.lastname}`],
           ["College", user.department],
@@ -43,7 +43,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
         const generalInfoSheet = XLSX.utils.aoa_to_sheet(generalInfoData);
         XLSX.utils.book_append_sheet(workbook, generalInfoSheet, "General Info");
 
-        // \u2705 Attendance Records Sheet
+        // ✅ Attendance Records Sheet
         let attendanceDataSheet = [
           ["Date", "Course", "Time In", "Time Out", "Late Status", "Validation Progress", "Total Hours", "Units"],
         ];
@@ -61,7 +61,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
               record.time_in || "-",
               record.time_out || "-",
               record.late_status || "-",
-              `${validationPercentage}%`,  // \u2705 Include Validation Progress
+              `${validationPercentage}%`,  // ✅ Include Validation Progress
               record.total_hours || "-",
               record.units || "-",
             ]);
@@ -71,11 +71,33 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
         const attendanceSheet = XLSX.utils.aoa_to_sheet(attendanceDataSheet);
         XLSX.utils.book_append_sheet(workbook, attendanceSheet, "Attendance Records");
 
+        // ✅ Full Schedule Data Sheet (New Addition)
+        let scheduleSheetData = [
+          ["Academic Year", "Semester", "Days", "Time In", "Time Out", "Short Name", "Course Title", "Units"]
+        ];
+
+        scheduleData.forEach(schedule => {
+          scheduleSheetData.push([
+            schedule.academicYear,
+            schedule.semester,
+            schedule.days,
+            schedule.timeIn,
+            schedule.timeOut,
+            schedule.shortName,
+            schedule.courseTitle,
+            schedule.units
+          ]);
+        });
+
+        const scheduleSheet = XLSX.utils.aoa_to_sheet(scheduleSheetData);
+        XLSX.utils.book_append_sheet(workbook, scheduleSheet, "Full Schedule");
+
+        // ✅ Generate File
         const fileName = `${user.firstname}_${user.lastname}_Attendance_${acadYear}_${semester}.xlsx`;
         const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
         const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-        // \u2705 Create a download link dynamically
+        // ✅ Create a download link dynamically
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
@@ -85,7 +107,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
       });
     });
   } catch (error) {
-    console.error("\u274c Error generating Excel:", error);
+    console.error("❌ Error generating Excel:", error);
   }
 };
 

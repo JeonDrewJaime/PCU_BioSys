@@ -1,5 +1,7 @@
 import React from "react";
 import { Box, Alert, Typography } from "@mui/material";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/Cancel';
 
 const ValidationAlert = ({ rows, users, isValidColumn }) => {
   const yearPattern = /^\d{4}-\d{4}$/;
@@ -43,19 +45,114 @@ const ValidationAlert = ({ rows, users, isValidColumn }) => {
   const isSpecialCharValid = specialCharColumns.every(columns => columns.every(value => specialCharPattern.test(value?.toString().trim())));
 
   return (
-    <Box sx={{ marginBottom: 2 }}>
-      <Alert severity={isValidColumn() ? "success" : "error"} sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-        {isAcademicYearValid ? <Typography sx={{ color: "green" }}>✔️ Academic Year and Semester are valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid Academic Year or Semester format!</Typography>}
-        {isHeaderRowValid ? <Typography sx={{ color: "green" }}>✔️ The third row (headers) is correctly structured</Typography> : <Typography sx={{ color: "red" }}>❌ The third row (headers) is incorrect!</Typography>}
-        {isTotalUnitsValid ? <Typography sx={{ color: "green" }}>✔️ Total Units values are valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid Total Units!</Typography>}
-        {isDayValid ? <Typography sx={{ color: "green" }}>✔️ Days column is valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid Day format!</Typography>}
-        {isSTIMEValid ? <Typography sx={{ color: "green" }}>✔️ All Start Times (STIME) are valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid Start Time format!</Typography>}
-        {isETIMEValid ? <Typography sx={{ color: "green" }}>✔️ All End Times (ETIME) are valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid End Time format!</Typography>}
-        {isTimeOrderValid ? <Typography sx={{ color: "green" }}>✔️ Start Time is earlier than End Time</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid time order!</Typography>}
-        {isUsersValid ? <Typography sx={{ color: "green" }}>✔️ Assigned user names are valid</Typography> : <Typography sx={{ color: "red" }}>❌ Invalid assigned user!</Typography>}
-        {isSpecialCharValid ? <Typography sx={{ color: "green" }}>✔️ No special characters found</Typography> : <Typography sx={{ color: "red" }}>❌ Special characters detected!</Typography>}
-      </Alert>
-    </Box>
+<Box sx={{
+  display: 'flex',          // Use flexbox to center the content
+  flexDirection: 'column',  // Stack the items vertically
+  alignItems: 'center',     // Center the content horizontally
+  textAlign: 'center',      // Ensure text is centered
+  marginBottom: 2,          // Keep the margin for bottom spacing
+  height: '31vh',           // Ensure it takes full viewport height for vertical centering
+}}>
+
+  <Box severity={isValidColumn() ? "success" : "error"} icon={false} sx={{
+    display: "flex", 
+    flexDirection: "column", 
+    alignItems: "center",    // Center the Alert content horizontally
+    width: '100%',            // Optional: Adjust width for better layout control
+    maxWidth: '2000px', 
+    backgroundColor: "#ffffff",
+    border: "1px solid #D6D7D6", 
+     // Optional: Limit the maximum width
+  }}>
+
+    <Typography sx={{ color: '#041129', fontWeight: 600, fontSize: { xs: '14px', sm: '18px', md: '20px' }, mt: 3, mb:1}}>
+      It seems there are formatting issues with some of the inputs. Download the Excel template to ensure proper formatting.
+    </Typography>
+
+    {isAcademicYearValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> Academic Year and Semester are valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid Academic Year or Semester format!
+      </Typography>}
+
+    {isHeaderRowValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> The third row (headers) is correctly structured
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> The third row (headers) is incorrect!
+      </Typography>}
+
+    {isTotalUnitsValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> Total Units values are valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid Total Units!
+      </Typography>}
+
+    {isDayValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> Days column is valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid Day format!
+      </Typography>}
+
+    {isSTIMEValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> All Start Times (STIME) are valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid Start Time format!
+      </Typography>}
+
+    {isETIMEValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> All End Times (ETIME) are valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid End Time format!
+      </Typography>}
+
+    {isTimeOrderValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> Start Time is earlier than End Time
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid time order!
+      </Typography>}
+
+    {isUsersValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px' }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> Assigned user names are valid
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px' }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Invalid assigned user!
+      </Typography>}
+
+    {isSpecialCharValid ? 
+      <Typography sx={{ color: "green", fontSize: '14px', mb:3 }}>
+        <CheckCircleIcon sx={{ color: 'green', fontSize: 14 }} /> No special characters found
+      </Typography> 
+      : 
+      <Typography sx={{ color: "red", fontSize: '14px', mb:3 }}>
+        <ErrorOutlineIcon sx={{ color: 'red', fontSize: 14 }} /> Special characters detected!
+      </Typography>}
+  </Box>
+</Box>
+
+
   );
 };
 

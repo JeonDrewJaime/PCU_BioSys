@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox, Menu, 
+  Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox, Menu, TextField,
 } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,6 +11,7 @@ import { downloadPDFSchedule } from '../../utils/downloadPDF';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI';
 import { FileDownload } from '@mui/icons-material';
+import BulkEditInstructors from '../UI/Dialogs/BulkEditInstructors';
 
 const ScheduleManagement = () => {
   const [page, setPage] = useState(0);
@@ -21,11 +22,25 @@ const ScheduleManagement = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
-  
+  const [openBulkEditDialog, setOpenBulkEditDialog] = useState(false);
+const [bulkEditInstructors, setBulkEditInstructors] = useState([]);
 const [anchorEl, setAnchorEl] = useState(null);
 
   const queryClient = useQueryClient();
 
+  const handleBulkEdit = () => {
+    const selectedInstructors = selectedRows.map((key) => {
+      const [yearIndex, semIndex, instIndex] = key.split('-');
+      const year = filteredData[yearIndex];
+      const semester = year?.semesters[semIndex];
+      return semester?.instructors[instIndex];
+    }).filter(Boolean);
+  
+    console.log("Selected Instructors for Bulk Edit:", selectedInstructors);
+  
+    setBulkEditInstructors(selectedInstructors);
+    setOpenBulkEditDialog(true);
+  };
   const { data: academicYears = [] } = useQuery({
     queryKey: ['schedules'],
     queryFn: fetchScheduleData
@@ -116,6 +131,24 @@ const handleClose = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+  <InputLabel>Actions</InputLabel>
+  <Select
+    value=""
+    onChange={(e) => {
+      const action = e.target.value;
+      if (action === "edit") {
+        setOpenEditDialog(true);
+      } else if (action === "delete") {
+        handleDeleteAcademicYear({ acadYear: selectedYear, semesterKey: selectedSemester });
+      }
+    }}
+  >
+    <MenuItem value="edit">Edit</MenuItem>
+    <MenuItem value="delete">Delete</MenuItem>
+  </Select>
+</FormControl>
+          
           <IconButton
   onClick={() => {
     selectedRows.forEach((key) => {
@@ -161,6 +194,28 @@ const handleClose = () => {
   }}
 >
   Export
+</Button>
+
+<Button
+  variant="contained"
+  color="secondary"
+  disabled={selectedRows.length === 0}
+  onClick={handleBulkEdit}
+  sx={{
+    borderRadius: "45px",
+    height: "40px",
+    backgroundColor: selectedRows.length > 0 ? "#FFC107" : "#F0F0F0",
+    border: "1px solid #041129",
+    color: selectedRows.length > 0 ? "#fff" : "#041129",
+    fontWeight: 600,
+    boxShadow: "none",
+    transition: "background-color 0.3s",
+    "&:hover": {
+      backgroundColor: selectedRows.length > 0 ? "#FFA000" : "#F0F0F0",
+    }
+  }}
+>
+  Bulk Edit
 </Button>
 
 {/* ✅ Dropdown Menu */}
@@ -257,7 +312,76 @@ const handleClose = () => {
           <AddSchedule onClose={() => setOpenAddScheduleDialog(false)} />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={openBulkEditDialog} onClose={() => setOpenBulkEditDialog(false)} maxWidth="md" fullWidth>
+  <DialogTitle>
+    Bulk Edit Instructors
+    <IconButton onClick={() => setOpenBulkEditDialog(false)} sx={{ position: "absolute", right: 8, top: 8 }}>
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+  <DialogContent>
+    {bulkEditInstructors.length > 0 && (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {bulkEditInstructors.map((instructor, index) => (
+          <Box key={index} sx={{ display: "flex", flexDirection: "column", gap: 1, borderBottom: "1px solid #ddd", paddingBottom: 2 }}>
+            <Typography variant="subtitle1">Instructor {index + 1}</Typography>
+            <TextField
+              label="Name"
+              value={instructor.name}
+              onChange={(e) => {
+                const updatedInstructors = [...bulkEditInstructors];
+                updatedInstructors[index] = { ...updatedInstructors[index], name: e.target.value };
+                setBulkEditInstructors(updatedInstructors);
+              }}
+              fullWidth
+            />
+            <TextField
+              label="Department"
+              value={instructor.department}
+              onChange={(e) => {
+                const updatedInstructors = [...bulkEditInstructors];
+                updatedInstructors[index] = { ...updatedInstructors[index], department: e.target.value };
+                setBulkEditInstructors(updatedInstructors);
+              }}
+              fullWidth
+            />
+            <TextField
+              label="Email"
+              value={instructor.email}
+              onChange={(e) => {
+                const updatedInstructors = [...bulkEditInstructors];
+                updatedInstructors[index] = { ...updatedInstructors[index], email: e.target.value };
+                setBulkEditInstructors(updatedInstructors);
+              }}
+              fullWidth
+            />
+          </Box>
+        ))}
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            console.log("Updated Instructors:", bulkEditInstructors);
+            setOpenBulkEditDialog(false);
+          }}
+        >
+          Save Changes
+        </Button>
+      </Box>
+    )}
+  </DialogContent>
+</Dialog>
+<BulkEditInstructors
+  open={openBulkEditDialog}
+  onClose={() => setOpenBulkEditDialog(false)}
+  instructors={bulkEditInstructors}
+  setInstructors={setBulkEditInstructors}
+/>
     </>
+
+    
   );
 };
 
