@@ -125,9 +125,7 @@ const Dashboard = () => {
         let totalOnTime = 0;
         let totalCheckIns = 0;
         let totalLate = 0;
-  
         let attendanceByDate = {};
-  
         const processedUsers = data.map((user) => {
           let presentDays = 0;
           let workingDays = 0;

@@ -1,47 +1,79 @@
-import React, { useEffect, useRef } from 'react'
-import uiia from "../assets/uiia.gif"
-import loadingSound from "../assets/uiia.mp3" // Add your mp3 file to assets folder
-import { Box } from '@mui/material'
+import React, { useEffect, useState } from 'react';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import CircularProgress, { circularProgressClasses } from '@mui/material/CircularProgress';
 
-function Loader() {
-  const audioRef = useRef(null)
-
-  useEffect(() => {
-    // Autoplay the sound when component loads
-    if (audioRef.current) {
-      audioRef.current.play().catch((e) => {
-        console.warn("Autoplay prevented by browser:", e)
-      })
-    }
-  }, [])
-
+function CustomCircularProgress(props) {
   return (
-    <Box 
-      sx={{ 
-        height: "100vh", 
-        width: "100vw", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center", 
-        position: "fixed", 
-        top: 0, 
-        left: 0,
-        backgroundColor: "white"
-      }}
-    >
-      <img 
-        src={uiia} 
-        alt="Loading..." 
-        style={{ 
-          width: "100vw",
-          height: "100vh", 
-          objectFit: "contain" 
-        }} 
+    <Box sx={{ position: 'relative' }}>
+      <CircularProgress
+        variant="determinate"
+        sx={(theme) => ({
+          color: theme.palette.grey[200],
+          ...theme.applyStyles('dark', {
+            color: theme.palette.grey[800],
+          }),
+        })}
+        size={40}
+        thickness={4}
+        {...props}
+        value={100}
       />
-      {/* Hidden audio player */}
-      <audio ref={audioRef} src={loadingSound} loop />
+      <CircularProgress
+        variant="indeterminate"
+        disableShrink
+        sx={(theme) => ({
+          color: '#1a90ff',
+          animationDuration: '550ms',
+          position: 'absolute',
+          left: 0,
+          [`& .${circularProgressClasses.circle}`]: {
+            strokeLinecap: 'round',
+          },
+          ...theme.applyStyles('dark', {
+            color: '#308fe8',
+          }),
+        })}
+        size={40}
+        thickness={4}
+        {...props}
+      />
     </Box>
-  )
+  );
 }
 
-export default Loader
+// Preloader Component
+const Loader = ({ duration = 1500 }) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [duration]);
+
+  return (
+    <>
+      {loading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+          }}
+        >
+          <Stack spacing={2}>
+            <CustomCircularProgress />
+          </Stack>
+        </Box>
+      )}
+    </>
+  );
+};
+
+export default Loader;
+

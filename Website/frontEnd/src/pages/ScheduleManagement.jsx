@@ -144,13 +144,8 @@ const handleClose = () => {
       }
     }}
   >
-    <MenuItem value="edit">Edit</MenuItem>
-    <MenuItem value="delete">Delete</MenuItem>
-  </Select>
-</FormControl>
-          
-          <IconButton
-  onClick={() => {
+    <MenuItem value="edit" onClick={handleBulkEdit}   disabled={selectedRows.length === 0}>Edit</MenuItem>
+    <MenuItem value="delete"  onClick={() => {
     selectedRows.forEach((key) => {
       const [yearIndex, semIndex] = key.split('-');
       const year = filteredData[yearIndex];
@@ -164,15 +159,11 @@ const handleClose = () => {
     setSelectedRows([]);
   }}
   disabled={selectedRows.length === 0}
-  sx={{
-    border: "1px solid #041129",
-    color: selectedRows.length > 0 ? "#D32F2F" : "#041129",
-    boxShadow: "none",
-    backgroundColor: selectedRows.length > 0 ? "#FFEBEE" : "#F0F0F0"
-  }}
->
-  <Delete />
-</IconButton>
+> Delete</MenuItem>
+  </Select> 
+</FormControl>
+          
+
 <Button
   variant="contained"
   color="primary"
@@ -196,27 +187,7 @@ const handleClose = () => {
   Export
 </Button>
 
-<Button
-  variant="contained"
-  color="secondary"
-  disabled={selectedRows.length === 0}
-  onClick={handleBulkEdit}
-  sx={{
-    borderRadius: "45px",
-    height: "40px",
-    backgroundColor: selectedRows.length > 0 ? "#FFC107" : "#F0F0F0",
-    border: "1px solid #041129",
-    color: selectedRows.length > 0 ? "#fff" : "#041129",
-    fontWeight: 600,
-    boxShadow: "none",
-    transition: "background-color 0.3s",
-    "&:hover": {
-      backgroundColor: selectedRows.length > 0 ? "#FFA000" : "#F0F0F0",
-    }
-  }}
->
-  Bulk Edit
-</Button>
+
 
 {/* ✅ Dropdown Menu */}
 <Menu
