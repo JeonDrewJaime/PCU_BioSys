@@ -455,22 +455,7 @@ const getRowStyle = (attendanceData) => {
         </Select>
       </FormControl>
 
-      {/* Search Field */}
-      <TextField
-        variant="outlined"
-        placeholder="Search users..."
-        value={searchQuery}
-        onChange={handleSearchChange}
-        size="small"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ minWidth: 430, mx: 2, borderRadius: '4px' }}
-      />
+
 
       {/* Add User Button */}
       <Button

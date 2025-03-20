@@ -51,7 +51,7 @@ const ValidationAlert = ({ rows, users, isValidColumn }) => {
   alignItems: 'center',     // Center the content horizontally
   textAlign: 'center',      // Ensure text is centered
   marginBottom: 2,          // Keep the margin for bottom spacing
-  height: '31vh',           // Ensure it takes full viewport height for vertical centering
+  height: '35vh',           // Ensure it takes full viewport height for vertical centering
 }}>
 
   <Box severity={isValidColumn() ? "success" : "error"} icon={false} sx={{
@@ -62,11 +62,11 @@ const ValidationAlert = ({ rows, users, isValidColumn }) => {
     maxWidth: '2000px', 
     backgroundColor: "#ffffff",
     border: "1px solid #D6D7D6", 
-     // Optional: Limit the maximum width
+    p:2
   }}>
 
-    <Typography sx={{ color: '#041129', fontWeight: 600, fontSize: { xs: '14px', sm: '18px', md: '20px' }, mt: 3, mb:1}}>
-      It seems there are formatting issues with some of the inputs. Download the Excel template to ensure proper formatting.
+    <Typography sx={{ color: '#041129', fontWeight: 600, fontSize: { xs: '18px', sm: '22px', md: '30px' }, mt: 3, mb:1}}>
+    To guarantee proper formatting, kindly follow these key guidelines:
     </Typography>
 
     {isAcademicYearValid ? 
