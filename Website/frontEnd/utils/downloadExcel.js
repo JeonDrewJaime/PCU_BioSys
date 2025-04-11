@@ -1082,12 +1082,28 @@ export const downloadExcelSchedule = (selectedRows) => {
       });
     });
 
+
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     worksheet['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
       { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } }
     ];
 
+        // Set column widths
+        worksheet['!cols'] = [
+          { wch: 10 },  // SECTION
+          { wch: 10 },  // CURR
+          { wch: 15 },  // COURSE CODE
+          { wch: 35 },  // COURSE DESCRIPTION
+          { wch: 11 },  // TOTAL UNITS
+          { wch: 5 },  // DAY
+          { wch: 8 },  // STIME
+          { wch: 8 },  // ETIME
+          { wch: 5 },  // ROOM
+          { wch: 20 },  // INSTRUCTOR
+        ];
+
+     
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule');
     XLSX.writeFile(workbook, `${row.acadYear}_${row.semesterKey}.xlsx`);
   });

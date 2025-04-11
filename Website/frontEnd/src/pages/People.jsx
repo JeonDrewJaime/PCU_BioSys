@@ -405,6 +405,7 @@ const getRowStyle = (attendanceData, role) => {
           </MenuItem>
         </Select>
       </FormControl>
+      
       {/* Add User Button */}
       <Button
         variant="contained"

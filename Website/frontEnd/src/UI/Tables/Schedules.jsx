@@ -39,13 +39,13 @@ const Schedules = ({
   
 
   return (
-    <Box>
-      <TableContainer component={Paper}>
+    <Box sx={{ boxShadow: 'none',}}>
+      <TableContainer component={Paper} sx={{ border: "1px solid #cccccc", boxShadow: "none",  borderLeft: "1px solid #ffffff", borderRight: "1px solid #ffffff",  }}>
         <Table>
-          <TableHead sx={{backgroundColor: "#CEE3F3"}}>
+          <TableHead sx={{ backgroundColor: "#ffffff" }}>
             <TableRow>
             <TableCell padding='checkbox'>
-  <Checkbox
+  <Checkbox sx={{ml:1}}
     checked={selectedRows.length > 0 && selectedRows.length === filteredData.reduce((acc, year, yearIndex) => {
       return acc + year.semesters.reduce((semAcc, semester, semIndex) => {
         return semAcc + semester.instructors.length;
@@ -71,16 +71,30 @@ const Schedules = ({
       onSelectRow(updatedSelectedRows);
     }}
   />
-  <Typography variant="body2">
+
+  <Typography variant="body2" sx={{textAlign:"center"}}>
     {selectedRows.length > 0 
       ? `${selectedRows.length} ${selectedRows.length === 1 ? 'row' : 'rows'} selected`
       : ''}
   </Typography>
+
 </TableCell>
 
 
-              <TableCell>
-      <TableSortLabel
+              <TableCell 
+              sx={{ fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"}}>
+
+      <TableSortLabel sx={{
+            color: "#041129", 
+            "&.MuiTableSortLabel-root": {
+              color: "#041129 !important", 
+            },
+            "& .MuiTableSortLabel-icon": {
+              color: "#041129 !important", 
+            },
+          }}
         active
         direction={order}
         onClick={handleSort}
@@ -151,8 +165,12 @@ const Schedules = ({
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Semester</TableCell>
-                  <TableCell>Instructors</TableCell>
+                  <TableCell sx={{ fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"}}>Semester</TableCell>
+                  <TableCell sx={{ fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"}}>Instructors</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -201,8 +219,18 @@ const Schedules = ({
                           <Table size="small">
                             <TableHead>
                               <TableRow>
-                                <TableCell>
-                                  <TableSortLabel
+                                <TableCell sx={{ fontWeight: 600,
+          color: "#041129",
+          fontSize:"17px"}}>
+                                  <TableSortLabel sx={{
+            color: "#041129", 
+            "&.MuiTableSortLabel-root": {
+              color: "#041129 !important", 
+            },
+            "& .MuiTableSortLabel-icon": {
+              color: "#041129 !important", 
+            },
+          }}
                                     active
                                     direction={instructorOrder}
                                     onClick={() => setInstructorOrder(instructorOrder === 'asc' ? 'desc' : 'asc')}
