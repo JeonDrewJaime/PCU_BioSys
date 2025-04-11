@@ -9,9 +9,10 @@ import Schedules from '../UI/Tables/Schedules';
 import { downloadExcelSchedule } from '../../utils/downloadExcel';
 import { downloadPDFSchedule } from '../../utils/downloadPDF';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchScheduleData, deleteAcademicYear } from '../../APIs/adminAPI';
+import { fetchScheduleData, deleteAcademicYear, deleteSemesters, deleteMultipleAcademicYears, deleteCoursesByInstructorNames} from '../../APIs/adminAPI';
 import { FileDownload } from '@mui/icons-material';
 import BulkEditInstructors from '../UI/Dialogs/BulkEditInstructors';
+
 
 const ScheduleManagement = () => {
   const [page, setPage] = useState(0);
@@ -23,30 +24,43 @@ const ScheduleManagement = () => {
   const [selectedSemester, setSelectedSemester] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
   const [openBulkEditDialog, setOpenBulkEditDialog] = useState(false);
-const [bulkEditInstructors, setBulkEditInstructors] = useState([]);
-const [anchorEl, setAnchorEl] = useState(null);
+  const [bulkEditInstructors, setBulkEditInstructors] = useState([]);
+  const [bulkEditContext, setBulkEditContext] = useState({ academicYear: '', semester: '', instructors: [] });
+
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const queryClient = useQueryClient();
 
   const handleBulkEdit = () => {
-    const selectedInstructors = selectedRows.map((key) => {
+    const instructors = [];
+    let academicYear = '';
+    let semesterKey = '';
+  
+    selectedRows.forEach((key) => {
       const [yearIndex, semIndex, instIndex] = key.split('-');
       const year = filteredData[yearIndex];
       const semester = year?.semesters[semIndex];
-      return semester?.instructors[instIndex];
-    }).filter(Boolean);
+      const instructor = semester?.instructors[instIndex];
   
-    console.log("Selected Instructors for Bulk Edit:", selectedInstructors);
+      if (instructor) {
+        instructors.push(instructor);
+      }
   
-    setBulkEditInstructors(selectedInstructors);
+      if (!academicYear && year?.acadYear) academicYear = year.acadYear;
+      if (!semesterKey && semester?.semesterKey) semesterKey = semester.semesterKey;
+    });
+  
+    console.log("✏️ Bulk Edit Context:", { academicYear, semesterKey, instructors });
+  
+    setBulkEditContext({ academicYear, semester: semesterKey, instructors });
     setOpenBulkEditDialog(true);
   };
+  
   const { data: academicYears = [] } = useQuery({
     queryKey: ['schedules'],
     queryFn: fetchScheduleData
   });
 
-  
 const handleExportClick = (event) => {
   setAnchorEl(event.currentTarget);
 };
@@ -54,16 +68,91 @@ const handleExportClick = (event) => {
 const handleClose = () => {
   setAnchorEl(null);
 };
-  const deleteMutation = useMutation({
-    mutationFn: deleteAcademicYear,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['schedules']);
+
+const handleDelete = async () => {
+  const semesterMap = new Map(); // key = academicYear, value = Set of semesters
+  const academicYearsToDelete = new Set(); // Set of academic years to delete entirely
+  const instructorsToDelete = new Set(); // Set to track selected instructors
+  const semesterDetails = []; // Array to store the academic year and semester details for deletion
+
+  // Group selected rows by academic year, semester, and instructor
+  selectedRows.forEach((key) => {
+    const [yearIndex, semIndex, instIndex] = key.split('-');
+    const year = academicYears[yearIndex];
+    const semester = year?.semesters[semIndex];
+    const academicYear = year?.acadYear;
+    const semesterKey = semester?.semesterKey;
+    const instructor = semester?.instructors[instIndex];
+
+    if (academicYear && semesterKey) {
+      // Group semesters by academic year
+      if (!semesterMap.has(academicYear)) {
+        semesterMap.set(academicYear, new Set());
+      }
+      semesterMap.get(academicYear).add(semesterKey);
+
+      // Collect instructors to delete
+      if (instructor) {
+        instructorsToDelete.add(instructor.name);
+        // Store the academic year and semester details for instructor deletion
+        semesterDetails.push({ academicYear, semesterKey });
+      }
     }
   });
 
-  const handleDeleteAcademicYear = (academicYear) => {
-    deleteMutation.mutate(academicYear);
-  };
+  // Check if all academic years and semesters are selected
+  const allYearsSelected = semesterMap.size === academicYears.length;
+  const allSemestersSelected = Array.from(semesterMap.values()).every((semesters) => semesters.size === academicYears[0]?.semesters.length);
+
+  // If all academic years and semesters are selected and there are selected instructors, delete courses for instructors
+  if (allYearsSelected && allSemestersSelected && instructorsToDelete.size > 0) {
+    try {
+      // Call function to delete courses by instructors with academic year and semester
+      await deleteCoursesByInstructorNames(Array.from(instructorsToDelete), semesterDetails[0].academicYear, semesterDetails[0].semesterKey);
+      console.log(`✅ Deleted courses for instructors: ${Array.from(instructorsToDelete).join(', ')}`);
+    } catch (err) {
+      console.error(`❌ Failed to delete courses for instructors:`, err);
+    }
+  } else {
+    // Check for academic years to delete fully (if all semesters are selected)
+    semesterMap.forEach((semestersSet, academicYear) => {
+      const year = academicYears.find((yr) => yr.acadYear === academicYear);
+      const allSemesters = year?.semesters.map((sem) => sem.semesterKey);
+
+      if (allSemesters && allSemesters.length === semestersSet.size) {
+        // If all semesters of this academic year are selected, delete the entire academic year
+        academicYearsToDelete.add(academicYear);
+      }
+    });
+
+    // First, delete entire academic years
+    if (academicYearsToDelete.size > 0) {
+      try {
+        await deleteMultipleAcademicYears(Array.from(academicYearsToDelete));
+        console.log(`✅ Deleted academic years: ${Array.from(academicYearsToDelete).join(', ')}`);
+      } catch (err) {
+        console.error(`❌ Failed to delete academic years:`, err);
+      }
+    }
+
+    // Then, delete specific semesters for the remaining years
+    for (const [academicYear, semestersSet] of semesterMap.entries()) {
+      if (!academicYearsToDelete.has(academicYear)) { // Skip already deleted academic years
+        const semesters = Array.from(semestersSet);
+        try {
+          await deleteSemesters(academicYear, semesters);
+          console.log(`✅ Deleted semesters ${semesters.join(', ')} from ${academicYear}`);
+        } catch (err) {
+          console.error(`❌ Failed to delete semesters from ${academicYear}:`, err);
+        }
+      }
+    }
+  }
+
+  // Clear selected rows after deletion
+  setSelectedRows([]);
+};
+
 
   const filteredData = academicYears
     .filter((year) => (selectedYear ? year.acadYear === selectedYear : true))
@@ -86,32 +175,11 @@ const handleClose = () => {
       <Typography variant="h4" gutterBottom sx={{ color: "#041129", fontWeight: "bold" }}>
         Schedules
       </Typography>
-
+        <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
+        Keep your team’s availability and instructional time on track with a clear breakdown of daily teaching schedules.
+            </Typography>
       <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }}>
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-
-        <Checkbox
-  indeterminate={
-    selectedRows.length > 0 && selectedRows.length < filteredData.reduce((total, year) => total + year.semesters.length, 0)
-  }
-  checked={
-    selectedRows.length === filteredData.reduce((total, year) => total + year.semesters.length, 0)
-  }
-  onChange={(e) => {
-    if (e.target.checked) {
-      // Select all rows
-      const allRows = filteredData.flatMap((year, yearIndex) =>
-        year.semesters.map((_, semIndex) => `${yearIndex}-${semIndex}`)
-      );
-      setSelectedRows(allRows);
-    } else {
-      // Deselect all
-      setSelectedRows([]);
-    }
-  }}
-/>
-
-
         <FormControl sx={{ minWidth: 150 }} size="small">
             <InputLabel>Academic Year</InputLabel>
             <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
@@ -134,33 +202,26 @@ const handleClose = () => {
           <FormControl sx={{ minWidth: 120 }} size="small">
   <InputLabel>Actions</InputLabel>
   <Select
-    value=""
-    onChange={(e) => {
-      const action = e.target.value;
-      if (action === "edit") {
-        setOpenEditDialog(true);
-      } else if (action === "delete") {
-        handleDeleteAcademicYear({ acadYear: selectedYear, semesterKey: selectedSemester });
-      }
-    }}
-  >
-    <MenuItem value="edit" onClick={handleBulkEdit}   disabled={selectedRows.length === 0}>Edit</MenuItem>
-    <MenuItem value="delete"  onClick={() => {
-    selectedRows.forEach((key) => {
-      const [yearIndex, semIndex] = key.split('-');
-      const year = filteredData[yearIndex];
-      const semester = year.semesters[semIndex];
-      
-      handleDeleteAcademicYear({
-        acadYear: year.acadYear,
-        semesterKey: semester.semesterKey
-      });
-    });
-    setSelectedRows([]);
+  value=""
+  onChange={(e) => {
+    const action = e.target.value;
+    if (action === "edit") {
+      handleBulkEdit();
+    } else if (action === "delete") {
+      handleDelete();
+    }
   }}
-  disabled={selectedRows.length === 0}
-> Delete</MenuItem>
-  </Select> 
+  displayEmpty
+>
+  
+  <MenuItem value="edit" disabled={selectedRows.length === 0}>
+    Edit
+  </MenuItem>
+  <MenuItem value="delete" disabled={selectedRows.length === 0}>
+    Delete
+  </MenuItem>
+</Select>
+
 </FormControl>
           
 
@@ -188,8 +249,6 @@ const handleClose = () => {
 </Button>
 
 
-
-{/* ✅ Dropdown Menu */}
 <Menu
   anchorEl={anchorEl}
   open={Boolean(anchorEl)}
@@ -198,14 +257,15 @@ const handleClose = () => {
   <MenuItem onClick={() => {
     handleClose();
     const selectedData = selectedRows.map((key) => {
-      const [yearIndex, semIndex] = key.split('-');
+      const [yearIndex, semIndex, instIndex] = key.split('-');
       const year = filteredData[yearIndex];
       const semester = year.semesters[semIndex];
-
+      const instructor = semester.instructors[instIndex];  // Get the specific instructor
+  
       return {
         acadYear: year.acadYear,
         semesterKey: semester.semesterKey,
-        instructors: semester.instructors
+        instructors: instructor ? [instructor] : []  // Only include the selected instructor
       };
     });
 
@@ -217,14 +277,15 @@ const handleClose = () => {
   <MenuItem onClick={() => {
     handleClose();
     const selectedData = selectedRows.map((key) => {
-      const [yearIndex, semIndex] = key.split('-');
+      const [yearIndex, semIndex, instIndex] = key.split('-');
       const year = filteredData[yearIndex];
       const semester = year.semesters[semIndex];
-
+      const instructor = semester.instructors[instIndex];  // Get the specific instructor
+  
       return {
         acadYear: year.acadYear,
         semesterKey: semester.semesterKey,
-        instructors: semester.instructors
+        instructors: instructor ? [instructor] : []  // Only include the selected instructor
       };
     });
 
@@ -261,7 +322,7 @@ const handleClose = () => {
   openInstructorRows={openInstructorRows}
   handleRowClick={(index) => setOpenRows((prev) => ({ ...prev, [index]: !prev[index] }))}
   handleInstructorClick={(name) => setOpenInstructorRows((prev) => ({ ...prev, [name]: !prev[name] }))}
-  handleDeleteAcademicYear={handleDeleteAcademicYear}
+  handleDeleteAcademicYear={handleDelete}
   setPage={setPage}
   setRowsPerPage={setRowsPerPage}
   onSelectRow={setSelectedRows}
@@ -285,74 +346,21 @@ const handleClose = () => {
       </Dialog>
 
       <Dialog open={openBulkEditDialog} onClose={() => setOpenBulkEditDialog(false)} maxWidth="md" fullWidth>
-  <DialogTitle>
-    Bulk Edit Instructors
-    <IconButton onClick={() => setOpenBulkEditDialog(false)} sx={{ position: "absolute", right: 8, top: 8 }}>
-      <CloseIcon />
-    </IconButton>
-  </DialogTitle>
-  <DialogContent>
-    {bulkEditInstructors.length > 0 && (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {bulkEditInstructors.map((instructor, index) => (
-          <Box key={index} sx={{ display: "flex", flexDirection: "column", gap: 1, borderBottom: "1px solid #ddd", paddingBottom: 2 }}>
-            <Typography variant="subtitle1">Instructor {index + 1}</Typography>
-            <TextField
-              label="Name"
-              value={instructor.name}
-              onChange={(e) => {
-                const updatedInstructors = [...bulkEditInstructors];
-                updatedInstructors[index] = { ...updatedInstructors[index], name: e.target.value };
-                setBulkEditInstructors(updatedInstructors);
-              }}
-              fullWidth
-            />
-            <TextField
-              label="Department"
-              value={instructor.department}
-              onChange={(e) => {
-                const updatedInstructors = [...bulkEditInstructors];
-                updatedInstructors[index] = { ...updatedInstructors[index], department: e.target.value };
-                setBulkEditInstructors(updatedInstructors);
-              }}
-              fullWidth
-            />
-            <TextField
-              label="Email"
-              value={instructor.email}
-              onChange={(e) => {
-                const updatedInstructors = [...bulkEditInstructors];
-                updatedInstructors[index] = { ...updatedInstructors[index], email: e.target.value };
-                setBulkEditInstructors(updatedInstructors);
-              }}
-              fullWidth
-            />
-          </Box>
-        ))}
 
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            console.log("Updated Instructors:", bulkEditInstructors);
-            setOpenBulkEditDialog(false);
-          }}
-        >
-          Save Changes
-        </Button>
-      </Box>
-    )}
-  </DialogContent>
 </Dialog>
 <BulkEditInstructors
   open={openBulkEditDialog}
   onClose={() => setOpenBulkEditDialog(false)}
-  instructors={bulkEditInstructors}
-  setInstructors={setBulkEditInstructors}
+  instructors={bulkEditContext.instructors}
+  academicYear={bulkEditContext.academicYear}
+  semester={bulkEditContext.semester}
+  setInstructors={(newInstructors) =>
+    setBulkEditContext((prev) => ({ ...prev, instructors: newInstructors }))
+  }
 />
+
     </>
 
-    
   );
 };
 

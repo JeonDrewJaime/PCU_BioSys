@@ -51,30 +51,54 @@ function People() {
   const [searchQuery, setSearchQuery] = useState("");
    const [openDialog, setOpenDialog] = useState(false);
    const [reportDialogOpen, setReportDialogOpen] = useState(false);
-const [selectedUserId, setSelectedUserId] = useState(null);
 const [selectedColor, setSelectedColor] = useState("");
 const [selectedUser, setSelectedUser] = useState(null);
-const [currentUser, setCurrentUser] = useState(null);
+const [refresh, setRefresh] = useState(false);
 
-
+const updatePeople = (newUser) => {
+  setPeople(prevPeople => [...prevPeople, newUser]);
+};
 const handleDepartmentChange = (event) => {
   setSelectedDepartment(event.target.value);
 };
 
-const handleSelectAllRows = () => {
-  const newSelectAll = !selectAll;
-  setSelectAll(newSelectAll);
-  
-  if (newSelectAll) {
-    setSelectedRows(filteredPeople.map(person => person.id)); // Select all users
-  } else {
-    setSelectedRows([]); // Deselect all
+
+const handleDeleteUser = async (userIds) => {
+  // Log the user IDs to be deleted
+  console.log("User IDs to be deleted:", userIds);
+
+  // Show confirmation modal
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, delete them!",
+  });
+
+  if (result.isConfirmed) {
+    try {
+      // Call API to delete multiple users from the database
+      await adminAPI.delete('/delete', { data: { userIds } });
+      // Update UI
+      setPeople((prev) => prev.filter((user) => !userIds.includes(user.id)));
+
+      Swal.fire("Deleted!", "Users have been deleted.", "success");
+    } catch (error) {
+      console.error("❌ Error deleting users:", error);
+      Swal.fire("Error!", "Failed to delete users.", "error");
+    }
   }
 };
+
+
 
 const handleColorChange = (event) => {
   setSelectedColor(event.target.value);
 };
+
 
 const handleOpenReportDialog = async (user) => {
   setSelectedUser(user);
@@ -94,24 +118,32 @@ const handleOpenReportDialog = async (user) => {
   }
 };
 
-const renderStars = (attendanceData) => {
+
+const renderStars = (attendanceData, role) => {
   const maxStars = 5;
-  if (!attendanceData) return null;
+  if (!attendanceData || role === "Admin") return null; // Skip for admins
 
-  let presentDays = 0, lateDays = 0, absentDays = 0, totalDays = Object.keys(attendanceData).length;
+  let presentDays = 0, lateDays = 0, absentDays = 0, totalDays = 0;
 
-  Object.values(attendanceData).forEach((sessions) => {
-    if (Object.values(sessions).some((session) => session.late_status?.toLowerCase() === "on time")) {
-      presentDays++;
-    } else if (Object.values(sessions).some((session) => session.late_status?.toLowerCase() === "late")) {
-      lateDays++;
-    } else {
-      absentDays++;
-    }
+  // Traverse the nested attendance structure
+  Object.values(attendanceData).forEach((academicYear) => {
+    Object.values(academicYear).forEach((semester) => {
+      Object.entries(semester).forEach(([date, sessions]) => {
+        totalDays++;
+        const sessionStatuses = Object.values(sessions).map(session => session.late_status?.toLowerCase());
+        
+        if (sessionStatuses.some(status => status === "on time")) {
+          presentDays++;
+        } else if (sessionStatuses.some(status => status === "late")) {
+          lateDays++;
+        } else {
+          absentDays++;
+        }
+      });
+    });
   });
 
- 
-  const attendanceScore = (presentDays + (lateDays * 0.5)) / totalDays;
+  const attendanceScore = totalDays > 0 ? (presentDays + (lateDays * 0.5)) / totalDays : 0;
   const filledStars = Math.min(maxStars, Math.round(attendanceScore * maxStars));
 
   return (
@@ -127,28 +159,37 @@ const renderStars = (attendanceData) => {
   );
 };
 
-const getStarCount = (attendanceData) => {
+const getStarCount = (attendanceData, role) => {
   const maxStars = 5;
-  if (!attendanceData) return 0;
+  if (!attendanceData || role === "Admin") return 0; // Return 0 stars for admins
 
-  let presentDays = 0, lateDays = 0, absentDays = 0, totalDays = Object.keys(attendanceData).length;
+  let presentDays = 0, lateDays = 0, absentDays = 0, totalDays = 0;
 
-  Object.values(attendanceData).forEach((sessions) => {
-    if (Object.values(sessions).some((session) => session.late_status?.toLowerCase() === "on time")) {
-      presentDays++;
-    } else if (Object.values(sessions).some((session) => session.late_status?.toLowerCase() === "late")) {
-      lateDays++;
-    } else {
-      absentDays++;
-    }
+  Object.values(attendanceData).forEach((academicYear) => {
+    Object.values(academicYear).forEach((semester) => {
+      Object.entries(semester).forEach(([date, sessions]) => {
+        totalDays++;
+        const sessionStatuses = Object.values(sessions).map(session => session.late_status?.toLowerCase());
+        
+        if (sessionStatuses.some(status => status === "on time")) {
+          presentDays++;
+        } else if (sessionStatuses.some(status => status === "late")) {
+          lateDays++;
+        } else {
+          absentDays++;
+        }
+      });
+    });
   });
 
-  const attendanceScore = (presentDays + (lateDays * 0.5)) / totalDays;
+  const attendanceScore = totalDays > 0 ? (presentDays + (lateDays * 0.5)) / totalDays : 0;
   return Math.min(maxStars, Math.round(attendanceScore * maxStars));
 };
 
-const getRowStyle = (attendanceData) => {
-  const stars = getStarCount(attendanceData);
+const getRowStyle = (attendanceData, role) => {
+  if (role === "Admin") return "#F5B7B1"; // No background color for admins
+  
+  const stars = getStarCount(attendanceData, role);
 
   switch (stars) {
     case 5: return { backgroundColor: "#D4EDDA" }; // Excellent (Light Green)
@@ -235,6 +276,7 @@ const getRowStyle = (attendanceData) => {
       );
       setEditingRow(null);
       Swal.fire("Success!", "User details updated successfully.", "success");
+      setRefresh(prev => !prev); // Toggle refresh state to force re-render
     } catch (error) {
       console.error("❌ Error updating user:", error);
       Swal.fire("Error!", "Failed to update user.", "error");
@@ -246,40 +288,7 @@ const getRowStyle = (attendanceData) => {
     setEditedData({});
   };
 
-  const handleDeleteUser = async (userId) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
-    });
-  
-    if (result.isConfirmed) {
-      try {
-        // Call API to delete user from database
-        await adminAPI.delete(`/delete/${userId}`);
-    
-        Swal.fire("Deleted!", "User has been deleted.", "success");
-  
-        // Remove from Firebase Authentication (only works if deleting current logged-in user)
-        const auth = getAuth();
-        if (auth.currentUser && auth.currentUser.uid === userId) {
-          await deleteAuthUser(auth.currentUser);
-        }
-  
-        // Update UI
-        setPeople((prev) => prev.filter((user) => user.id !== userId));
-  
-        Swal.fire("Deleted!", "User has been deleted.", "success");
-      } catch (error) {
-        console.error("❌ Error deleting user:", error);
-        Swal.fire("Error!", "Failed to delete user.", "error");
-      }
-    }
-  };
+
 
   const toggleRow = async (id) => {
     setExpandedRows((prev) => ({
@@ -314,7 +323,6 @@ const getRowStyle = (attendanceData) => {
         const snapshot = await get(attendanceDetailRef);
         const attendanceData = snapshot.exists() ? snapshot.val() : {};
        
-  
         setExpandedDates((prev) => ({
           ...prev,
           [`${personId}-${date}`]: { loading: false, data: attendanceData },
@@ -325,43 +333,6 @@ const getRowStyle = (attendanceData) => {
     }
   };
 
-
-  const handleDeleteSelectedUsers = async () => {
-    if (selectedRows.length === 0) return;
-  
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to delete ${selectedRows.length} user(s). This action cannot be undone!`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete them!",
-    });
-  
-    if (result.isConfirmed) {
-      try {
-        // Delete users one by one
-        for (const userId of selectedRows) {
-          await adminAPI.delete(`/delete/${userId}`);
-          const auth = getAuth();
-          if (auth.currentUser && auth.currentUser.uid === userId) {
-            await deleteAuthUser(auth.currentUser);
-          }
-        }
-  
-        // Update UI after deletion
-        setPeople((prev) => prev.filter((user) => !selectedRows.includes(user.id)));
-        setSelectedRows([]); // Clear selection
-  
-        Swal.fire("Deleted!", "Selected users have been removed.", "success");
-      } catch (error) {
-        console.error("❌ Error deleting users:", error);
-        Swal.fire("Error!", "Failed to delete selected users.", "error");
-      }
-    }
-  };
-  
   const handleRowSelection = (selectedIds) => {
     setSelectedRows(selectedIds);
   };
@@ -378,27 +349,7 @@ const getRowStyle = (attendanceData) => {
       <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
       <Box sx={{ display: 'flex', alignItems: 'center', mt: 1,mb: 4, flexWrap: 'wrap' }}>
       {/* Select All Section */}
-      <Box
-        sx={{
-          border: '1px solid #cccccc',
-          boxShadow: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          minWidth: 137,
-          borderRadius: '4px',
-          height: '40px',
-          mr: 1,
-        }}
-      >
-       <Checkbox
-        checked={selectAll}
-        onChange={handleSelectAllRows}
-        inputProps={{ 'aria-label': 'select all users' }}
-      />
-      <Typography variant="body1" sx={{ fontSize: '15px' }}>
-        {selectAll ? 'Select None' : 'Select All'}
-      </Typography>
-      </Box>
+
 
       {/* Department Select */}
       <FormControl sx={{ minWidth: 150, mx: 2, mr: -1, }} size="small">
@@ -454,9 +405,6 @@ const getRowStyle = (attendanceData) => {
           </MenuItem>
         </Select>
       </FormControl>
-
-
-
       {/* Add User Button */}
       <Button
         variant="contained"
@@ -514,7 +462,13 @@ const getRowStyle = (attendanceData) => {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <CreateUser />
+        <CreateUser 
+  onClose={() => {
+    setOpenDialog(false);
+    setRefresh(prev => !prev); // Trigger refresh
+  }}
+  updatePeople={updatePeople}
+/>
         </DialogContent>
       </Dialog>
 

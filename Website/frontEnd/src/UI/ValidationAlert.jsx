@@ -3,19 +3,18 @@ import { Box, Alert, Typography } from "@mui/material";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/Cancel';
 
-const ValidationAlert = ({ rows, users, isValidColumn }) => {
+const ValidationAlert = ({ rows, users, onValidationResult }) => {
+
   const yearPattern = /^\d{4}-\d{4}$/;
   const validSemesters = ["1st Sem", "2nd Sem"];
   const numberPattern = /^\d+$/;
   const timePattern = /^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/;
   const specialCharPattern = /^[a-zA-Z0-9\s]+$/;
   const allowedDays = ["M", "T", "W", "TH", "F", "S"];
-
-  const expectedHeaders = ["SECTION", "Curri", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS", "DAY", "STIME", "ETIME", "ROOM", "INSTRUCTOR"];
-  
+  const expectedHeaders = ["SECTION", "CURRICULUM", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS", "DAY", "STIME", "ETIME", "ROOM", "INSTRUCTOR"];
   const academicYear = rows[0][0];
   const semester = rows[1][0];
-  const headerRow = rows[2]; // Third row for validation
+  const headerRow = rows[2]; 
   
   const totalUnitsColumn = rows.slice(3).map(row => row[4]?.toString().trim());
   const assignedUsers = rows.slice(3).map(row => row[9]?.trim());
@@ -44,6 +43,26 @@ const ValidationAlert = ({ rows, users, isValidColumn }) => {
   const isTimeOrderValid = rows.slice(3).every(row => parseTime(row[6]?.trim()) < parseTime(row[7]?.trim()));
   const isSpecialCharValid = specialCharColumns.every(columns => columns.every(value => specialCharPattern.test(value?.toString().trim())));
 
+  const allValid = (
+    isAcademicYearValid &&
+    isSemesterValid &&
+    isHeaderRowValid &&
+    isTotalUnitsValid &&
+    isUsersValid &&
+    isDayValid &&
+    isSTIMEValid &&
+    isETIMEValid &&
+    isTimeOrderValid &&
+    isSpecialCharValid
+  );
+
+  // Notify parent
+  React.useEffect(() => {
+    if (onValidationResult) {
+      onValidationResult(allValid);
+    }
+  }, [allValid, onValidationResult]);
+
   return (
 <Box sx={{
   display: 'flex',          // Use flexbox to center the content
@@ -54,7 +73,7 @@ const ValidationAlert = ({ rows, users, isValidColumn }) => {
   height: '35vh',           // Ensure it takes full viewport height for vertical centering
 }}>
 
-  <Box severity={isValidColumn() ? "success" : "error"} icon={false} sx={{
+  <Box  icon={false} sx={{
     display: "flex", 
     flexDirection: "column", 
     alignItems: "center",    // Center the Alert content horizontally

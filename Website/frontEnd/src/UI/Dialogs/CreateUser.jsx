@@ -30,7 +30,8 @@ const validationSchemas = [
   }),
 ];
 
-function CreateUser() {
+
+function CreateUser({ onClose, updatePeople }) {
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
@@ -60,21 +61,27 @@ function CreateUser() {
             lastname: values.lastname,
             email: values.email,
             department: values.department,
+            role: "Faculty", // Add default role
+            id: user.uid // Add the user ID
           });
 
-          Swal.fire({
-            title: 'Registration Successful!',
-            text: 'Your account has been created successfully.',
-            icon: 'success',
-            confirmButtonText: 'OK',
+          // Call updatePeople with the new user data
+          updatePeople({
+            id: user.uid,
+            firstname: values.firstname,
+            lastname: values.lastname,
+            email: values.email,
+            department: values.department,
+            role: "Faculty",
+            attendance: {} // Add empty attendance object
           });
+
+          // Show success message and close
+          Swal.fire("Success!", "User created successfully.", "success");
+          onClose();
         } catch (error) {
-          Swal.fire({
-            title: 'Sign Up Failed',
-            text: error.message,
-            icon: 'error',
-            confirmButtonText: 'OK',
-          });
+          console.error("Error creating user:", error);
+          Swal.fire("Error!", error.message, "error");
         }
       } else {
         setActiveStep((prev) => prev + 1);
@@ -83,50 +90,48 @@ function CreateUser() {
   });
 
   return (
+    <>
+      <Typography variant="h4" gutterBottom align="center" sx={{ color: '#041129', fontWeight: 700, letterSpacing: 1, fontSize: '30px', mb: '20px' }}>
+        Create User
+      </Typography>
+      <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: '20px' }}>
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel>{label}</StepLabel>
+          </Step>
+        ))}
+      </Stepper>
 
-   
-     <>
-          <Typography variant="h4" gutterBottom align="center" sx={{ color: '#041129', fontWeight: 700, letterSpacing: 1, fontSize: '30px', mb: '20px' }}>
-            Create User
-          </Typography>
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: '20px' }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-
-          <form onSubmit={formik.handleSubmit} noValidate>
-            {activeStep === 0 && (
-              <TextField fullWidth margin="normal" label="Email" {...formik.getFieldProps('email')} error={formik.touched.email && Boolean(formik.errors.email)} helperText={formik.touched.email && formik.errors.email} />
-            )}
-            {activeStep === 1 && (
-              <>
-                <TextField fullWidth margin="normal" label="First Name" {...formik.getFieldProps('firstname')} error={formik.touched.firstname && Boolean(formik.errors.firstname)} helperText={formik.touched.firstname && formik.errors.firstname} />
-                <TextField fullWidth margin="normal" label="Last Name" {...formik.getFieldProps('lastname')} error={formik.touched.lastname && Boolean(formik.errors.lastname)} helperText={formik.touched.lastname && formik.errors.lastname} />
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Department</InputLabel>
-                  <Select {...formik.getFieldProps('department')} error={formik.touched.department && Boolean(formik.errors.department)}>
-                    <MenuItem value="Information Technology">Information Technology</MenuItem>
-                    <MenuItem value="Computer Science">Computer Science</MenuItem>
-                    <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
-                  </Select>
-                </FormControl>
-              </>
-            )}
-            {activeStep === 2 && (
-              <>
-                <TextField fullWidth margin="normal" label="Password" type="password" {...formik.getFieldProps('password')} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} />
-                <TextField fullWidth margin="normal" label="Confirm Password" type="password" {...formik.getFieldProps('confirmPassword')} error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)} helperText={formik.touched.confirmPassword && formik.errors.confirmPassword} />
-              </>
-            )}
-            <Box display="flex" justifyContent="space-between" mt={2}>
-              {activeStep > 0 && <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)} startIcon={<ArrowBack />}>Back</Button>}
-              <Button type="submit" variant="contained" color="primary" endIcon={<ArrowForward />}>{activeStep === steps.length - 1 ? 'Submit' : 'Next'}</Button>
-            </Box>
-          </form>
+      <form onSubmit={formik.handleSubmit} noValidate>
+        {activeStep === 0 && (
+          <TextField fullWidth margin="normal" label="Email" {...formik.getFieldProps('email')} error={formik.touched.email && Boolean(formik.errors.email)} helperText={formik.touched.email && formik.errors.email} />
+        )}
+        {activeStep === 1 && (
+          <>
+            <TextField fullWidth margin="normal" label="First Name" {...formik.getFieldProps('firstname')} error={formik.touched.firstname && Boolean(formik.errors.firstname)} helperText={formik.touched.firstname && formik.errors.firstname} />
+            <TextField fullWidth margin="normal" label="Last Name" {...formik.getFieldProps('lastname')} error={formik.touched.lastname && Boolean(formik.errors.lastname)} helperText={formik.touched.lastname && formik.errors.lastname} />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Department</InputLabel>
+              <Select {...formik.getFieldProps('department')} error={formik.touched.department && Boolean(formik.errors.department)}>
+                <MenuItem value="Information Technology">Information Technology</MenuItem>
+                <MenuItem value="Computer Science">Computer Science</MenuItem>
+                <MenuItem value="Computer Engineering">Computer Engineering</MenuItem>
+              </Select>
+            </FormControl>
           </>
+        )}
+        {activeStep === 2 && (
+          <>
+            <TextField fullWidth margin="normal" label="Password" type="password" {...formik.getFieldProps('password')} error={formik.touched.password && Boolean(formik.errors.password)} helperText={formik.touched.password && formik.errors.password} />
+            <TextField fullWidth margin="normal" label="Confirm Password" type="password" {...formik.getFieldProps('confirmPassword')} error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)} helperText={formik.touched.confirmPassword && formik.errors.confirmPassword} />
+          </>
+        )}
+        <Box display="flex" justifyContent="space-between" mt={2}>
+          {activeStep > 0 && <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)} startIcon={<ArrowBack />}>Back</Button>}
+          <Button type="submit" variant="contained" color="primary" endIcon={<ArrowForward />}>{activeStep === steps.length - 1 ? 'Submit' : 'Next'}</Button>
+        </Box>
+      </form>
+    </>
   );
 }
 

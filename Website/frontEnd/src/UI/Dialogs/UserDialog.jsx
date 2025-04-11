@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { downloadPDFDTR } from "../../../utils/downloadPDF";
@@ -22,6 +22,10 @@ import {
   Box,
   Typography,
   Checkbox,
+  FormControl,
+  InputLabel, 
+  Select,
+  MenuItem ,
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
@@ -31,9 +35,33 @@ const UserReportDialog = ({ open, onClose, user }) => {
   const [expandedDates, setExpandedDates] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
   const [selectAll, setSelectAll] = useState(false);
-
-  if (!user) return null;
-
+  const [selectedYear, setSelectedYear] = useState("");
+const [selectedSemester, setSelectedSemester] = useState("");
+  useEffect(() => {
+    if (!user?.attendance || !open) return;
+  
+    const years = {};
+    const semesters = {};
+    const dates = {};
+  
+    Object.entries(user.attendance).forEach(([acadYear, semestersData]) => {
+      years[acadYear] = false;
+  
+      Object.entries(semestersData).forEach(([semester, dateData]) => {
+        const semKey = `${acadYear}-${semester}`;
+        semesters[semKey] = false;
+  
+        Object.keys(dateData).forEach((date) => {
+          dates[date] = false;
+        });
+      });
+    });
+  
+    setExpandedYears(years);
+    setExpandedSemesters(semesters);
+    setExpandedDates(dates);
+  }, [user, open]);
+  
   const toggleExpand = (stateSetter, key) => {
     stateSetter((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -65,14 +93,23 @@ const UserReportDialog = ({ open, onClose, user }) => {
     setSelectedItems(newSelection);
   };
 
-  const attendanceData = Object.entries(user?.attendance || {}).map(([acadYear, semesters]) => ({
-    acadYear,
-    semesters: Object.entries(semesters).map(([semester, dates]) => ({
-      semester,
-      dates: Object.entries(dates).map(([date, details]) => ({ date, details })),
-    })),
-  }));
-
+  const attendanceData = Object.entries(user?.attendance || {}).reduce((acc, [acadYear, semesters]) => {
+    if (selectedYear && selectedYear !== acadYear) return acc;
+  
+    const filteredSemesters = Object.entries(semesters)
+      .filter(([semester]) => !selectedSemester || selectedSemester === semester)
+      .map(([semester, dates]) => ({
+        semester,
+        dates: Object.entries(dates).map(([date, details]) => ({ date, details })),
+      }));
+  
+    if (filteredSemesters.length > 0) {
+      acc.push({ acadYear, semesters: filteredSemesters });
+    }
+  
+    return acc;
+  }, []);
+  
 
   const getValidatedCount = (details) => {
     let count = Object.values(details).filter(d => d.status === "Validated").length;
@@ -88,7 +125,7 @@ const UserReportDialog = ({ open, onClose, user }) => {
     );
   };
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" >
       <DialogTitle sx={{ bgcolor: "#012763", color: "#ffffff", fontWeight: "bold", fontSize: "24px" }}>
         User Report - {user?.firstname || "N/A"} {user?.lastname || ""}
         <Box sx={{ p: 2 }}>
@@ -104,24 +141,113 @@ const UserReportDialog = ({ open, onClose, user }) => {
         </Box>
       </DialogTitle>
 
-      <DialogContent>
-      <Button variant="contained" color="primary" onClick={() => downloadPDFDTR(user, attendanceData, selectedItems)} sx={{ mb: 2 }}>
-  Download Selected as PDF
-</Button>
+      <DialogContent sx={{bgcolor:"#f5f5fb"}}>
 
-<Button variant="contained" color="secondary" onClick={() => downloadExcelDTR(user, attendanceData, selectedItems)}>
-          Download Selected as Excel
-        </Button>
+
+     <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: 1, mb: 1, p:2, }}>
+  {/* Left side content (Select All, Filters, etc.) */}
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+    {/* Select All Section */}
+
+    {/* Filters */}
+    <FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
+  <InputLabel>Academic Year</InputLabel>
+  <Select
+    value={selectedYear}
+    onChange={(e) => setSelectedYear(e.target.value)}
+  >
+    <MenuItem value="">All</MenuItem>
+    {Object.keys(user?.attendance || {}).map((year) => (
+      <MenuItem key={year} value={year}>{year}</MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
+<FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
+  <InputLabel>Semester</InputLabel>
+  <Select
+    value={selectedSemester}
+    onChange={(e) => setSelectedSemester(e.target.value)}
+  >
+    <MenuItem value="">All</MenuItem>
+    {/* You can dynamically extract semesters too */}
+    {Array.from(
+      new Set(
+        Object.values(user?.attendance || {})
+          .flatMap(semesters => Object.keys(semesters))
+      )
+    ).map((sem) => (
+      <MenuItem key={sem} value={sem}>{sem}</MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
+
+  </Box>
+
+  {/* Right side buttons */}
+  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    {/* Download as PDF Button */}
+    <Button 
+    variant="contained" 
+    color="primary"  
+    onClick={() => downloadPDFDTR(user, attendanceData, selectedItems)} 
+    sx={{ 
+      borderRadius: '45px',
+      height: '40px',
+      backgroundColor:'#F8DDE1',
+      border: '1px solid #c33c3c',
+      color:  '#923535',
+      fontWeight: 600,
+      boxShadow: 'none',
+      mr: 1,
+      width: '200px',
+      transition: 'background-color 0.3s',
+      '&:hover': {
+        backgroundColor:  '#c33c3c',
+        border: '1px solid #c33c3c',
+        color:  '#fff',
+      },
+    }}
+  >
+    Download as PDF
+  </Button>
+
+  <Button 
+    variant="contained" 
+    color="secondary" 
+    onClick={() => downloadExcelDTR(user, attendanceData, selectedItems)} 
+    sx={{ 
+      borderRadius: '45px',
+      height: '40px',
+      backgroundColor:'#e3efdf',
+      border: '1px solid #00590d',
+      color:  '#242005',
+      fontWeight: 600,
+      boxShadow: 'none',
+      mr: 1,
+      width: '200px',
+      transition: 'background-color 0.3s',
+      '&:hover': {
+        backgroundColor:  '#157744',
+        border: '1px solid #157744',
+        color:  '#fff',
+      },
+    }}
+  >
+    Download as Excel
+  </Button>
+  </Box>
+  
+</Box>
+
+
+        
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
-                
-                <TableCell><Checkbox
-  checked={selectAll}
-  onChange={handleSelectAll}
-  color="primary"
-/></TableCell>
+              <TableCell><Checkbox checked={selectAll} onChange={handleSelectAll} color="primary" /></TableCell>
                 <TableCell>Academic Year</TableCell>
               </TableRow>
             </TableHead>
@@ -209,7 +335,7 @@ const UserReportDialog = ({ open, onClose, user }) => {
                             </React.Fragment>
                           ))}
                       </React.Fragment>
-                    ))}j
+                    ))}
                 </React.Fragment>
               ))}
             </TableBody>

@@ -2,8 +2,11 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Typography, TextField,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box, CircularProgress,
-  Snackbar, Alert, InputLabel, FormControl, Select, MenuItem } from '@mui/material';
+  Snackbar, Alert, InputLabel, FormControl, Select, MenuItem, Checkbox} from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Save as SaveIcon } from '@mui/icons-material';
+import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 import { styled } from '@mui/system';
 import { useDropzone } from 'react-dropzone';
@@ -48,17 +51,32 @@ const DropZoneContainer = styled('div')(({ theme }) => ({
 function AddSchedule( { onClose }) {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [openDialog, setOpenDialog] = useState(true); // Open dialog immediately
+  const [openDialog, setOpenDialog] = useState(false); // Open dialog immediately
   const [loading, setLoading] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [isValidData, setIsValidData] = useState(true); // assume valid initially
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+
   const [openCreateUserDialog, setOpenCreateUserDialog] = useState(false)
 const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which row is being assigned
 
+
+const handleCheckboxChange = (rowIndex) => (e) => {
+  if (e.target.checked) {
+    setSelectedRows((prev) => {
+      const newSelectedRows = [...prev, rowIndex];
+      console.log("Selected Row Data:", rows[rowIndex]);
+      return newSelectedRows;
+    });
+  } else {
+    setSelectedRows((prev) => prev.filter((row) => row !== rowIndex));
+  }
+};
 
   useEffect(() => {
     fetchAllUsers()
@@ -129,11 +147,6 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [], 'application/vnd.ms-excel': [] } });
 
-
-  const handleDeleteRow = (index) => {
-    setRows(rows.filter((_, i) => i !== index));
-  };
-
   const handleEditRow = (index) => {
     setEditingRow(index);
   };
@@ -142,95 +155,37 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
     setEditingRow(null);
   };
 
+  const yearRanges = Array.from({ length: 10 }, (_, i) => {
+    const startYear = 2020 + i;
+    return `${startYear}-${startYear + 1}`;
+  });
+  
   const handleChangeCell = (rowIndex, cellIndex, value) => {
     const updatedRows = [...rows];
     updatedRows[rowIndex][cellIndex] = value;
     setRows(updatedRows);
   };
-  const isValidColumn = () => {
-    if (rows.length < 2) return false;
 
-    // Expected Headers
-    const expectedHeaders = [
-        "SECTION", "CURRICULUM", "COURSE CODE", "COURSE DESCRIPTION", "TOTAL UNITS",
-        "DAY", "STIME", "ETIME", "ROOM", "INSTRUCTOR"
-    ];
 
-    // Validate Headers
-    const headersMatch = expectedHeaders.every((header, index) => 
-        rows[0][index]?.toString().trim().toLowerCase() === header.toLowerCase()
-    );
-
-    if (!headersMatch) return false;
-
-    const numberPattern = /^\d+$/; // Matches numbers only
-    const timePattern = /^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/; // Matches HH:mm AM/PM
-    const allowedDays = ["M", "T", "W", "TH", "F", "S"]; // Allowed day values
-    const specialCharPattern = /^[a-zA-Z0-9\s]+$/; // No special characters allowed (only letters, numbers, spaces)
-
-    // Validate 5th column (TOTAL UNITS - index 4) - Must contain only numbers
-    const isTotalUnitsValid = rows.slice(1).every(row =>
-        numberPattern.test(row[4]?.toString().trim())
-    );
-
-    // Validate assigned users in column 10 (INSTRUCTOR - index 9)
-    const instructorSet = new Set(users.map(user => `${user.firstname} ${user.lastname}`));
-    const isAllUsersValid = rows.slice(1).every(row =>
-        instructorSet.has(row[9])
-    );
-
-    // Validate 6th column (DAY - index 5) - Must be a valid day
-    const isDayColumnValid = rows.slice(1).every(row =>
-        allowedDays.includes(row[5]?.toString().trim().toUpperCase())
-    );
-
-    // Validate STIME (7th column - index 6) and ETIME (8th column - index 7)
-    const isSTIMEValid = rows.slice(1).every(row =>
-        timePattern.test(row[6]?.toString().trim())
-    );
-    const isETIMEValid = rows.slice(1).every(row =>
-        timePattern.test(row[7]?.toString().trim())
-    );
-
-    // Ensure STIME is before ETIME
-    const isTimeOrderValid = rows.slice(1).every(row => {
-        const startTime = row[6]?.toString().trim();
-        const endTime = row[7]?.toString().trim();
-
-        if (!startTime || !endTime || !timePattern.test(startTime) || !timePattern.test(endTime)) {
-            return false; // Invalid format already caught
-        }
-
-        const parseTime = timeStr => {
-            const [time, modifier] = timeStr.split(" ");
-            let [hours, minutes] = time.split(":").map(Number);
-            if (modifier === "PM" && hours !== 12) hours += 12;
-            if (modifier === "AM" && hours === 12) hours = 0;
-            return new Date(1970, 0, 1, hours, minutes);
-        };
-
-        return parseTime(startTime) < parseTime(endTime); // STIME must be before ETIME
+  const handleBulkDelete = () => {
+    if (selectedRows.length === 0) return;
+  
+    // Sort in descending order to avoid index shifting issues
+    const sortedIndices = [...selectedRows].sort((a, b) => b - a);
+    
+    const newRows = [...rows];
+    sortedIndices.forEach(index => {
+      if (index >= 3) { // Only allow deleting rows from index 3 onwards (data rows)
+        newRows.splice(index, 1);
+      }
     });
-
-    // Validate Columns 1,2,3,8 (No Special Characters) - SECTION, Curri, COURSE CODE, ROOM
-    const isSpecialCharValid = rows.slice(1).every(row =>
-        [row[0], row[1], row[2], row[8]].every(value =>
-            specialCharPattern.test(value?.toString().trim())
-        )
-    );
-
-    return (
-        headersMatch &&
-        isTotalUnitsValid &&
-        isAllUsersValid &&
-        isDayColumnValid &&
-        isSTIMEValid &&
-        isETIMEValid &&
-        isTimeOrderValid &&
-        isSpecialCharValid
-    );
-};
-
+  
+    setRows(newRows);
+    setSelectedRows([]); // Clear selection after deletion
+    setSnackbarMessage(`${selectedRows.length} row(s) deleted successfully.`);
+    setSnackbarSeverity('success');
+    setOpenSnackbar(true);
+  };
   const handleSaveToDatabase = () => {
 
     setLoading(true);
@@ -262,7 +217,7 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
   {rows.length > 0 && (
     <Box sx={{ marginBottom: 2, }}>
       <Alert
-        severity={isValidColumn() ? "success" : "error"}
+    
         sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" ,  backgroundColor: "transparent", }}
       >
         <Typography fontWeight={600}>Validation Results:</Typography>
@@ -284,6 +239,8 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
         })()}
       </Alert>
     </Box>
+
+  
   )}
   
   
@@ -316,37 +273,65 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
         </Button>
 
         <Button
-          variant="contained"
-          color="primary"
-          disabled={!isValidColumn()}
-          onClick={handleSaveToDatabase}
-          sx={{
-        borderRadius: "45px",
-        height: "40px",
-        width: "200px",
-        backgroundColor: "#EFF6FB",
-        border: "1px solid #041129",
-        color: "#041129",
-        fontWeight: 600,
-        boxShadow: "none",
-      }}
-        >
-          Save to Database
-        </Button>
-        
+  variant="contained"
+  color="primary"
+  onClick={handleSaveToDatabase}
+  disabled={!isValidData}
+  sx={{
+    borderRadius: "45px",
+    height: "40px",
+    width: "200px",
+    backgroundColor:  "#f0f0f0" ,
+    border: "1px solid #041129",
+    color: "black",
+    fontWeight: 600,
+    boxShadow: "none",
+
+  }}
+>
+  Save to Database
+</Button>
+
+<Button
+    variant="contained"
+    color="error"
+    onClick={() => {
+      if (selectedRows.length > 0) {
+        handleBulkDelete();
+      }
+    }}
+    disabled={selectedRows.length === 0}
+    sx={{
+      borderRadius: "45px",
+      height: "40px",
+      width: "200px",
+      backgroundColor: selectedRows.length > 0 ? "#ffebee" : "#f0f0f0",
+      border: selectedRows.length > 0 ? "1px solid #d32f2f" : "1px solid #9e9e9e",
+      color: selectedRows.length > 0 ? "#d32f2f" : "#9e9e9e",
+      fontWeight: 600,
+      boxShadow: "none",
+      '&:hover': {
+        backgroundColor: selectedRows.length > 0 ? "#ffcdd2" : "#f0f0f0",
+      }
+    }}
+  >
+    Delete Selected
+  </Button>
       </div>
-                    <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column', // Stack the image and text vertically
-                  justifyContent: 'center', // Center everything horizontally
-                  alignItems: 'center', // Center everything vertically
-                  textAlign: 'center', // Ensure text is centered
-                  height: '60vh', // Ensure the parent container takes up the full height of the viewport
-                  px: 2, // Optional padding for some space on the sides
-                }}
-              >
-                <Box
+
+{rows.length === 0 && (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+      height: '60vh',
+      px: 2,
+    }}
+  >
+  <Box
                   component="img"
                   src={msexcel}
                   alt="wala"
@@ -359,34 +344,58 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
                   }}
                 />
 
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ color: '#3b3c3d', fontWeight: 700, 
-                    fontSize: { xs: '35px', sm: '35px', md: '40px', lg: '55px' }, mt: { xs: 5, sm: 5, md: 3, lg: 3 } }}>
-                    Note for Users
-                  </Typography>
-                  <Typography sx={{ color: '#3b3c3d', fontWeight: 600, mt: '3px', fontSize: { xs: '14px', sm: '18px', md: '25px' } }}>
-                    To upload your schedule, please follow these steps:
-                  </Typography>
-                  <Typography sx={{ color: '#727375', fontWeight: 500, mt: '15px', fontSize: { xs: '12px', sm: '15px' }, mb: { xs: 5, sm: 5, md: 4, lg: 5 } }}>
-                    -<span style={{ textDecoration: 'underline', color: 'blue' }}>
-                      Download the Excel Template
-                    </span>.<br />
-                    -Follow the example data in the template to ensure proper formatting.<br />
-                    -Fill in your own schedule information based on the template structure.<br />
-                    -Save the file and upload it to complete the process.
-                  </Typography>
-                </Box>
-
-              </Box>
-
-      
-           
+    <Box sx={{ textAlign: 'center' }}>
+      <Typography
+        sx={{
+          color: '#3b3c3d',
+          fontWeight: 700,
+          fontSize: { xs: '35px', sm: '35px', md: '40px', lg: '55px' },
+          mt: { xs: 5, sm: 5, md: 3, lg: 3 },
+        }}
+      >
+        Note for Users
+      </Typography>
+      <Typography
+        sx={{
+          color: '#3b3c3d',
+          fontWeight: 600,
+          mt: '3px',
+          fontSize: { xs: '14px', sm: '18px', md: '25px' },
+        }}
+      >
+        To upload your schedule, please follow these steps:
+      </Typography>
+      <Typography
+        sx={{
+          color: '#727375',
+          fontWeight: 500,
+          mt: '15px',
+          fontSize: { xs: '12px', sm: '15px' },
+          mb: { xs: 5, sm: 5, md: 4, lg: 5 },
+        }}
+      >
+        -
+        <span style={{ textDecoration: 'underline', color: 'blue' }}>
+          Download the Excel Template
+        </span>
+        .<br />
+        -Follow the example data in the template to ensure proper formatting.<br />
+        -Fill in your own schedule information based on the template structure.<br />
+        -Save the file and upload it to complete the process.
+      </Typography>
+    </Box>
+  </Box>
+)}
   
       {filteredRows.length > 0 && (
 <Box sx = {{bgcolor: ""}}>
-<ValidationAlert rows={rows} users={users} isValidColumn={isValidColumn} />
-        <StyledTableContainer component={Paper}>
+<ValidationAlert
+  rows={rows}
+  users={users}
 
+  onValidationResult={(result) => setIsValidData(result)}
+/>
+        <StyledTableContainer component={Paper}>
           <Table sx={{ border: "1px solid #D6D7D6", borderRadius: 4, boxShadow: "none"}}>
             <TableBody>
               {filteredRows.map((row, rowIndex) => (
@@ -403,7 +412,15 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
       const timePattern = /^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/; // HH:mm AM/PM
       const specialCharPattern = /^[a-zA-Z0-9\s]+$/; // No special characters (letters, numbers, spaces only)
       const allowedDays = ["M", "T", "W", "TH", "F", "S"]; // Allowed days
-
+      const parseTime = (timeStr) => {
+        if (!timePattern.test(timeStr)) return -1;
+        const [time, modifier] = timeStr.split(" ");
+        let [hours, minutes] = time.split(":").map(Number);
+        if (modifier === "PM" && hours !== 12) hours += 12;
+        if (modifier === "AM" && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+      };
+  
       // Highlight 1st column (Academic Year & Semester) if invalid
       if (cellIndex === 0) {
         if ((rowIndex === 0 && !yearPattern.test(cell)) || (rowIndex === 1 && !validSemesters.includes(cell))) {
@@ -417,25 +434,33 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
       if (rowIndex === 2 && cell !== expectedHeaders[cellIndex]) {
         return "rgba(255, 0, 0, 0.3)"; // Highlight incorrect headers in red
       }
-            // Highlight 6th column (Day) if invalid
-            if (cellIndex === 5 && rowIndex >= 3 && !allowedDays.includes(cell?.toString().trim().toUpperCase())) {
-              return "rgba(255, 0, 0, 0.3)";
-            }
+      // Highlight 6th column (Day) if invalid
+      if (cellIndex === 5 && rowIndex >= 3 && !allowedDays.includes(cell?.toString().trim().toUpperCase())) {
+        return "rgba(255, 0, 0, 0.3)";
+      }
 
       // Highlight 5th column (Total Units) if not a valid number
       if (cellIndex === 4 && rowIndex >= 3 && !numberPattern.test(cell?.toString().trim())) {
         return "rgba(255, 0, 0, 0.3)";
       }
 
-      // Highlight 7th column (STIME) if not a valid time format
-      if (cellIndex === 6 && rowIndex >= 3 && !timePattern.test(cell)) {
+    // STIME and ETIME validations
+    if ((cellIndex === 6 || cellIndex === 7) && rowIndex >= 3) {
+      const stimeStr = rows[rowIndex][6]?.trim();
+      const etimeStr = rows[rowIndex][7]?.trim();
+      const stime = parseTime(stimeStr);
+      const etime = parseTime(etimeStr);
+
+      // Highlight if current cell is not in proper time format
+      if (!timePattern.test(cell)) {
         return "rgba(255, 0, 0, 0.3)";
       }
 
-      // Highlight 8th column (ETIME) if not a valid time format
-      if (cellIndex === 7 && rowIndex >= 3 && !timePattern.test(cell)) {
+      // Highlight both STIME and ETIME if order is invalid
+      if (stime !== -1 && etime !== -1 && stime >= etime) {
         return "rgba(255, 0, 0, 0.3)";
       }
+    }
 
       // Highlight 10th column (Assigned Instructor) if user is not valid
       if (cellIndex === 9 && rowIndex >= 3 && !users.some(user => `${user.firstname} ${user.lastname}` === cell)) {
@@ -451,8 +476,40 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
     })(),
   }}
 >
-{editingRow === rowIndex ? (
-  rowIndex === 2 ? ( // Apply text fields only for the 3rd row
+{cellIndex === 0 && rowIndex >= 3 && (
+    <Checkbox
+    checked={selectedRows.includes(rowIndex)}
+    onChange={handleCheckboxChange(rowIndex)}
+    />
+  )}
+{
+
+
+editingRow === rowIndex ? (
+  rowIndex === 0 ? (
+    <FormControl fullWidth size="small">
+      <Select
+        value={cell}
+        onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+      >
+        {yearRanges.map((range) => (
+          <MenuItem key={range} value={range}>
+            {range}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  ) : rowIndex === 1 ? (
+    <FormControl fullWidth size="small">
+      <Select
+        value={cell}
+        onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+      >
+        <MenuItem value="1st Sem">1st Sem</MenuItem>
+        <MenuItem value="2nd Sem">2nd Sem</MenuItem>
+      </Select>
+    </FormControl>
+  ) : rowIndex === 2 ? (
     <TextField
       value={cell}
       onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
@@ -487,6 +544,32 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
           ))}
       </Select>
     </FormControl>
+  ) : cellIndex === 4 ? (
+    <TextField
+      type="number"
+      inputProps={{ min: 0 }}
+      value={cell}
+      onChange={(e) => handleChangeCell(rowIndex, cellIndex, e.target.value)}
+      fullWidth
+      size="small"
+    />
+  ) : cellIndex === 6 || cellIndex === 7 ? (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <TimePicker
+        value={cell ? dayjs(`2023-01-01 ${cell}`) : null}
+        onChange={(newValue) => {
+          const formattedTime = newValue ? newValue.format("hh:mm A") : "";
+          handleChangeCell(rowIndex, cellIndex, formattedTime);
+        }}
+        ampm
+        slotProps={{
+          textField: {
+            size: 'small',
+            fullWidth: true,
+          }
+        }}
+      />
+    </LocalizationProvider>
   ) : (
     <TextField
       value={cell}
@@ -497,14 +580,17 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
   )
 ) : (
   cell
-)}
+)
+
+}
+
 
 
 </TableCell>
 ))}     
 <TableCell>
   {rowIndex < 3 ? (
-    // Rows 0 and 1 - Editable but no delete button
+    // Rows 0, 1, and 2 - Editable but no delete button
     editingRow === rowIndex ? (
       <IconButton onClick={handleSaveRow} color="primary">
         <SaveIcon />
@@ -515,11 +601,13 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
       </IconButton>
     )
   ) : rowIndex === 2 ? (
-
     null
   ) : (
-    // Rows 3 and beyond - Editable and deletable
     <>
+      {/* Rows 3 and beyond - Editable, deletable and checkbox */}
+ 
+
+
       {editingRow === rowIndex ? (
         <>
           <IconButton onClick={handleSaveRow} color="primary">
@@ -540,12 +628,10 @@ const [selectedRowIndex, setSelectedRowIndex] = useState(null); // Track which r
           <EditIcon />
         </IconButton>
       )}
-      <IconButton onClick={() => handleDeleteRow(rowIndex)} color="error">
-        <DeleteIcon />
-      </IconButton>
     </>
   )}
 </TableCell>
+
                 </TableRow>
               ))}
             </TableBody>

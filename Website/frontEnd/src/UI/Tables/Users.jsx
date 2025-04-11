@@ -21,8 +21,6 @@ import {
   Select,
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Delete, Edit, Save, Cancel} from "@mui/icons-material";
-import SummarizeIcon from '@mui/icons-material/Summarize';
-import Swal from "sweetalert2";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -75,6 +73,10 @@ const handleMenuClose = () => {
         : [...prev, userId]; // Select
       
       onRowSelectionChange(newSelectedRows); // Notify the parent
+  
+      // Log the selected user IDs
+      console.log("Selected User IDs:", newSelectedRows);
+  
       return newSelectedRows;
     });
   };
@@ -89,6 +91,18 @@ const handleMenuClose = () => {
     <Table >
       <TableHead sx={{ backgroundColor: "#ffffff" }}>
       <TableRow >
+      <TableCell padding="checkbox">
+  <Checkbox
+    checked={selectedRows.length === people.length && people.length > 0}
+    indeterminate={selectedRows.length > 0 && selectedRows.length < people.length}
+    onChange={(e) => {
+      const isChecked = e.target.checked;
+      const newSelected = isChecked ? people.map((person) => person.id) : [];
+      setSelectedRows(newSelected);
+      onRowSelectionChange(newSelected);
+    }}
+  />
+</TableCell>
       <TableCell
   sx={{
     fontWeight: 400,
@@ -101,8 +115,6 @@ const handleMenuClose = () => {
 >
   {selectedRows.length > 0 ? `Selected: ${selectedRows.length}` : ""}
 </TableCell>
-
-
         <TableCell   sx={{
           fontWeight: 600,
           color: "#041129",
@@ -154,9 +166,8 @@ const handleMenuClose = () => {
           fontWeight: 600,
           color: "#041129",
           fontSize:"17px"
-        }}>Grade</TableCell>
+        }}>Actions</TableCell>
 
-  <TableCell></TableCell>
 </TableRow>
       </TableHead>
 

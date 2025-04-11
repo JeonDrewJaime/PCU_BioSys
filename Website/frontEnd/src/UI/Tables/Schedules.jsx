@@ -33,6 +33,9 @@ const Schedules = ({
       }),
     })),
   }));
+  const isSelected = (key) => {
+    return Array.isArray(selectedRows) && selectedRows.some(rowKey => rowKey?.startsWith?.(key));
+  };
   
 
   return (
@@ -41,14 +44,40 @@ const Schedules = ({
         <Table>
           <TableHead sx={{backgroundColor: "#CEE3F3"}}>
             <TableRow>
-            <TableCell >
-  
-  <Typography variant="body2" >
+            <TableCell padding='checkbox'>
+  <Checkbox
+    checked={selectedRows.length > 0 && selectedRows.length === filteredData.reduce((acc, year, yearIndex) => {
+      return acc + year.semesters.reduce((semAcc, semester, semIndex) => {
+        return semAcc + semester.instructors.length;
+      }, 0);
+    }, 0)}
+    indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.reduce((acc, year, yearIndex) => {
+      return acc + year.semesters.reduce((semAcc, semester, semIndex) => {
+        return semAcc + semester.instructors.length;
+      }, 0);
+    }, 0)}
+    onChange={() => {
+      let allKeys = [];
+
+      filteredData.forEach((year, yearIndex) => {
+        year.semesters.forEach((semester, semIndex) => {
+          semester.instructors.forEach((_, instIndex) => {
+            allKeys.push(`${yearIndex}-${semIndex}-${instIndex}`);
+          });
+        });
+      });
+
+      let updatedSelectedRows = selectedRows.length === allKeys.length ? [] : allKeys;
+      onSelectRow(updatedSelectedRows);
+    }}
+  />
+  <Typography variant="body2">
     {selectedRows.length > 0 
       ? `${selectedRows.length} ${selectedRows.length === 1 ? 'row' : 'rows'} selected`
       : ''}
   </Typography>
 </TableCell>
+
 
               <TableCell>
       <TableSortLabel
@@ -69,18 +98,38 @@ const Schedules = ({
       <TableRow>
         <TableCell>
           <Checkbox
-            checked={selectedRows.some((key) => key.startsWith(`${yearIndex}-`))}
+            checked={year.semesters.every((semester, semIndex) =>
+              semester.instructors.every((_, instIndex) =>
+                selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
+              )
+            )}
+            indeterminate={
+              year.semesters.some((semester, semIndex) =>
+                semester.instructors.some((_, instIndex) =>
+                  selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
+                )
+              ) &&
+              !year.semesters.every((semester, semIndex) =>
+                semester.instructors.every((_, instIndex) =>
+                  selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
+                )
+              )
+            }
             onChange={() => {
-              const allSemesterKeys = year.semesters.map((_, semIndex) => `${yearIndex}-${semIndex}`);
-              const isAllSelected = allSemesterKeys.every((key) => selectedRows.includes(key));
-              
+              let allKeys = [];
+              year.semesters.forEach((semester, semIndex) => {
+                semester.instructors.forEach((_, instIndex) => {
+                  allKeys.push(`${yearIndex}-${semIndex}-${instIndex}`);
+                });
+              });
+
+              const isAllSelected = allKeys.every((key) => selectedRows.includes(key));
               let updatedSelectedRows = [...selectedRows];
+
               if (isAllSelected) {
-                updatedSelectedRows = updatedSelectedRows.filter(
-                  (key) => !allSemesterKeys.includes(key)
-                );
+                updatedSelectedRows = updatedSelectedRows.filter((key) => !allKeys.includes(key));
               } else {
-                updatedSelectedRows = [...new Set([...updatedSelectedRows, ...allSemesterKeys])];
+                updatedSelectedRows = [...new Set([...updatedSelectedRows, ...allKeys])];
               }
 
               onSelectRow(updatedSelectedRows);
@@ -93,8 +142,6 @@ const Schedules = ({
           </IconButton>
           {year.acadYear}
         </TableCell>
-
-        
       </TableRow>
 
       {/* ✅ Semester Rows (Collapsible under Academic Year) */}
@@ -106,7 +153,6 @@ const Schedules = ({
                 <TableRow>
                   <TableCell>Semester</TableCell>
                   <TableCell>Instructors</TableCell>
-                 
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -116,15 +162,25 @@ const Schedules = ({
                     <TableRow>
                       <TableCell sx={{ paddingLeft: "40px" }}>
                         <Checkbox
-                          checked={selectedRows.includes(`${yearIndex}-${semIndex}`)}
+                          checked={semester.instructors.every((_, instIndex) =>
+                            selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
+                          )}
+                          indeterminate={semester.instructors.some((_, instIndex) =>
+                            selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
+                          )}
                           onChange={() => {
-                            const key = `${yearIndex}-${semIndex}`;
+                            let allKeys = [];
+                            semester.instructors.forEach((_, instIndex) => {
+                              allKeys.push(`${yearIndex}-${semIndex}-${instIndex}`);
+                            });
+
+                            const isAllSelected = allKeys.every((key) => selectedRows.includes(key));
                             let updatedSelectedRows = [...selectedRows];
 
-                            if (updatedSelectedRows.includes(key)) {
-                              updatedSelectedRows = updatedSelectedRows.filter((row) => row !== key);
+                            if (isAllSelected) {
+                              updatedSelectedRows = updatedSelectedRows.filter((key) => !allKeys.includes(key));
                             } else {
-                              updatedSelectedRows.push(key);
+                              updatedSelectedRows = [...new Set([...updatedSelectedRows, ...allKeys])];
                             }
 
                             onSelectRow(updatedSelectedRows);
@@ -136,7 +192,6 @@ const Schedules = ({
                         {semester.semesterKey}
                       </TableCell>
                       <TableCell>{semester.instructors.length}</TableCell>
-                 
                     </TableRow>
 
                     {/* ✅ Instructors Collapsible under Semester */}
@@ -144,70 +199,79 @@ const Schedules = ({
                       <TableCell colSpan={5}>
                         <Collapse in={openInstructorRows[`${yearIndex}-${semIndex}`]} timeout="auto" unmountOnExit>
                           <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                            <TableCell>
-  <TableSortLabel
-    active
-    direction={instructorOrder}
-    onClick={() => setInstructorOrder(instructorOrder === 'asc' ? 'desc' : 'asc')}
-  >
-    Instructors
-  </TableSortLabel>
-  </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                          {semester.instructors.map((instructor, instIndex) => (
-                              <React.Fragment key={instIndex}>
-                                {/* ✅ Instructor Row */}
-                                <TableRow>
-                                  <TableCell>
-                                    <IconButton onClick={() => handleInstructorClick(instructor.name)}>
-                                      <ExpandMoreIcon />
-                                    </IconButton>
-                                    {instructor.name}
-                                  </TableCell>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active
+                                    direction={instructorOrder}
+                                    onClick={() => setInstructorOrder(instructorOrder === 'asc' ? 'desc' : 'asc')}
+                                  >
+                                    Instructors
+                                  </TableSortLabel>
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {semester.instructors.map((instructor, instIndex) => (
+                                <React.Fragment key={instIndex}>
+                                  {/* ✅ Instructor Row */}
+                                  <TableRow>
+                                    <TableCell>
+                                      <Checkbox
+                                        checked={selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)}
+                                        onChange={() => {
+                                          const key = `${yearIndex}-${semIndex}-${instIndex}`;
+                                          const updatedSelectedRows = selectedRows.includes(key)
+                                            ? selectedRows.filter((rowKey) => rowKey !== key)
+                                            : [...selectedRows, key];
+                                          onSelectRow(updatedSelectedRows);
+                                        }}
+                                      />
+                                      <IconButton onClick={() => handleInstructorClick(instructor.name)}>
+                                        <ExpandMoreIcon />
+                                      </IconButton>
+                                      {instructor.name}
+                                    </TableCell>
 
-                                  <TableCell colSpan={7}>
-                                    <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
-                                      <Table size="small">
-                                        <TableHead>
-                                          <TableRow>
-                                            <TableCell>Course Code</TableCell>
-                                            <TableCell>Description</TableCell>
-                                            <TableCell>Curriculum</TableCell>
-                                            <TableCell>Section</TableCell>
-                                            <TableCell>Room</TableCell>
-                                            <TableCell>Day</TableCell>
-                                            <TableCell>Total Units</TableCell>
-                                            <TableCell>Start Time</TableCell>
-                                            <TableCell>End Time</TableCell>
-                           
-                                          </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                          {instructor.courses.map((course, cIdx) => (
-                                            <TableRow key={cIdx}>
-                                              <TableCell>{course.courseCode}</TableCell>
-                                              <TableCell>{course.courseDescription}</TableCell>
-                                              <TableCell>{course.curriculum}</TableCell>
-                                              <TableCell>{course.schedule.section || 'N/A'}</TableCell>
-                                              <TableCell>{course.schedule.room || 'N/A'}</TableCell>
-                                              <TableCell>{course.schedule.day || 'N/A'}</TableCell>
-                                              <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
-                                              <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
-                                              <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
+                                    <TableCell colSpan={7}>
+                                      <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
+                                        <Table size="small">
+                                          <TableHead>
+                                            <TableRow>
+                                              <TableCell>Course Code</TableCell>
+                                              <TableCell>Description</TableCell>
+                                              <TableCell>Curriculum</TableCell>
+                                              <TableCell>Section</TableCell>
+                                              <TableCell>Room</TableCell>
+                                              <TableCell>Day</TableCell>
+                                              <TableCell>Total Units</TableCell>
+                                              <TableCell>Start Time</TableCell>
+                                              <TableCell>End Time</TableCell>
                                             </TableRow>
-                                          ))}
-                                        </TableBody>
-                                      </Table>
-                                    </Collapse>
-                                  </TableCell>
-                                </TableRow>
-                              </React.Fragment>
-                            ))}
-                          </TableBody>
+                                          </TableHead>
+                                          <TableBody>
+                                            {instructor.courses.map((course, cIdx) => (
+                                              <TableRow key={cIdx}>
+                                                <TableCell>{course.courseCode}</TableCell>
+                                                <TableCell>{course.courseDescription}</TableCell>
+                                                <TableCell>{course.curriculum}</TableCell>
+                                                <TableCell>{course.schedule.section || 'N/A'}</TableCell>
+                                                <TableCell>{course.schedule.room || 'N/A'}</TableCell>
+                                                <TableCell>{course.schedule.day || 'N/A'}</TableCell>
+                                                <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
+                                                <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
+                                                <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </Collapse>
+                                    </TableCell>
+                                  </TableRow>
+                                </React.Fragment>
+                              ))}
+                            </TableBody>
                           </Table>
                         </Collapse>
                       </TableCell>
@@ -222,6 +286,7 @@ const Schedules = ({
     </React.Fragment>
   ))}
 </TableBody>
+
 
         </Table>
       </TableContainer>
