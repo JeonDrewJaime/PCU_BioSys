@@ -6,6 +6,8 @@ import { getCoursesByInstructorNames, updateCourseAndInstructorName, deleteMulti
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import 'dayjs/locale/en'; // optional, for consistent formatting
 
 const BulkEditInstructors = ({ open, onClose, instructors, academicYear, semester }) => {
   const [fetchedCourses, setFetchedCourses] = useState([]);
@@ -340,28 +342,29 @@ const BulkEditInstructors = ({ open, onClose, instructors, academicYear, semeste
           </TableCell>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <TableCell>
-              <TimePicker
-                label="Start Time"
-                value={dayjs(course.instructors[0].schedule.start_time, 'HH:mm')}
-                onChange={(newValue) =>
-                  handleTextFieldChange(course.id, 'start_time', newValue.format('HH:mm'))
-                }
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
-            </TableCell>
-            <TableCell>
-              <TimePicker
-                label="End Time"
-                value={dayjs(course.instructors[0].schedule.end_time, 'HH:mm')}
-                onChange={(newValue) =>
-                  handleTextFieldChange(course.id, 'end_time', newValue.format('HH:mm'))
-                }
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
-            </TableCell>
-          </LocalizationProvider>
-
+  <TableCell>
+    <TimePicker
+      label="Start Time"
+      ampm={true}  // This will enable AM/PM
+      value={dayjs(course.instructors[0].schedule.start_time, 'HH:mm A')}
+      onChange={(newValue) =>
+        handleTextFieldChange(course.id, 'start_time', newValue.format('hh:mm A'))  // Save in "hh:mm A" format
+      }
+      renderInput={(params) => <TextField {...params} fullWidth />}
+    />
+  </TableCell>
+  <TableCell>
+    <TimePicker
+      label="End Time"
+      ampm={true}  // This will enable AM/PM
+      value={dayjs(course.instructors[0].schedule.end_time, 'HH:mm A')}
+      onChange={(newValue) =>
+        handleTextFieldChange(course.id, 'end_time', newValue.format('hh:mm A'))  // Save in "hh:mm A" format
+      }
+      renderInput={(params) => <TextField {...params} fullWidth />}
+    />
+  </TableCell>
+</LocalizationProvider>
           <TableCell>
             <TextField
               value={course.instructors[0].schedule.room}
