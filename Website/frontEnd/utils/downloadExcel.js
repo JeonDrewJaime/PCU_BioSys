@@ -208,7 +208,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
           const dtr1to15Data = [
             ["Philippine Christian University"],  
             [],
-            ["DATE TIME RECORD FOR INSTRUCTORS"],  
+            ["DAILY TIME RECORD FOR INSTRUCTORS"],  
             [],
             ["College/Department:", "", "", "", user.department],  
             ["","","","","","","","","","","","","","","",],
@@ -230,9 +230,9 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
 
           // Merge Cells
           dtr1to15Sheet.mergeCells('A1:N1'); // Philippine Christian University
-          dtr1to15Sheet.mergeCells('A3:N3'); // DATE TIME RECORD
+          dtr1to15Sheet.mergeCells('A3:N3'); 
           dtr1to15Sheet.mergeCells('A5:D5'); // College/Department
-          dtr1to15Sheet.mergeCells('A6:N6'); // DATE TIME RECORD
+          dtr1to15Sheet.mergeCells('A6:N6'); 
           dtr1to15Sheet.mergeCells('E5:M5'); // College/Department Data
           dtr1to15Sheet.mergeCells('A8:B8'); // Name
           dtr1to15Sheet.mergeCells('C8:M8'); // Faculty Name Data
@@ -247,44 +247,45 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
           dtr1to15Sheet.mergeCells('I33:K33'); 
 
           let dayCounter = 0;
+const alreadyMergedRows = new Set();
 
-          for (const { date } of dates) {
-            // Only process first 15 valid days
-            if (dayCounter >= 15) break;
-          
-            // Only process if selected
-            if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
-          
-            const day = new Date(date).getDate();
-            if (day < 1 || day > 15) continue;
-          
-            const rowNumber = 13 + day; // Row 14 = Day 1
-            const row = dtr1to15Sheet.getRow(rowNumber);
-          
-            // Show actual date (e.g., "April 3, 2025")
-            const formattedDate = new Date(date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            });
-          
-            row.getCell(1).value = formattedDate;
-          
-            // Merge A and B (columns 1 and 2)
-            dtr1to15Sheet.mergeCells(`A${rowNumber}:B${rowNumber}`);
-          
-            // Optional: style
-            row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-            row.getCell(1).font = { size: 10 };
-            row.getCell(1).border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' },
-            };
-          
-            dayCounter++;
-          }
+for (const { date } of dates) {
+  if (dayCounter >= 15) break;
+  if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
+
+  const day = new Date(date).getDate();
+  if (day < 1 || day > 15) continue;
+
+  const rowNumber = 13 + day;
+  const row = dtr1to15Sheet.getRow(rowNumber);
+
+  const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  row.getCell(1).value = formattedDate;
+
+  // ✅ Safely merge only once
+  const mergeRange = `A${rowNumber}:B${rowNumber}`;
+  if (!alreadyMergedRows.has(rowNumber)) {
+    dtr1to15Sheet.mergeCells(mergeRange);
+    alreadyMergedRows.add(rowNumber);
+  }
+
+  row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  row.getCell(1).font = { size: 10 };
+  row.getCell(1).border = {
+    top: { style: 'thin' },
+    left: { style: 'thin' },
+    bottom: { style: 'thin' },
+    right: { style: 'thin' },
+  };
+
+  dayCounter++;
+}
+
           
 
           // Center align specific cells
@@ -350,7 +351,7 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
           }
           
           // Add letter spacing for the text in cell A3
-          const spacedText = addLetterSpacing('DATE TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
+          const spacedText = addLetterSpacing('DAILY TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
           
           dtr1to15Sheet.getCell('A3').value = spacedText;
           dtr1to15Sheet.getCell('A3').font = { name: 'Old English', size: 13, };
@@ -629,7 +630,7 @@ for (let rowNum = 12; rowNum <= 29; rowNum++) {
                   const dtr16to31Data = [
                     ["Philippine Christian University"],
                     [],
-                    ["DATE TIME RECORD FOR INSTRUCTORS"],
+                    ["DAILY TIME RECORD FOR INSTRUCTORS"],
                     [],
                     ["College/Department:", "", "", "", user.department],
                     ["","","","","","","","","","","","","","","",],
@@ -651,9 +652,9 @@ for (let rowNum = 12; rowNum <= 29; rowNum++) {
 
                   // Merge Cells (same logic as before)
                   dtr16to31Sheet.mergeCells('A1:N1'); // Philippine Christian University
-                  dtr16to31Sheet.mergeCells('A3:N3'); // DATE TIME RECORD
+                  dtr16to31Sheet.mergeCells('A3:N3'); 
                   dtr16to31Sheet.mergeCells('A5:D5'); // College/Department
-                  dtr16to31Sheet.mergeCells('A6:N6'); // DATE TIME RECORD
+                  dtr16to31Sheet.mergeCells('A6:N6'); 
                   dtr16to31Sheet.mergeCells('E5:M5'); // College/Department Data
                   dtr16to31Sheet.mergeCells('A8:B8'); // Name
                   dtr16to31Sheet.mergeCells('C8:M8'); // Faculty Name Data
@@ -765,7 +766,7 @@ for (let rowNum = 12; rowNum <= 29; rowNum++) {
           }
           
           // Add letter spacing for the text in cell A3
-          const spacedTextt = addLetterSpacingg('DATE TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
+          const spacedTextt = addLetterSpacingg('DAILY TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
           
           dtr16to31Sheet.getCell('A3').value = spacedTextt;
           dtr16to31Sheet.getCell('A3').font = { name: 'Old English', size: 13, };

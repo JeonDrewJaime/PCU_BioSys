@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import {
   Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, TablePagination, Collapse, IconButton, Checkbox, TableSortLabel, Typography,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, Delete } from '@mui/icons-material';
+import AOS from "aos";
+import "aos/dist/aos.css";
+
 
 const Schedules = ({
   filteredData, page, rowsPerPage, openRows, openInstructorRows,
@@ -13,6 +16,14 @@ const Schedules = ({
  
   const [order, setOrder] = useState('asc');
   const [instructorOrder, setInstructorOrder] = useState('asc');
+
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      offset: 100,
+      once: true,
+    });
+  }, []);
 
   const handleSort = () => {
     setOrder(order === 'asc' ? 'desc' : 'asc');
@@ -42,10 +53,11 @@ const Schedules = ({
     <Box sx={{ boxShadow: 'none',}}>
       <TableContainer component={Paper} sx={{ border: "1px solid #cccccc", boxShadow: "none",  borderLeft: "1px solid #ffffff", borderRight: "1px solid #ffffff",  }}>
         <Table>
-          <TableHead sx={{ backgroundColor: "#ffffff" }}>
+          <TableHead sx={{ backgroundColor: "#FFffff" }}>
             <TableRow>
             <TableCell padding='checkbox'>
-  <Checkbox sx={{ml:1}}
+
+  <Checkbox sx={{ml:1.5}}
     checked={selectedRows.length > 0 && selectedRows.length === filteredData.reduce((acc, year, yearIndex) => {
       return acc + year.semesters.reduce((semAcc, semester, semIndex) => {
         return semAcc + semester.instructors.length;
@@ -72,7 +84,7 @@ const Schedules = ({
     }}
   />
 
-  <Typography variant="body2" sx={{textAlign:"center"}}>
+  <Typography variant="body2" sx={{textAlign:"center", fontSize:"10px", mb:0.5 }}>
     {selectedRows.length > 0 
       ? `${selectedRows.length} ${selectedRows.length === 1 ? 'row' : 'rows'} selected`
       : ''}
@@ -84,7 +96,7 @@ const Schedules = ({
               <TableCell 
               sx={{ fontWeight: 600,
           color: "#041129",
-          fontSize:"17px"}}>
+          fontSize:"17px",}}>
 
       <TableSortLabel sx={{
             color: "#041129", 
@@ -109,7 +121,7 @@ const Schedules = ({
   {sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((year, yearIndex) => (
     <React.Fragment key={`${yearIndex}`}>
       {/* ✅ Academic Year Row */}
-      <TableRow>
+      <TableRow >
         <TableCell>
           <Checkbox
             checked={year.semesters.every((semester, semIndex) =>
@@ -159,26 +171,26 @@ const Schedules = ({
       </TableRow>
 
       {/* ✅ Semester Rows (Collapsible under Academic Year) */}
-      <TableRow>
-        <TableCell colSpan={5}>
+      <TableRow >
+        <TableCell colSpan={5} >
           <Collapse in={openRows[`${yearIndex}`]} timeout="auto" unmountOnExit>
             <Table>
-              <TableHead>
-                <TableRow>
+              <TableHead >
+                <TableRow >
+                  <TableCell sx={{ fontWeight: 600,
+          color: "#041129", paddingLeft: "32px",
+          fontSize:"17px"}}data-aos="fade-right">Semester</TableCell>
                   <TableCell sx={{ fontWeight: 600,
           color: "#041129",
-          fontSize:"17px"}}>Semester</TableCell>
-                  <TableCell sx={{ fontWeight: 600,
-          color: "#041129",
-          fontSize:"17px"}}>Instructors</TableCell>
+          fontSize:"17px"}} data-aos="fade-right">Instructors</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {year.semesters.map((semester, semIndex) => (
                   <React.Fragment key={`${yearIndex}-${semIndex}`}>
                     {/* ✅ Semester Row */}
-                    <TableRow>
-                      <TableCell sx={{ paddingLeft: "40px" }}>
+                    <TableRow >
+                      <TableCell sx={{ paddingLeft: "32px" }}>
                         <Checkbox
                           checked={semester.instructors.every((_, instIndex) =>
                             selectedRows.includes(`${yearIndex}-${semIndex}-${instIndex}`)
@@ -266,33 +278,39 @@ const Schedules = ({
                                       <Collapse in={openInstructorRows[instructor.name]} timeout="auto" unmountOnExit>
                                         <Table size="small">
                                           <TableHead>
-                                            <TableRow>
-                                              <TableCell>Course Code</TableCell>
-                                              <TableCell>Description</TableCell>
-                                              <TableCell>Curriculum</TableCell>
-                                              <TableCell>Section</TableCell>
-                                              <TableCell>Room</TableCell>
-                                              <TableCell>Day</TableCell>
-                                              <TableCell>Total Units</TableCell>
-                                              <TableCell>Start Time</TableCell>
-                                              <TableCell>End Time</TableCell>
+                                            <TableRow >
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Course Code</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Description</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Curriculum</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Section</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Room</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Day</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Total Units</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">Start Time</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}data-aos="fade-right">End Time</TableCell>
                                             </TableRow>
                                           </TableHead>
                                           <TableBody>
-                                            {instructor.courses.map((course, cIdx) => (
-                                              <TableRow key={cIdx}>
-                                                <TableCell>{course.courseCode}</TableCell>
-                                                <TableCell>{course.courseDescription}</TableCell>
-                                                <TableCell>{course.curriculum}</TableCell>
-                                                <TableCell>{course.schedule.section || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.room || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.day || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
-                                                <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
+                                              {instructor.courses.map((course, cIdx) => (
+                                                <TableRow
+                                                  key={cIdx}
+                                                  sx={{
+                                                    backgroundColor: cIdx % 2 === 0 ? '#f2f2f4' : 'white',
+                                                  }}
+                                                >
+                                                  <TableCell>{course.courseCode}</TableCell>
+                                                  <TableCell>{course.courseDescription}</TableCell>
+                                                  <TableCell>{course.curriculum}</TableCell>
+                                                  <TableCell>{course.schedule.section || 'N/A'}</TableCell>
+                                                  <TableCell>{course.schedule.room || 'N/A'}</TableCell>
+                                                  <TableCell>{course.schedule.day || 'N/A'}</TableCell>
+                                                  <TableCell>{course.schedule.total_units || 'N/A'}</TableCell>
+                                                  <TableCell>{course.schedule.start_time || 'N/A'}</TableCell>
+                                                  <TableCell>{course.schedule.end_time || 'N/A'}</TableCell>
+                                                </TableRow>
+                                              ))}
+                                            </TableBody>
+
                                         </Table>
                                       </Collapse>
                                     </TableCell>
@@ -331,6 +349,8 @@ const Schedules = ({
           setRowsPerPage(parseInt(event.target.value, 10));
           setPage(0);
         }}
+
+
       />
     </Box>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import {
   Box, Paper, Button, Dialog, DialogContent, DialogTitle, Typography, FormControl, Select, MenuItem, InputLabel, IconButton, Checkbox, Menu, TextField,
 } from '@mui/material';
@@ -12,7 +12,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduleData, deleteAcademicYear, deleteSemesters, deleteMultipleAcademicYears, deleteCoursesByInstructorNames} from '../../APIs/adminAPI';
 import { FileDownload } from '@mui/icons-material';
 import BulkEditInstructors from '../UI/Dialogs/BulkEditInstructors';
-
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const ScheduleManagement = () => {
   const [page, setPage] = useState(0);
@@ -30,6 +31,14 @@ const ScheduleManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const queryClient = useQueryClient();
+
+    useEffect(() => {
+      AOS.init({
+        duration: 1000, // Animation duration (in ms)
+        offset: 100,    // Offset (in px) before animation triggers
+        once: true,     // Whether animation should happen only once
+      });
+    }, []);
 
   const handleBulkEdit = () => {
     const instructors = [];
@@ -178,7 +187,7 @@ const handleDelete = async () => {
         <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
         Keep your team’s availability and instructional time on track with a clear breakdown of daily teaching schedules.
             </Typography>
-      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }}>
+      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
         
      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: -1, mb: 2, p:2, }}>
   {/* Left side content (Select All, Filters, etc.) */}

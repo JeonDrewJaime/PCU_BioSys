@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -45,6 +46,9 @@ import Loader from '../pages/Loader';
 const drawerWidth = 240;
 const drawerBgColor = '#012763';
 
+
+
+
 function getInitials(name) {
   if (!name) return "U"; // Fallback if name isn't loaded yet
   const nameParts = name.split(" ");
@@ -53,6 +57,16 @@ function getInitials(name) {
 }
 
 function DashboardNavbar(props) {
+
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCurrentDateTime(new Date());
+  }, 1000);
+
+  return () => clearInterval(timer); // cleanup
+}, []);
   
 
   const [loading, setLoading] = React.useState(true);
@@ -166,28 +180,84 @@ function DashboardNavbar(props) {
     fetchUserData();
   }, []);
   
+
+
+
+
   const drawer = (
     <div>
       <Toolbar />
-      <Box sx={{ textAlign: 'center', mt: -6 }}>
-        <Avatar
-          alt="PCU Logo"
-          src={logo} // Replace this with the correct logo path
-          sx={{ width: 100, height: 100, mx: 'auto' }}
-        />
+      <Box
+  sx={{
+    display: 'flex',
+    flexDirection: 'column',
+    height: '90vh',
+    overflow: 'hidden', // prevents scroll
+    justifyContent: 'space-between',
+    color: 'white',
+  }}
+>
+  {/* TOP PART - LOGO + MENU */}
+  <Box>
+    <Toolbar sx={{overflow: 'hidden'}}/>
+    <Box sx={{ textAlign: 'center', mt: -8 }}>
+      <Avatar
+        alt="PCU Logo"
+        src={logo}
+        sx={{ width: 100, height: 100, mx: 'auto' }}
+      />
+    </Box>
+    <Divider sx={{ mb: 4 }} />
+    <List sx={{ color: 'white' }}>
+      {menuItems.map((item) => (
+        <ListItem key={item.text} disablePadding>
+          <ListItemButton
+            onClick={() => setSelectedComponent(item.text)}
+            sx={{
+              '&:hover': {
+                backgroundColor: '#ffffff33',
+              },
+              backgroundColor:
+                selectedComponent === item.text ? '#ffffff22' : 'transparent',
+              borderRadius: 1,
+            }}
+          >
+            <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+            <ListItemText
+              primary={item.text}
+              primaryTypographyProps={{
+                fontSize: item.text === 'Schedule Management' ? '14px' : '15px',
+                fontWeight: 500,
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+      ))}
+    </List>
+  </Box>
 
-      </Box>
-      <Divider />
-      <List sx={{ color: 'white' }}>
-  {menuItems.map((item) => (
-    <ListItem key={item.text} disablePadding>
-      <ListItemButton onClick={() => setSelectedComponent(item.text)}>
-        <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
-        <ListItemText primary={item.text} />
-      </ListItemButton>
-    </ListItem>
-  ))}
-</List>
+  {/* BOTTOM FIXED DATE & TIME */}
+  <Box sx={{ textAlign: 'center', py: 2, }}>
+    <Typography variant="body2" sx={{fontSize:'14px', color:'#E8E9ED', fontWeight:100}}>
+      {currentDateTime.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })}
+    </Typography>
+    <Typography variant="body2"  sx={{fontSize:'13px', color:'#E8E9ED', fontWeight:100}}>
+      {currentDateTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      })}{' '}
+      • {currentDateTime.toLocaleDateString('en-US', { weekday: 'long' })}
+    </Typography>
+  </Box>
+</Box>
+
+
+
     </div>
   );
 
