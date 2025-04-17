@@ -8,9 +8,9 @@ AOS.init();
 
 function About() {
   const developers = [
-    { name: 'Jeon Drew Jaime', role: 'ABCD', avatar: '../src/assets/jeon.png' },
-    { name: 'Prince Meco Francisco', role: 'Bading', avatar: '../src/assets/meco.jpg' },
-    { name: 'Andrea Teves', role: 'Sobrang Latina', avatar: '../src/assets/andeng.jpg' },
+    { name: 'Jeon Drew Jaime', role: 'Full Stack Developer', avatar: '../src/assets/jeon.png' },
+    { name: 'Prince Meco Francisco', role: 'Mobile Application Developer', avatar: '../src/assets/meco.jpg' },
+    { name: 'Andrea Teves', role: 'Front End Developer', avatar: '../src/assets/andeng.jpg' },
     
   ];
 
@@ -252,18 +252,18 @@ function About() {
             fontSize: { xs: 14, sm: 15, md: 16 },
             fontWeight: 400,
             color: "#fff",
-            textAlign: "left",
+            textAlign: "justify",
             lineHeight: 1.6,
           }}
         >
-          Our team is driven by innovation, teamwork, and a commitment to excellence. 
-          We believe that creativity fuels progress, allowing us to develop intuitive and efficient 
-          solutions tailored to modern challenges. Collaboration is at the heart of our process—we work 
-          closely with each other, sharing ideas and expertise to bring out the best in our projects. 
-          Above all, we maintain a high level of professionalism, ensuring that every system we build 
-          is reliable, user-friendly, and meets the highest standards of quality. With a shared vision 
-          for technological advancement, we are dedicated to transforming ideas into impactful digital 
-          solutions.
+    Our team is driven by innovation, teamwork, and a commitment to excellence. 
+    We believe that creativity fuels progress, allowing us to develop intuitive 
+    and efficient solutions tailored to modern challenges. Collaboration is at the 
+    heart of our process—we work closely with each other, sharing ideas and expertise 
+    to bring out the best in our projects. Above all, we maintain a high level of
+    professionalism, ensuring that every system we build is reliable and user-friendly. 
+    ith a shared vision for learning and growth, we aim to turn ideas into 
+    meaningful digital solutions.
         </Typography>
       </Grid>
 
@@ -327,8 +327,8 @@ function About() {
                       fontFamily: "Kanit",
                       fontSize: { xs: 14, md: 16 },
                       fontWeight: "bold",
-                      color: "#fff",
-                      ml: 1,
+                      color: "#FFC800",
+                      ml: 3,
                     },
                   }}
                   secondaryTypographyProps={{
@@ -336,7 +336,7 @@ function About() {
                       fontFamily: "Kanit",
                       fontSize: { xs: 12, md: 14 },
                       color: "#fff",
-                      ml: 1,
+                      ml: 3,
                       mb: 5,
                     },
                   }}

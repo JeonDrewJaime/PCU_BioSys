@@ -230,22 +230,59 @@ doc.text("Total number of hours rendered", 14, finalY - 1);
 };
 
 
+
+
+
+
+
 export const downloadPDFSchedule = (selectedRows) => {
   if (selectedRows.length === 0) return;
 
   selectedRows.forEach((row) => {
     const doc = new jsPDF('l'); // ✅ Set PDF to Landscape
+
+
+
     const fileName = `${row.acadYear}_${row.semesterKey}.pdf`;
-    doc.setFontSize(16);
-    doc.text('Class Schedule Report', 148.5, 10, { align: 'center' }); // ✅ Centered horizontally in landscape
-    doc.setFontSize(12);
-    doc.text(`Academic Year: ${row.acadYear}`, 14, 20);
-    doc.text(`Semester: ${row.semesterKey}`, 14, 26);
-    let startY = 35;
+
+    doc.setFontSize(22);
+    doc.addFont(customFont, "CustomFont", "normal");
+    doc.setTextColor("#012763")
+    doc.setFont("CustomFont");
+
+    doc.addImage(pculogo, "PNG", 77, 11, 27, 13);
+    doc.text("Philippine Christian University", 100, 20, { align: "left" });
+
+
+    doc.setFontSize(18);
+    doc.setFont("times",); 
+    doc.setTextColor("#041129");
+    doc.text('Class Schedule Report',143, 33, { align: 'center' });
+
+     // ✅ Centered horizontally in landscape
+    doc.setFontSize(11);
+    doc.setFont("times", "bold");
+    doc.text(`Academic Year:`, 14, 40);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${row.acadYear}`, 48, 40);
+    doc.line(42, 41, 105, 41); 
+
+    doc.setFontSize(11);
+    doc.setFont("times", "bold");
+    doc.text(`Semester:`, 14, 47);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${row.semesterKey}`, 42, 47);
+    doc.line(32, 48, 105, 48); 
+
+    let startY = 54;
 
     row.instructors.forEach((instructor) => {
       doc.setFontSize(11);
-      doc.text(`Instructor: ${instructor.name}`, 14, startY);
+      doc.setFont("times", "bold");
+      doc.text(`Instructor:`, 14, startY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${instructor.name}`, 40, startY);
+      doc.line(33, 55, 105, 55); 
 
       const courseData = instructor.courses.map((course) => [
         course.courseCode,
@@ -265,12 +302,18 @@ export const downloadPDFSchedule = (selectedRows) => {
         body: courseData,
         theme: 'striped',
         styles: { fontSize: 9 },
+        headStyles: {
+          fillColor: [1, 39, 99], 
+          textColor: [255, 255, 255], 
+          fontStyle: "bold",
+        },
+
         columnStyles: { 
-          0: { cellWidth: 25 }, // Adjust column width for landscape
-          1: { cellWidth: 60 },
+          0: { cellWidth: 35 }, // Adjust column width for landscape
+          1: { cellWidth: 70 },
           2: { cellWidth: 30 },
-          3: { cellWidth: 15 },
-          4: { cellWidth: 20 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 27 },
           5: { cellWidth: 20 },
           6: { cellWidth: 20 },
           7: { cellWidth: 20 },

@@ -4,6 +4,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
   Menu,
   Checkbox,
+  Typography,
   Tooltip,
   Table,
   TableBody,
@@ -58,6 +59,7 @@ const handleMenuClose = () => {
       once: true,
     });
   }, []);
+  
   const [sortOrder, setSortOrder] = useState("asc");
 
   const handleSort = () => {
@@ -92,29 +94,38 @@ const handleMenuClose = () => {
       <TableHead sx={{ backgroundColor: "#ffffff" }}>
       <TableRow >
       <TableCell padding="checkbox">
-  <Checkbox
-    checked={selectedRows.length === people.length && people.length > 0}
-    indeterminate={selectedRows.length > 0 && selectedRows.length < people.length}
-    onChange={(e) => {
-      const isChecked = e.target.checked;
-      const newSelected = isChecked ? people.map((person) => person.id) : [];
-      setSelectedRows(newSelected);
-      onRowSelectionChange(newSelected);
-    }}
-  />
-</TableCell>
-      <TableCell
+ 
+      <Checkbox
+  sx={{  }}
+  checked={selectedRows.length === people.length && people.length > 0}
+  indeterminate={selectedRows.length > 0 && selectedRows.length < people.length}
+  onChange={(e) => {
+    const isChecked = e.target.checked;
+    const newSelected = isChecked ? people.map((person) => person.id) : [];
+    setSelectedRows(newSelected);
+    onRowSelectionChange(newSelected);
+  }}
+/>
+
+<Typography
+  variant="body2"
   sx={{
+    textAlign: "center",
+    fontSize: "10px",
+    mb: 0.5,
     fontWeight: 400,
     color: "#041129",
-    textAlign: 'center',
-    fontSize: "15px",
-    minWidth: 145, // Adjust this value to increase the width
-    width: 'auto', // Ensures the cell adjusts automatically based on content, but still allows flexibility
+    minWidth: 145,
+    width: 'auto',
+    ml:-4
   }}
 >
-  {selectedRows.length > 0 ? `Selected: ${selectedRows.length}` : ""}
+  {selectedRows.length > 0
+    ? `${selectedRows.length} ${selectedRows.length === 1 ? 'row' : 'rows'} selected`
+    : ''}
+</Typography>
 </TableCell>
+
         <TableCell   sx={{
           fontWeight: 600,
           color: "#041129",

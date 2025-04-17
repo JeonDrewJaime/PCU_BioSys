@@ -91,16 +91,48 @@ function HomeNavbar(props) {
               Philippine Christian University
             </Typography>
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {navItems.map((item) => (
-                <Button
-                  key={item.label}
-                  onClick={() => handleNavClick(item.component)}
-                  sx={{ color: 'var(--pri)', marginLeft: '10px' }}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
+  {navItems.map((item) => (
+    <Button
+      key={item.label}
+      onClick={() => handleNavClick(item.component)}
+      sx={{
+        color: 'var(--pri)',
+        marginLeft: '15px',height: '63px',
+        position: 'relative',
+        border: 'none',
+        '&:hover': { 
+          '&::after': {
+            content: "''",
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',    
+            height: '3px', // Set the thickness of the bottom border
+            backgroundColor: '#FFC800', // Bottom border color
+            transform: 'scaleX(1)',
+            transformOrigin: 'bottom right',
+            transition: 'transform 0.3s ease-out', // smooth transition for the effect
+          },
+        },
+        '&::after': {
+          content: "''",
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#FFC800',
+          transform: 'scaleX(0)', // Initially hidden
+          transformOrigin: 'bottom right',
+          transition: 'transform 0.3s ease-out',
+        },
+      }}
+    >
+      {item.label}
+    </Button>
+  ))}
+</Box>
+
             <Button
   onClick={() => handleNavClick(<Login setActiveComponent={setActiveComponent} />)}
   sx={{

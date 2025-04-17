@@ -12,7 +12,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduleData, deleteAcademicYear, deleteSemesters, deleteMultipleAcademicYears, deleteCoursesByInstructorNames} from '../../APIs/adminAPI';
 import { FileDownload } from '@mui/icons-material';
 import BulkEditInstructors from '../UI/Dialogs/BulkEditInstructors';
-import Swal from 'sweetalert2';
 
 
 const ScheduleManagement = () => {
@@ -71,25 +70,12 @@ const handleClose = () => {
 };
 
 const handleDelete = async () => {
-  if (selectedRows.length === 0) return;
+  const semesterMap = new Map(); // key = academicYear, value = Set of semesters
+  const academicYearsToDelete = new Set(); // Set of academic years to delete entirely
+  const instructorsToDelete = new Set(); // Set to track selected instructors
+  const semesterDetails = []; // Array to store the academic year and semester details for deletion
 
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This action will permanently delete the selected schedule(s).',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete it!'
-  });
-
-  if (!result.isConfirmed) return;
-
-  const semesterMap = new Map();
-  const academicYearsToDelete = new Set();
-  const instructorsToDelete = new Set();
-  const semesterDetails = [];
-
+  // Group selected rows by academic year, semester, and instructor
   selectedRows.forEach((key) => {
     const [yearIndex, semIndex, instIndex] = key.split('-');
     const year = academicYears[yearIndex];
@@ -99,59 +85,73 @@ const handleDelete = async () => {
     const instructor = semester?.instructors[instIndex];
 
     if (academicYear && semesterKey) {
+      // Group semesters by academic year
       if (!semesterMap.has(academicYear)) {
         semesterMap.set(academicYear, new Set());
       }
       semesterMap.get(academicYear).add(semesterKey);
 
+      // Collect instructors to delete
       if (instructor) {
         instructorsToDelete.add(instructor.name);
+        // Store the academic year and semester details for instructor deletion
         semesterDetails.push({ academicYear, semesterKey });
       }
     }
   });
 
+  // Check if all academic years and semesters are selected
   const allYearsSelected = semesterMap.size === academicYears.length;
   const allSemestersSelected = Array.from(semesterMap.values()).every((semesters) => semesters.size === academicYears[0]?.semesters.length);
 
-  try {
-    if (allYearsSelected && allSemestersSelected && instructorsToDelete.size > 0) {
+  // If all academic years and semesters are selected and there are selected instructors, delete courses for instructors
+  if (allYearsSelected && allSemestersSelected && instructorsToDelete.size > 0) {
+    try {
+      // Call function to delete courses by instructors with academic year and semester
       await deleteCoursesByInstructorNames(Array.from(instructorsToDelete), semesterDetails[0].academicYear, semesterDetails[0].semesterKey);
       console.log(`✅ Deleted courses for instructors: ${Array.from(instructorsToDelete).join(', ')}`);
-    } else {
-      semesterMap.forEach((semestersSet, academicYear) => {
-        const year = academicYears.find((yr) => yr.acadYear === academicYear);
-        const allSemesters = year?.semesters.map((sem) => sem.semesterKey);
+    } catch (err) {
+      console.error(`❌ Failed to delete courses for instructors:`, err);
+    }
+  } else {
+    // Check for academic years to delete fully (if all semesters are selected)
+    semesterMap.forEach((semestersSet, academicYear) => {
+      const year = academicYears.find((yr) => yr.acadYear === academicYear);
+      const allSemesters = year?.semesters.map((sem) => sem.semesterKey);
 
-        if (allSemesters && allSemesters.length === semestersSet.size) {
-          academicYearsToDelete.add(academicYear);
-        }
-      });
+      if (allSemesters && allSemesters.length === semestersSet.size) {
+        // If all semesters of this academic year are selected, delete the entire academic year
+        academicYearsToDelete.add(academicYear);
+      }
+    });
 
-      if (academicYearsToDelete.size > 0) {
+    // First, delete entire academic years
+    if (academicYearsToDelete.size > 0) {
+      try {
         await deleteMultipleAcademicYears(Array.from(academicYearsToDelete));
         console.log(`✅ Deleted academic years: ${Array.from(academicYearsToDelete).join(', ')}`);
-      }
-
-      for (const [academicYear, semestersSet] of semesterMap.entries()) {
-        if (!academicYearsToDelete.has(academicYear)) {
-          const semesters = Array.from(semestersSet);
-          await deleteSemesters(academicYear, semesters);
-          console.log(`✅ Deleted semesters ${semesters.join(', ')} from ${academicYear}`);
-        }
+      } catch (err) {
+        console.error(`❌ Failed to delete academic years:`, err);
       }
     }
 
-    Swal.fire('Deleted!', 'The selected schedule(s) have been deleted.', 'success');
-    setSelectedRows([]);
-    queryClient.invalidateQueries({ queryKey: ['schedules'] });
-
-  } catch (err) {
-    console.error('❌ Deletion failed:', err);
-    Swal.fire('Error', 'Something went wrong while deleting.', 'error');
+    // Then, delete specific semesters for the remaining years
+    for (const [academicYear, semestersSet] of semesterMap.entries()) {
+      if (!academicYearsToDelete.has(academicYear)) { // Skip already deleted academic years
+        const semesters = Array.from(semestersSet);
+        try {
+          await deleteSemesters(academicYear, semesters);
+          console.log(`✅ Deleted semesters ${semesters.join(', ')} from ${academicYear}`);
+        } catch (err) {
+          console.error(`❌ Failed to delete semesters from ${academicYear}:`, err);
+        }
+      }
+    }
   }
-};
 
+  // Clear selected rows after deletion
+  setSelectedRows([]);
+};
 
 
   const filteredData = academicYears

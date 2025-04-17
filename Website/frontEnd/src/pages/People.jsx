@@ -192,12 +192,13 @@ const getRowStyle = (attendanceData, role) => {
   const stars = getStarCount(attendanceData, role);
 
   switch (stars) {
-    case 5: return { backgroundColor: "#D4EDDA" }; // Excellent (Light Green)
-    case 4: return { backgroundColor: "#D1ECF1" }; // Very Good (Light Blue)
-    case 3: return { backgroundColor: "#FFF3CD" }; // Good (Light Yellow)
-    case 2: return { backgroundColor: "#F8D7DA" }; // Satisfactory (Light Pink)
-    case 1: return { backgroundColor: "#FADBD8" }; // Needs Improvement (Light Red)
-    case 0: return { backgroundColor: "#F5B7B1" }; // Unsatisfactory (Darker Red)
+    case 5: return { backgroundColor: "#A1BAAA4D" }; // Excellent (LIGHT GREEN)
+    case 4: return { backgroundColor: "#A7B8DD4D" }; // Very Good (LIGHT BLUE)
+    case 3: return { backgroundColor: "#FEEAAE4D" }; // LIGHT YELLOW 
+    case 2: return { backgroundColor: "#ECC0D54D" }; // Satisfactory (LIGHT PINK)
+    case 1: return { backgroundColor: "#D6A09A4D" }; // Needs Improvement (LIGHT RED)
+    case 0: return { backgroundColor: "#9F4B414D" }; // DARK RED
+    
     default: return {};
   }
 };
@@ -405,6 +406,7 @@ const getRowStyle = (attendanceData, role) => {
           </MenuItem>
         </Select>
       </FormControl>
+      
       {/* Add User Button */}
       <Button
         variant="contained"
@@ -451,8 +453,8 @@ const getRowStyle = (attendanceData, role) => {
       </Paper>
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ color: "black" }}>
-          Add People
+        <DialogTitle sx={{ color: "black", mb:3 }}>
+          
           <IconButton
             aria-label="close"
             onClick={() => setOpenDialog(false)}
