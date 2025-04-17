@@ -4,6 +4,20 @@ import autoTable from "jspdf-autotable";
 import { downloadPDFDTR } from "../../../utils/downloadPDF";
 import { downloadExcelDTR } from "../../../utils/downloadExcel";
 import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+
+
+import {
   Dialog,
   DialogTitle,
   DialogContent,
@@ -36,6 +50,10 @@ const UserReportDialog = ({ open, onClose, user }) => {
   const [selectedItems, setSelectedItems] = useState({});
   const [selectAll, setSelectAll] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
+  const [chartFilter, setChartFilter] = useState("All");
+  const [filterType, setFilterType] = useState("Daily");
+
+
 const [selectedSemester, setSelectedSemester] = useState("");
   useEffect(() => {
     if (!user?.attendance || !open) return;
@@ -78,6 +96,51 @@ const [selectedSemester, setSelectedSemester] = useState("");
     });
   };
   
+  const generateChartData = () => {
+    const statusMap = {};
+  
+    attendanceData.forEach(({ acadYear, semesters }) => {
+      semesters.forEach(({ semester, dates }) => {
+        dates.forEach(({ date, details }) => {
+          const dateObj = new Date(date);
+          
+          // Apply filter logic
+          let filterKey = date;
+          if (filterType === "Weekly") {
+            // Calculate week of the year
+            const week = Math.floor(dateObj.getDate() / 7);
+            filterKey = `${dateObj.getFullYear()}-W${week}`;
+          } else if (filterType === "Yearly") {
+            filterKey = `${dateObj.getFullYear()}`;
+          }
+  
+          if (!statusMap[filterKey]) {
+            statusMap[filterKey] = { date: filterKey, Late: 0, Absent: 0, Attended: 0 };
+          }
+  
+          Object.values(details).forEach((record) => {
+            const status = record?.late_status || record?.status;
+            if (status === "Late") statusMap[filterKey].Late++;
+            else if (status === "Absent") statusMap[filterKey].Absent++;
+            else if (status === "Attended" || status === "Present") statusMap[filterKey].Attended++;
+          });
+        });
+      });
+    });
+  
+    let data = Object.values(statusMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+    if (chartFilter !== "All") {
+      data = data.map((entry) => ({
+        date: entry.date,
+        [chartFilter]: entry[chartFilter],
+      }));
+    }
+  
+    return data;
+  };
+  
+  
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
     let newSelection = {};
@@ -111,19 +174,7 @@ const [selectedSemester, setSelectedSemester] = useState("");
   }, []);
   
 
-  const getValidatedCount = (details) => {
-    let count = Object.values(details).filter(d => d.status === "Validated").length;
-    let percentage = Math.round((count / 3) * 100);
-    return (
-      <CircularProgress
-        variant="determinate"
-        value={percentage}
-        color={percentage === 100 ? "success" : percentage >= 50 ? "warning" : "error"}
-        size={40}
-        thickness={4}
-      />
-    );
-  };
+ 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl" >
       <DialogTitle sx={{ bgcolor: "#012763", color: "#ffffff", fontWeight: "bold", fontSize: "24px" }}>
@@ -142,6 +193,7 @@ const [selectedSemester, setSelectedSemester] = useState("");
       </DialogTitle>
 
       <DialogContent sx={{bgcolor:"#f5f5fb"}}>
+
 
 
      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: 1, mb: 1, p:2, }}>
@@ -182,6 +234,27 @@ const [selectedSemester, setSelectedSemester] = useState("");
   </Select>
 </FormControl>
 
+<FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
+  <InputLabel>Status Filter</InputLabel>
+  <Select value={chartFilter} onChange={(e) => setChartFilter(e.target.value)}>
+    <MenuItem value="All">All</MenuItem>
+    <MenuItem value="Late">Late</MenuItem>
+    <MenuItem value="Absent">Absent</MenuItem>
+    <MenuItem value="Attended">Attended</MenuItem>
+  </Select>
+</FormControl>
+
+<FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
+  <InputLabel>Filter Type</InputLabel>
+  <Select
+    value={filterType}
+    onChange={(e) => setFilterType(e.target.value)}
+  >
+    <MenuItem value="Daily">Daily</MenuItem>
+    <MenuItem value="Weekly">Weekly</MenuItem>
+    <MenuItem value="Yearly">Yearly</MenuItem>
+  </Select>
+</FormControl>
 
   </Box>
 
@@ -241,8 +314,43 @@ const [selectedSemester, setSelectedSemester] = useState("");
   
 </Box>
 
+<ResponsiveContainer width="100%" height={400}>
+  {chartFilter === "All" ? (
+    <BarChart data={generateChartData()}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="date" />
+      <YAxis allowDecimals={false} />
+      <RechartsTooltip />
+      <Legend />
+      <Bar dataKey="Late" fill="#FFA726" />
+      <Bar dataKey="Absent" fill="#EF5350" />
+      <Bar dataKey="Attended" fill="#66BB6A" />
+    </BarChart>
+  ) : (
+    <LineChart data={generateChartData()}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="date" />
+      <YAxis allowDecimals={false} />
+      <RechartsTooltip />
+      <Legend />
+      <Line
+        type="monotone"
+        dataKey={chartFilter}
+        stroke={
+          chartFilter === "Late"
+            ? "#FFA726"
+            : chartFilter === "Absent"
+            ? "#EF5350"
+            : "#66BB6A"
+        }
+        strokeWidth={2}
+      />
+    </LineChart>
+  )}
+</ResponsiveContainer>
 
-        
+
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -310,9 +418,9 @@ const [selectedSemester, setSelectedSemester] = useState("");
                                           <TableCell>Time In</TableCell>
                                           <TableCell>Time Out</TableCell>
                                           <TableCell>Late Status</TableCell>
-                                          <TableCell>Validation Progress</TableCell>
+                                      
                                           <TableCell>Total Hours</TableCell>
-                                          <TableCell>Units</TableCell>
+                                     
                                         </TableRow>
                                       </TableHead>
                                       <TableBody>
@@ -322,9 +430,7 @@ const [selectedSemester, setSelectedSemester] = useState("");
                                             <TableCell>{record.time_in}</TableCell>
                                             <TableCell>{record.time_out}</TableCell>
                                             <TableCell>{record.late_status}</TableCell>
-                                            <TableCell>{getValidatedCount(record)}</TableCell>
                                             <TableCell>{record.total_hours}</TableCell>
-                                            <TableCell>{record.units}</TableCell>
                                           </TableRow>
                                         ))}
                                       </TableBody>
