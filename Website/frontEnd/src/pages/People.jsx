@@ -417,7 +417,7 @@ const getRowStyle = (attendanceData, role) => {
           width: '200px',
           backgroundColor: '#cceaff',
           border: '1px solid #1a4076',
-          color: '#1a4076',
+          color: '#0F232F',
           fontWeight: 600,
           boxShadow: 'none',
           marginLeft: 'auto', // Align the button to the far right

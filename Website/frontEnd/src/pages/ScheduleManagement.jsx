@@ -178,9 +178,13 @@ const handleDelete = async () => {
         <Typography gutterBottom sx={{ color: "#041129", mt: -1, mb: 2, fontSize: "16px" }}>
         Keep your team’s availability and instructional time on track with a clear breakdown of daily teaching schedules.
             </Typography>
+            
       <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }}>
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <FormControl sx={{ minWidth: 150 }} size="small">
+     <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: -1, mb: 2, p:2,}}>
+  {/* Left side content (Select All, Filters, etc.) */}
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', flex: 1,  }}>
+          
+        <FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
             <InputLabel>Academic Year</InputLabel>
             <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
               <MenuItem value="">All</MenuItem>
@@ -190,7 +194,7 @@ const handleDelete = async () => {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 150 }} size="small">
+          <FormControl sx={{ minWidth: 150, mr: 1 }} size="small">
             <InputLabel>Semester</InputLabel>
             <Select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
               <MenuItem value="">All</MenuItem>
@@ -199,31 +203,35 @@ const handleDelete = async () => {
               ))}
             </Select>
           </FormControl>
-          <FormControl sx={{ minWidth: 120 }} size="small">
-  <InputLabel>Actions</InputLabel>
-  <Select
-  value=""
-  onChange={(e) => {
-    const action = e.target.value;
-    if (action === "edit") {
-      handleBulkEdit();
-    } else if (action === "delete") {
-      handleDelete();
-    }
-  }}
-  displayEmpty
->
-  
-  <MenuItem value="edit" disabled={selectedRows.length === 0}>
-    Edit
-  </MenuItem>
-  <MenuItem value="delete" disabled={selectedRows.length === 0}>
-    Delete
-  </MenuItem>
-</Select>
 
-</FormControl>
-          
+          <FormControl sx={{ minWidth: 120,mr: 1 }} size="small">
+          <InputLabel>Actions</InputLabel>
+          <Select
+          value=""
+          onChange={(e) => {
+            const action = e.target.value;
+            if (action === "edit") {
+              handleBulkEdit();
+            } else if (action === "delete") {
+              handleDelete();
+            }
+          }}
+          displayEmpty
+        >
+  
+          <MenuItem value="edit" disabled={selectedRows.length === 0}>
+            Edit
+          </MenuItem>
+          <MenuItem value="delete" disabled={selectedRows.length === 0}>
+            Delete
+          </MenuItem>
+        </Select>
+
+        </FormControl>
+      </Box>
+
+      
+  <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
 <Button
   variant="contained"
@@ -234,14 +242,16 @@ const handleDelete = async () => {
   sx={{
     borderRadius: "45px",
     height: "40px",
-    backgroundColor: selectedRows.length > 0 ? "#4CAF50" : "#F0F0F0",
-    border: "1px solid #041129",
-    color: selectedRows.length > 0 ? "#fff" : "#041129",
+    backgroundColor: selectedRows.length > 0 ? '#e3efdf' : "#F0F0F0",
+    border: '1px solid #00590d',
+    color: selectedRows.length > 0 ? '#242005' : "#fff",
     fontWeight: 600,
     boxShadow: "none",
+    mr: 1,
+    width: '200px',
     transition: "background-color 0.3s",
     "&:hover": {
-      backgroundColor: selectedRows.length > 0 ? "#388E3C" : "#F0F0F0"
+     
     }
   }}
 >
@@ -252,7 +262,7 @@ const handleDelete = async () => {
 <Menu
   anchorEl={anchorEl}
   open={Boolean(anchorEl)}
-  onClose={handleClose}
+  onClose={handleClose} sx={{ml:3.5}}
 >
   <MenuItem onClick={() => {
     handleClose();
@@ -303,9 +313,9 @@ const handleDelete = async () => {
               borderRadius: "45px",
               height: "40px",
               width: "200px",
-              backgroundColor: "#EFF6FB",
-              border: "1px solid #041129",
-              color: "#041129",
+              backgroundColor: '#cceaff',
+              border: '1px solid #1a4076',
+              color: '#0F232F',
               fontWeight: 600,
               boxShadow: "none",
             }}
@@ -313,6 +323,10 @@ const handleDelete = async () => {
             Add Schedule
           </Button>
         </Box>
+        </Box>
+   
+
+
 
         <Schedules
   filteredData={filteredData}
