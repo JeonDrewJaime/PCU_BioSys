@@ -356,16 +356,16 @@ const [selectedSemester, setSelectedSemester] = useState("");
             <TableHead>
               <TableRow>
               <TableCell><Checkbox checked={selectAll} onChange={handleSelectAll} color="primary" /></TableCell>
-                <TableCell>Academic Year</TableCell>
+                <TableCell sx={{fontWeight:600}}>Academic Year</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
             {attendanceData.map(({ acadYear, semesters }) => (
                 <React.Fragment key={acadYear}>
                   <TableRow>
-                    <TableCell padding="checkbox">
+                    <TableCell padding="checkbox" >
                       
-                      <Checkbox checked={selectedItems[acadYear] || false} onChange={() => toggleSelect(acadYear)} />
+                      <Checkbox checked={selectedItems[acadYear] || false} onChange={() => toggleSelect(acadYear)} sx={{ml:1.5}}/>
                     </TableCell>
                     <TableCell>
                       <IconButton onClick={() => toggleExpand(setExpandedYears, acadYear)}>

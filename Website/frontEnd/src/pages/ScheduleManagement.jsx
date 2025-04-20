@@ -179,7 +179,7 @@ const handleDelete = async () => {
         Keep your team’s availability and instructional time on track with a clear breakdown of daily teaching schedules.
             </Typography>
             
-      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }}>
+      <Paper sx={{ padding: 2, border: "1px solid #D6D7D6", boxShadow: "none" }} data-aos="fade-up">
      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', mt: -1, mb: 2, p:2,}}>
   {/* Left side content (Select All, Filters, etc.) */}
   <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', flex: 1,  }}>

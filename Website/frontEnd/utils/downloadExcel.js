@@ -64,22 +64,20 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
 
          
       let row = generalInfoSheet.addRow([
-  schedule.days || "-",          // A - Days
-  "",                            // B
-  schedule.timeIn || "-",        // C - Time In
-  schedule.timeOut || "-",       // D - Time Out
-  // Generate shortName based on courseTitle
-  (schedule.courseTitle 
-    ? schedule.courseTitle.split(' ').map(word => word.charAt(0).toUpperCase()).join('') 
-    : "-"),                       // E - Short Name (based on courseTitle)
-  "", "",                        // F, G
-  schedule.courseTitle || "-",   // H - Course Title
-  "", "", "", "", "", "",       // I, J, K, L, M, N
-  schedule.units || "-"          // O - Units
-]);
+      schedule.days || "-",          // A - Days
+      "",                            // B
+      schedule.timeIn || "-",        // C - Time In
+      schedule.timeOut || "-",       // D - Time Out
+      // Generate shortName based on courseTitle
+      (schedule.courseTitle 
+        ? schedule.courseTitle.split(' ').map(word => word.charAt(0).toUpperCase()).join('') 
+        : "-"),                       // E - Short Name (based on courseTitle)
+      "", "",                        // F, G
+      schedule.courseTitle || "-",   // H - Course Title
+      "", "", "", "", "", "",       // I, J, K, L, M, N
+      schedule.units || "-"          // O - Units
+    ]);
 
-
-          // Apply background color to **all** rows
           row.eachCell((cell) => {
             cell.fill = {
               type: "pattern",
@@ -110,57 +108,6 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
         }
 
           generalInfoSheet.addRow([]);
-
-          let rowPeriodCovered = generalInfoSheet.addRow([
-            "Period Covered", "", "", semester, "", "","", 
-          ]);
-
-          rowPeriodCovered.eachCell((cell, colNumber) => {
-            if (colNumber <= 3) { 
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "99CCFF" } 
-              };
-            } else {  
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "FFFF99" } 
-              };
-            }
-            cell.alignment = { horizontal: 'left', vertical: 'middle' };
-          });
-
-          // Merge Cells for Period Covered 
-          generalInfoSheet.mergeCells("A25:C25");
-          generalInfoSheet.mergeCells("D25:H25");
-
-          let rowFirstDay = generalInfoSheet.addRow([
-            "First Day of the Period Covered", "", "", "", semester, "", "", "",
-          ]);
-
-          rowFirstDay.eachCell((cell, colNumber) => {
-            if (colNumber <= 4) { 
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "99CCFF" } 
-              };
-            } else { 
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "FFFF99" } 
-              };
-            }
-            cell.alignment = { horizontal: 'left', vertical: 'middle' };
-          });
-
-          // Merge Cells 
-          generalInfoSheet.mergeCells("A26:D26");
-          generalInfoSheet.mergeCells("E26:H26");
-
         
         // Apply Cell Styles with Background Color for Merged Headers
         const applyStyle = (cell, bgColor, center = false) => {
@@ -200,434 +147,460 @@ export const downloadExcelDTR = async (user, attendanceData, selectedItems) => {
         // END General Information Sheet-----------------------------------------------------
 
 
-
-
           // ✅ DTR 1-15 Records Sheet--------------------------------------------------------
-          const dtr1to15Sheet = workbook.addWorksheet('Reg(1-15)');
 
-          const dtr1to15Data = [
-            ["Philippine Christian University"],  
-            [],
-            ["DAILY TIME RECORD FOR INSTRUCTORS"],  
-            [],
-            ["College/Department:", "", "", "", user.department],  
-            ["","","","","","","","","","","","","","","",],
-            [],
-            ["Name:", "", `${user.firstname} ${user.lastname}`],  
-            ["Address:", "", "1648 Taft Avenue corner Pedro Gil St., Malate, Manila", "", "", "", "","","E-mail:", `${user?.email}`], 
-            ["SUBJECT"],
-            [],
-            ["DATE"],
-            [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],
-            ["TOTAL FOR WEEK SUBJECT"],
-            [],[],
-            ["Total number of hours rendered","","",],
-            ["I hereby certify that the foregoing is a true record of my actual teaching hours for the month of","","","","","","","","April 1-15 2025",],
-          ];
+    const monthGroups = {};
 
-          // Add data to sheet
-          dtr1to15Data.forEach((row) => dtr1to15Sheet.addRow(row));
+    for (const { date } of dates) {
+      const d = new Date(date);
+      const key = `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
 
-          // Merge Cells
-          dtr1to15Sheet.mergeCells('A1:N1'); // Philippine Christian University
-          dtr1to15Sheet.mergeCells('A3:N3'); 
-          dtr1to15Sheet.mergeCells('A5:D5'); // College/Department
-          dtr1to15Sheet.mergeCells('A6:N6'); 
-          dtr1to15Sheet.mergeCells('E5:M5'); // College/Department Data
-          dtr1to15Sheet.mergeCells('A8:B8'); // Name
-          dtr1to15Sheet.mergeCells('C8:M8'); // Faculty Name Data
-          dtr1to15Sheet.mergeCells('A9:B9'); // Address Label
-          dtr1to15Sheet.mergeCells('C9:H9'); // Address Data
-          dtr1to15Sheet.mergeCells('J9:M9'); // Email Data
-          dtr1to15Sheet.mergeCells('A10:B11'); //Subject
-          dtr1to15Sheet.mergeCells('A12:B13'); //Month 
-          dtr1to15Sheet.mergeCells('A29:B29'); //TOTAL FOR WEEK SUBJECT
-          dtr1to15Sheet.mergeCells('A32:C32'); //Total number of hours rendered 
-          dtr1to15Sheet.mergeCells('A33:H33'); 
-          dtr1to15Sheet.mergeCells('I33:K33'); 
+      if (!monthGroups[key]) {
+        monthGroups[key] = [];
+      }
 
-          let dayCounter = 0;
-const alreadyMergedRows = new Set();
+      monthGroups[key].push(date);
+    }
 
-for (const { date } of dates) {
-  if (dayCounter >= 15) break;
-  if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
+    Object.entries(monthGroups).forEach(([monthYear, monthDates]) => {
+      const sheetName = `${monthYear} 1-15`;
+      const worksheet = workbook.addWorksheet(sheetName);
 
-  const day = new Date(date).getDate();
-  if (day < 1 || day > 15) continue;
 
-  const rowNumber = 13 + day;
-  const row = dtr1to15Sheet.getRow(rowNumber);
+    const dtr1to15Data = [
+      ["Philippine Christian University"],  
+      [],
+      ["DAILY TIME RECORD FOR INSTRUCTORS"],  
+      [],
+      ["College/Department:", "", "", "", user.department],  
+      ["","","","","","","","","","","","","","","",],
+      [],
+      ["Name:", "", `${user.firstname} ${user.lastname}`],  
+      ["Address:", "", "1648 Taft Avenue corner Pedro Gil St., Malate, Manila", "", "", "", "","","E-mail:", `${user?.email}`], 
+      ["SUBJECT"],
+      [],
+      ["DATE"],
+      [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],
+      ["TOTAL FOR WEEK SUBJECT"],
+      [],[],
+      ["Total number of hours rendered","","",],
+    
+    ];
 
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    // Add data to sheet
+    dtr1to15Data.forEach((row) => worksheet.addRow(row));
+
+    // Merge Cells
+    worksheet.mergeCells('A1:N1'); // Philippine Christian University
+    worksheet.mergeCells('A3:N3'); 
+    worksheet.mergeCells('A5:D5'); // College/Department
+    worksheet.mergeCells('A6:N6'); 
+    worksheet.mergeCells('E5:M5'); // College/Department Data
+    worksheet.mergeCells('A8:B8'); // Name
+    worksheet.mergeCells('C8:M8'); // Faculty Name Data
+    worksheet.mergeCells('A9:B9'); // Address Label
+    worksheet.mergeCells('C9:H9'); // Address Data
+    worksheet.mergeCells('J9:M9'); // Email Data
+    worksheet.mergeCells('A10:B11'); // Subject
+    worksheet.mergeCells('A12:B13'); // Month 
+    worksheet.mergeCells('A29:B29'); // TOTAL FOR WEEK SUBJECT
+    worksheet.mergeCells('A32:C32'); // Total number of hours rendered 
+    worksheet.mergeCells('A33:H33'); 
+    worksheet.mergeCells('I33:K33');
+
+    let dayCounter = 0;
+    const alreadyMergedRows = new Set();
+
+    let displayedMonth = "";
+    let displayedYear = "";
+
+    for (const date of monthDates) {
+      if (dayCounter >= 15) break;
+      if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
+
+      const day = new Date(date).getDate();
+      if (day < 1 || day > 15) continue;
+
+      if (!displayedMonth && !displayedYear) {
+        const firstDateObj = new Date(date);
+        displayedMonth = firstDateObj.toLocaleString('default', { month: 'long' });
+        displayedYear = firstDateObj.getFullYear();
+      }
+
+      const rowNumber = 13 + day;
+      const row = worksheet.getRow(rowNumber);
+
+      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      row.getCell(1).value = formattedDate;
+
+      const mergeRange = `A${rowNumber}:B${rowNumber}`;
+      if (!alreadyMergedRows.has(rowNumber)) {
+        worksheet.mergeCells(mergeRange);
+        alreadyMergedRows.add(rowNumber);
+      }
+
+      // Style cell...
+      row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell(1).font = { size: 10 };
+      row.getCell(1).border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      };
+
+      dayCounter++;
+    }
+
+    if (displayedMonth && displayedYear) {
+      const certRowIndex = 33;
+      const certRow = worksheet.getRow(certRowIndex);
+
+      certRow.getCell(1).value = "I hereby certify that the foregoing is a true record of my actual teaching hours for the month of";
+      certRow.getCell(9).value = `${displayedMonth} 1-15 ${displayedYear}`;
+
+      for (let col = 1; col <= 9; col++) {
+        const cell = certRow.getCell(col);
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { size: 10 };
+      }
+    }
+
+    // Center align specific cells
+    const centerAlignedCells = ['A1', 'A3', 'E5', 'A10', 'A12', 'A13', 'I33'];
+
+    centerAlignedCells.forEach((cellRef) => {
+      worksheet.getCell(cellRef).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Right align specific labels
+    const rightAlignedCells = ['A5', 'A8', 'A9', 'I9', 'A32', 'A33'];
+
+    rightAlignedCells.forEach((cellRef) => {
+      worksheet.getCell(cellRef).alignment = { horizontal: 'right', vertical: 'middle' };
+
+      // Modify font for the right-aligned cells
+      worksheet.getCell(cellRef).font = { 
+        name: 'Times', 
+        size: 11,
+      };
+    });
+
+    // Left align specific labels
+    const leftAlignedCells = ['C8', 'C9', 'K9'];
+    leftAlignedCells.forEach((cellRef) => {
+      worksheet.getCell(cellRef).alignment = { horizontal: 'left', vertical: 'middle' };
+
+      // Modify font for the left-aligned cells
+      worksheet.getCell(cellRef).font = { 
+        name: 'arial', 
+        size: 10,
+      };
+    });
+
+    // Bottom grid
+    const bottomGridCells = ['A9', 'E5', 'A6', 'C8', 'C9', 'K9', 'I9', 'N9', 'D32', 'I33'];
+    bottomGridCells.forEach((cellRef) => {
+      worksheet.getCell(cellRef).border = {
+        bottom: { style: 'thin', color: { argb: '000000' } }
+      };
+    });
+
+    // Grid for box borders
+    const gridCells = ['A10', 'A12', 'A13', 'A29'];
+    gridCells.forEach((cellRef) => {
+      worksheet.getCell(cellRef).border = {
+        bottom: { style: 'thin', color: { argb: '000000' } },
+        top: { style: 'thin', color: { argb: '000000' } },
+        left: { style: 'thin', color: { argb: '000000' } },
+        right: { style: 'thin', color: { argb: '000000' } },
+      };
+    });
+
+    // Increase font size and apply custom font to PCU title
+    worksheet.getRow(1).height = 30;
+    worksheet.getCell('A1').font = { name: 'Old English', size: 20, bold: true };
+
+    // Add letter spacing function
+    function addLetterSpacing(text, spacing) {
+      return text.split('').join(' '.repeat(spacing));
+    }
+
+    // Add letter spacing for A3
+    const spacedText = addLetterSpacing('DAILY TIME RECORD FOR INSTRUCTORS', 1);
+    worksheet.getCell('A3').value = spacedText;
+    worksheet.getCell('A3').font = { name: 'Old English', size: 13 };
+
+    // Set all columns width to 12
+    for (let col = 1; col <= 14; col++) {
+      worksheet.getColumn(col).width = 12;
+    }
+
+    // Custom font for some cells
+    worksheet.getCell('E5').font = { name: 'Old English', size: 11 };
+    worksheet.getCell('C8').font = { name: 'Old English', size: 11 };
+
+
+    // ✅ Add Table Headers ------------------------
+    scheduleData.forEach((schedule, index) => {
+      const colStart = 3 + index * 2;
+      const rowStart = 10;
+
+      const row10 = worksheet.getRow(rowStart);
+      row10.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+      row10.getCell(colStart).font = { size: 7 };
+      row10.getCell(colStart).border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+
+      const row11 = worksheet.getRow(rowStart + 1);
+      // Style for Day (Row 11)
+    row11.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+    row11.getCell(colStart).font = { size: 10 };
+    row11.getCell(colStart).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+    // Style for Time (Row 11)
+    row11.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+    row11.getCell(colStart + 1).font = { size: 6 };
+    row11.getCell(colStart + 1).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+
+    const row12 = worksheet.getRow(rowStart + 2);
+      // Style for "FROM" (Merged C12:C13)
+    row12.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+    row12.getCell(colStart).font = { size: 10 };
+    row12.getCell(colStart).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+
+    // Style for "TO" (Merged D12:D13)
+    row12.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+    row12.getCell(colStart + 1).font = { size: 10 };
+    row12.getCell(colStart + 1).border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+
+    // Merge course title horizontally across its two columns
+    worksheet.mergeCells(rowStart, colStart, rowStart, colStart + 1);
+
+      row10.getCell(colStart).value = schedule.courseTitle || "-";
+      row11.getCell(colStart).value = schedule.days || "-";
+      row11.getCell(colStart + 1).value = schedule.timeIn && schedule.timeOut
+        ? `${schedule.timeIn} - ${schedule.timeOut}`
+        : "-";
+
+      worksheet.mergeCells(rowStart + 2, colStart, rowStart + 3, colStart);
+      worksheet.mergeCells(rowStart + 2, colStart + 1, rowStart + 3, colStart + 1);
+      row12.getCell(colStart).value = "FROM";
+      row12.getCell(colStart + 1).value = "TO";
+
+      // Fill 1–15 days of time in/out         
+      scheduleData.forEach((schedule, index) => {
+        const colStart = 3 + index * 2;
+  
+    for (let day = 1; day <= 15; day++) {
+      const rowNumber = 13 + day;
+      const row = worksheet.getRow(rowNumber);
+      const cellDate = new Date(row.getCell(1).value); 
+  
+      let timeIn = "-";
+      let timeOut = "-";
+  
+      
+      const dateObj = dates.find(({ date }) => {
+        const d = new Date(date);
+        return (
+          d.getDate() === cellDate.getDate() &&
+          d.getMonth() === cellDate.getMonth() &&
+          d.getFullYear() === cellDate.getFullYear()
+        );
+      });
+  
+      if (dateObj && selectedItems[`${acadYear}-${semester}-${dateObj.date}`]) {
+        const { details } = dateObj;
+  
+        Object.entries(details).forEach(([course, record]) => {
+          const courseTitle = course.substring(11).trim();
+          if (courseTitle === schedule.courseTitle.trim()) {
+            timeIn = record.time_in || "-";
+            timeOut = record.time_out || "-";
+          }
+        });
+      }
+  
+      row.getCell(colStart).value = timeIn;
+      row.getCell(colStart + 1).value = timeOut;
+  
+      [colStart, colStart + 1].forEach((col) => {
+        row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(col).font = { size: 8 };
+        row.getCell(col).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+      });
+    }
   });
+  
+  const totalRowIndex = 29;
+  const totalWeekCell = worksheet.getCell('D32');
 
-  row.getCell(1).value = formattedDate;
+  let grandTotalHours = 0;
 
-  // ✅ Safely merge only once
-  const mergeRange = `A${rowNumber}:B${rowNumber}`;
-  if (!alreadyMergedRows.has(rowNumber)) {
-    dtr1to15Sheet.mergeCells(mergeRange);
-    alreadyMergedRows.add(rowNumber);
+  scheduleData.forEach((schedule, index) => {
+    const colStart = 3 + index * 2;
+    const toCol = colStart + 1;
+
+    let totalHours = 0;
+
+  for (let rowIndex = 14; rowIndex <= 28; rowIndex++) {
+    const row = worksheet.getRow(rowIndex);
+    const cellDate = new Date(row.getCell(1).value); 
+
+    const dateObj = dates.find(({ date }) => {
+      const d = new Date(date);
+      return (
+        d.getDate() === cellDate.getDate() &&
+        d.getMonth() === cellDate.getMonth() &&
+        d.getFullYear() === cellDate.getFullYear()
+      );
+    });
+
+    if (!dateObj) continue;
+
+    const selected = selectedItems[`${acadYear}-${semester}-${dateObj.date}`];
+    if (!selected) continue;
+
+    Object.entries(dateObj.details).forEach(([course, record]) => {
+      const courseTitle = course.substring(11).trim();
+
+      if (courseTitle === schedule.courseTitle.trim() && record.time_in && record.time_out) {
+        const timeIn = new Date(`${dateObj.date} ${record.time_in}`);
+        const timeOut = new Date(`${dateObj.date} ${record.time_out}`);
+
+        const diffInMillis = timeOut - timeIn;
+        const hours = diffInMillis / (1000 * 60 * 60);
+
+        if (!isNaN(hours) && hours > 0) {
+          totalHours += hours;
+        }
+      }
+    });
   }
 
-  row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-  row.getCell(1).font = { size: 10 };
-  row.getCell(1).border = {
+  const totalCell = worksheet.getCell(totalRowIndex, toCol);
+  totalCell.value = totalHours.toFixed(2);
+  totalCell.font = { bold: true };
+  totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  totalCell.border = {
     top: { style: 'thin' },
     left: { style: 'thin' },
     bottom: { style: 'thin' },
     right: { style: 'thin' },
   };
 
-  dayCounter++;
-}
+  grandTotalHours += totalHours;
+});
 
-          
+  totalWeekCell.value = grandTotalHours.toFixed(2);
+  totalWeekCell.font = { bold: true };
+  totalWeekCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  totalWeekCell.border = {
+  bottom: { style: 'thin' },
+};
 
-          // Center align specific cells
-          const centerAlignedCells = ['A1', 'A3', 'E5', 'A10', 'A12', 'A13', 'I33',];
+});
 
-          centerAlignedCells.forEach((cellRef) => {
-            dtr1to15Sheet.getCell(cellRef).alignment = { horizontal: 'center', vertical: 'middle' };
-          });
-
-          // Right align specific labels
-          const rightAlignedCells = ['A5', 'A8', 'A9', 'I9', 'A32', 'A33'];
-
-          rightAlignedCells.forEach((cellRef) => {
-            dtr1to15Sheet.getCell(cellRef).alignment = { horizontal: 'right', vertical: 'middle' };
-
-              // Modify font for the right-aligned cells
-              dtr1to15Sheet.getCell(cellRef).font = { 
-                name: 'Times', 
-                size: 11,      
-              };
-          });
-
-          // Left align specific labels
-          const leftAlignedCells = ['C8', 'C9', 'K9'];
-          leftAlignedCells.forEach((cellRef) => {
-            dtr1to15Sheet.getCell(cellRef).alignment = { horizontal: 'left', vertical: 'middle' };
-
-              // Modify font for the right-aligned cells
-              dtr1to15Sheet.getCell(cellRef).font = { 
-                name: 'arial', 
-                size: 10,      
-              };
-          });
-
-          // bottom grid
-          const bottomGridCells = ['A9','E5', 'A6', 'C8', , 'C8', 'C9', 'K9','I9','N9', 'D32','I33',];
-          bottomGridCells.forEach((cellRef) => {
-            dtr1to15Sheet.getCell(cellRef).border = {
-              bottom: { style: 'thin', color: { argb: '000000' } } // Adds a thin black bottom border
-            };
-          });
-
-          
-          // GRID
-          const gridCells = [ 'A10', 'A12', 'A13', 'A29'];
-        gridCells.forEach((cellRef) => {
-            dtr1to15Sheet.getCell(cellRef).border = {
-              bottom: { style: 'thin', color: { argb: '000000' } } ,
-              top: { style: 'thin', color: { argb: '000000' } } ,
-              left: { style: 'thin', color: { argb: '000000' } } ,
-              right: { style: 'thin', color: { argb: '000000' } } ,
-            };
-          });
-
-
-
-          // Increase font size and apply custom font to PCU title
-          dtr1to15Sheet.getRow(1).height = 25; // Increase row height for better visibility
-          dtr1to15Sheet.getCell('A1').font = { name: 'Old English', size: 20, bold: true }; 
-          
-          function addLetterSpacing(text, spacing) {
-            return text.split('').join(' '.repeat(spacing));
-          }
-          
-          // Add letter spacing for the text in cell A3
-          const spacedText = addLetterSpacing('DAILY TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
-          
-          dtr1to15Sheet.getCell('A3').value = spacedText;
-          dtr1to15Sheet.getCell('A3').font = { name: 'Old English', size: 13, };
-
-          // Set **ALL** columns width to 8
-          for (let col = 1; col <= 14; col++) {
-            dtr1to15Sheet.getColumn(col).width = 12;
-          }
-
-          dtr1to15Sheet.getCell('E5').font = { name: 'Old English', size: 11, };
-          dtr1to15Sheet.getCell('C8').font = { name: 'Old English', size: 11, };
-
-
-
-
-
-          // ✅ Add Table Headers ------------------------
-
-
-
-            scheduleData.forEach((schedule, index) => {
-            const colStart = 3 + index * 2;
-            const rowStart = 10;
-            
-
-            const row10 = dtr1to15Sheet.getRow(rowStart);
-            const row11 = dtr1to15Sheet.getRow(rowStart + 1);
-            const row12 = dtr1to15Sheet.getRow(rowStart + 2);
-          
-            row10.getCell(colStart).value = schedule.courseTitle || "-";
-            row11.getCell(colStart).value = schedule.days || "-";
-            row11.getCell(colStart + 1).value = schedule.timeIn && schedule.timeOut
-              ? `${schedule.timeIn} - ${schedule.timeOut}`
-              : "-";
-          
-            dtr1to15Sheet.mergeCells(rowStart + 2, colStart, rowStart + 3, colStart);
-            dtr1to15Sheet.mergeCells(rowStart + 2, colStart + 1, rowStart + 3, colStart + 1);
-            row12.getCell(colStart).value = "FROM";
-            row12.getCell(colStart + 1).value = "TO";
-          
-            // Fill 1–15 days of time in/out
-          
-            scheduleData.forEach((schedule, index) => {
-              const colStart = 3 + index * 2; // FROM in colStart, TO in colStart + 1
-            
-              // Loop through all 1–15 days
-              for (let day = 1; day <= 15; day++) {
-                const rowNumber = 13 + day; // Row 14 = Day 1
-                const row = dtr1to15Sheet.getRow(rowNumber);
-            
-                // Find the date object matching this day
-                const dateObj = dates.find(({ date }) => new Date(date).getDate() === day);
-                let timeIn = "-";
-                let timeOut = "-";
-            
-                if (dateObj && selectedItems[`${acadYear}-${semester}-${dateObj.date}`]) {
-                  const { details } = dateObj;
-            
-                  Object.entries(details).forEach(([course, record]) => {
-                    const courseTitle = course.substring(11).trim();
-                    if (courseTitle === schedule.courseTitle.trim()) {
-                      timeIn = record.time_in || "-";
-                      timeOut = record.time_out || "-";
-                    }
-                  });
-                }
-            
-                // Assign values to the correct columns
-                row.getCell(colStart).value = timeIn;
-                row.getCell(colStart + 1).value = timeOut;
-            
-                // Style the cells
-                [colStart, colStart + 1].forEach((col) => {
-                  row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
-                  row.getCell(col).font = { size: 8 };
-                  row.getCell(col).border = {
-                    top: { style: 'thin' },
-                    left: { style: 'thin' },
-                    bottom: { style: 'thin' },
-                    right: { style: 'thin' },
-                  };
-                  
-                });
-              }
-            });
-            
-            const totalRowIndex = 29; // "TOTAL FOR WEEK SUBJECT" is on row 29
-            const totalWeekCell = dtr1to15Sheet.getCell('D32'); // Total number of hours rendered (D32)
-            
-            let grandTotalHours = 0;
-            
-            scheduleData.forEach((schedule, index) => {
-              const colStart = 3 + index * 2;       // FROM column
-              const toCol = colStart + 1;           // TO column (for total display)
-            
-              let totalHours = 0;
-            
-              dates.forEach(({ date, details }) => {
-                if (!selectedItems[`${acadYear}-${semester}-${date}`]) return;
-            
-                Object.entries(details).forEach(([course, record]) => {
-                  const courseTitle = course.substring(11); // removes "Course: "
-            
-                  // If the course matches and has time_in and time_out, calculate the hours
-                  if (courseTitle === schedule.courseTitle && record.time_in && record.time_out) {
-                    const timeIn = new Date(`${date} ${record.time_in}`);
-                    const timeOut = new Date(`${date} ${record.time_out}`);
-            
-                    // Calculate the difference between time_in and time_out in hours
-                    const diffInMillis = timeOut - timeIn; // time in milliseconds
-                    const hours = diffInMillis / (1000 * 60 * 60); // convert to hours
-            
-                    // Only add valid hours (positive values)
-                    if (!isNaN(hours) && hours > 0) {
-                      totalHours += hours;
-                    }
-                  }
-                });
-              });
-            
-              // Display total in "TO" column on row 29
-              const totalCell = dtr1to15Sheet.getCell(totalRowIndex, toCol);
-              totalCell.value = totalHours.toFixed(2); // Show up to 2 decimal places
-              totalCell.font = { bold: true };
-              totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
-              totalCell.border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-              };
-            
-              // Add total hours for this course to the grand total
-              grandTotalHours += totalHours;
-            });
-            
-            // Now set the grand total hours for the week in D32
-            totalWeekCell.value = grandTotalHours.toFixed(2); // Show up to 2 decimal places
-            totalWeekCell.font = { bold: true };
-            totalWeekCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            totalWeekCell.border = {
-
-              bottom: { style: 'thin' },
-         
-            };
-            
-            // Merge cells for total rendered area, but only if not merged yet
-            if (!dtr1to15Sheet.getCell('D32').isMerged) {
-              dtr1to15Sheet.mergeCells('D32:G32'); // Merge total rendered area
-            }
-            
-            
-
-          
- 
-
-
-
-            
-            // Style for Course Title (Row 10)
-            row10.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
-            row10.getCell(colStart).font = { size: 7,  }; 
-            row10.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for Day (Row 11)
-            row11.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row11.getCell(colStart).font = { size: 10 };
-            row11.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for Time (Row 11)
-            row11.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row11.getCell(colStart + 1).font = { size: 6 }; 
-            row11.getCell(colStart + 1).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for "FROM" (Merged C12:C13)
-            row12.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row12.getCell(colStart).font = { size: 10 }; 
-            row12.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            };
-            
-            // Style for "TO" (Merged D12:D13)
-            row12.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row12.getCell(colStart + 1).font = { size: 10 }; 
-            row12.getCell(colStart + 1).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            };
-            
-            // Merge course title horizontally across its two columns
-            dtr1to15Sheet.mergeCells(rowStart, colStart, rowStart, colStart + 1);
-            
-            
-      
-        });
-        
-// 🔹 Ensure minimum columns until 'N' 
-const minColEnd = 14; 
-for (let col = 3; col <= minColEnd; col++) {
-
-  const cell10 = dtr1to15Sheet.getCell(10, col);
-  const cell11 = dtr1to15Sheet.getCell(11, col);
-
-  if (!cell10.value) {
-    cell10.value = "-";
-  }
-  if (!cell11.value) {
-    cell11.value = "-";
-  }
-
-  // Apply center alignment
-  cell10.alignment = { horizontal: 'center', vertical: 'middle' };
-  cell11.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  // Apply border
-  cell10.border = {
-    top: { style: 'thin' },
-    left: { style: 'thin' },
-    bottom: { style: 'thin' },
-    right: { style: 'thin' }
-  };
-  cell11.border = {
-    top: { style: 'thin' },
-    left: { style: 'thin' },
-    bottom: { style: 'thin' },
-    right: { style: 'thin' }
-  };
-}
-
-        
-// 🔹 Ensure placeholder "-" in every empty cell from Row 14 to 28 (days 1–15)
-for (let rowNum = 12; rowNum <= 29; rowNum++) {
-  const row = dtr1to15Sheet.getRow(rowNum);
-  for (let col = 3; col <= 14; col++) {
-    const cell = row.getCell(col);
-    if (!cell.value) {
-      cell.value = "-";
+    if (!worksheet.getCell('D32').isMerged) {
+      worksheet.mergeCells('D32:G32'); 
     }
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.font = { size: 8 };
-    cell.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-  }
-}
+
+// Ensure minimum columns until 'N' 
+    const minColEnd = 14; 
+    for (let col = 3; col <= minColEnd; col++) {
+
+      const cell10 = worksheet.getCell(10, col);
+      const cell11 = worksheet.getCell(11, col);
+
+      if (!cell10.value) {
+        cell10.value = "-";
+      }
+      if (!cell11.value) {
+        cell11.value = "-";
+      }
+
+      // Apply center alignment
+      cell10.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell11.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Apply border
+      cell10.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      cell11.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    }
+
+    //Ensure placeholder "-" in every empty cell from Row 14 to 28 (days 1–15)
+    for (let rowNum = 12; rowNum <= 29; rowNum++) {
+      const row = worksheet.getRow(rowNum);
+      for (let col = 3; col <= 14; col++) {
+        const cell = row.getCell(col);
+        if (!cell.value) {
+          cell.value = "-";
+        }
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { size: 8 };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+      }
+    }
+    });    
 
 
-        // ✅ DTR 16-31 Records Sheet--------------------------------------------------------
-            // Create a new worksheet for dates 16-31
-                  const dtr16to31Sheet = workbook.addWorksheet('Reg(16-31)');
 
-                  // Data for the new sheet (dates 16 to 31)
-                  const dtr16to31Data = [
+ // ✅ DTR 16-31 Records Sheet--------------------------------------------------------
+
+          Object.entries(monthGroups).forEach(([monthYear, monthDates]) => {
+            const sheetName = `${monthYear} 16-31`;
+            const worksheet = workbook.addWorksheet(sheetName);
+
+                const dtr16to31Data = [
                     ["Philippine Christian University"],
                     [],
                     ["DAILY TIME RECORD FOR INSTRUCTORS"],
@@ -644,390 +617,417 @@ for (let rowNum = 12; rowNum <= 29; rowNum++) {
                     ["TOTAL FOR WEEK SUBJECT"],
                     [],
                     ["Total number of hours rendered","","",],
-                    ["I hereby certify that the foregoing is a true record of my actual teaching hours for the month of","","","","","","","","April 16-30 2025",],
-                  ];
+               ];
 
-                  // Add data to the sheet
-                  dtr16to31Data.forEach((row) => dtr16to31Sheet.addRow(row));
+                  dtr16to31Data.forEach((row) => worksheet.addRow(row)
+                );
 
-                  // Merge Cells (same logic as before)
-                  dtr16to31Sheet.mergeCells('A1:N1'); // Philippine Christian University
-                  dtr16to31Sheet.mergeCells('A3:N3'); 
-                  dtr16to31Sheet.mergeCells('A5:D5'); // College/Department
-                  dtr16to31Sheet.mergeCells('A6:N6'); 
-                  dtr16to31Sheet.mergeCells('E5:M5'); // College/Department Data
-                  dtr16to31Sheet.mergeCells('A8:B8'); // Name
-                  dtr16to31Sheet.mergeCells('C8:M8'); // Faculty Name Data
-                  dtr16to31Sheet.mergeCells('A9:B9'); // Address Label
-                  dtr16to31Sheet.mergeCells('C9:H9'); // Address Data
-                  dtr16to31Sheet.mergeCells('J9:M9'); // Email Data
-                  dtr16to31Sheet.mergeCells('A10:B11'); //Subject
-                  dtr16to31Sheet.mergeCells('A12:B13'); //Month 
-                  dtr16to31Sheet.mergeCells('A30:B30'); //TOTAL FOR WEEK SUBJECT
-                  dtr16to31Sheet.mergeCells('A32:C32'); //Total number of hours rendered 
-                  dtr16to31Sheet.mergeCells('A33:H33'); 
-                  dtr16to31Sheet.mergeCells('I33:K33');
+                  worksheet.mergeCells('A1:N1'); // Philippine Christian University
+                  worksheet.mergeCells('A3:N3'); 
+                  worksheet.mergeCells('A5:D5'); // College/Department
+                  worksheet.mergeCells('A6:N6'); 
+                  worksheet.mergeCells('E5:M5'); // College/Department Data
+                  worksheet.mergeCells('A8:B8'); // Name
+                  worksheet.mergeCells('C8:M8'); // Faculty Name Data
+                  worksheet.mergeCells('A9:B9'); // Address Label
+                  worksheet.mergeCells('C9:H9'); // Address Data
+                  worksheet.mergeCells('J9:M9'); // Email Data
+                  worksheet.mergeCells('A10:B11'); // Subject
+                  worksheet.mergeCells('A12:B13'); // Month 
+                  worksheet.mergeCells('A29:B29'); // TOTAL FOR WEEK SUBJECT
+                  worksheet.mergeCells('A32:C32'); // Total number of hours rendered 
+                  worksheet.mergeCells('A33:H33'); 
+                  worksheet.mergeCells('I33:K33');
 
-                  // Date Counter Logic for 16-31
-                  let dayCounterr = 16; // Starting from 16
 
-                  for (const { date } of dates) {
-                    if (dayCounterr > 31) break; // Only process up to the 31st
+          let dayCounter = 0;
+          const alreadyMergedRows = new Set();
 
-                    if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
+          let displayedMonth = "";
+          let displayedYear = "";
 
-                    const day = new Date(date).getDate();
-                    if (day < 16 || day > 31) continue;
+          for (const date of monthDates) {
+            if (!selectedItems[`${acadYear}-${semester}-${date}`]) continue;
 
-                    const rowNumber = 13 + (day - 15); // Row 14 = Day 16
-                    const row = dtr16to31Sheet.getRow(rowNumber);
+            const day = new Date(date).getDate();
+            if (day < 16 || day > 31) continue;
 
-                    // Show actual date (e.g., "April 16, 2025")
-                    const formattedDate = new Date(date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    });
+            // Extract the month and year only once
+            if (!displayedMonth && !displayedYear) {
+              const firstDateObj = new Date(date);
+              displayedMonth = firstDateObj.toLocaleString('default', { month: 'long' });
+              displayedYear = firstDateObj.getFullYear();
+            }
 
-                    row.getCell(1).value = formattedDate;
+            const rowNumber = 13 + (day - 16 + 1); // adjust row number for 16–31
+            const row = worksheet.getRow(rowNumber);
 
-                    // Merge A and B (columns 1 and 2)
-                    dtr16to31Sheet.mergeCells(`A${rowNumber}:B${rowNumber}`);
-
-                    // Optional: style
-                    row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(1).font = { size: 10 };
-                    row.getCell(1).border = {
-                      top: { style: 'thin' },
-                      left: { style: 'thin' },
-                      bottom: { style: 'thin' },
-                      right: { style: 'thin' },
-                    };
-
-                    dayCounterr++;
-                  }
-
-                  // Repeat the styling logic from 1-15 for centering, alignment, borders, and font adjustments.
-                  const centerAlignedCellss = ['A1', 'A3', 'E5', 'A10', 'A12', 'A13', 'I33'];
-                  centerAlignedCellss.forEach((cellRef) => {
-                    dtr16to31Sheet.getCell(cellRef).alignment = { horizontal: 'center', vertical: 'middle' };
-                  });
-
-                  const rightAlignedCellss = ['A5', 'A8', 'A9', 'I9', 'A32', 'A33'];
-                  rightAlignedCellss.forEach((cellRef) => {
-                    dtr16to31Sheet.getCell(cellRef).alignment = { horizontal: 'right', vertical: 'middle' };
-
-                    // Modify font for the right-aligned cells
-                    dtr16to31Sheet.getCell(cellRef).font = { 
-                      name: 'Times', 
-                      size: 11,      
-                    };
-                  });
-
-                    // Left align specific labels
-          const leftAlignedCellss = ['C8', 'C9', 'K9'];
-          leftAlignedCellss.forEach((cellRef) => {
-            dtr16to31Sheet.getCell(cellRef).alignment = { horizontal: 'left', vertical: 'middle' };
-
-              // Modify font for the right-aligned cells
-              dtr16to31Sheet.getCell(cellRef).font = { 
-                name: 'arial', 
-                size: 10,      
-              };
-          });
-
-            // bottom grid
-            const bottomGridCellss = ['A9','E5', 'A6', 'C8', , 'C8', 'C9', 'K9','I9','N9', 'D32','I33',];
-            bottomGridCellss.forEach((cellRef) => {
-              dtr16to31Sheet.getCell(cellRef).border = {
-                bottom: { style: 'thin', color: { argb: '000000' } } // Adds a thin black bottom border
-              };
+            const formattedDate = new Date(date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             });
 
-             
-          // GRID
-          const gridCellss = [ 'A10', 'A12', 'A13', 'A30'];
-          gridCellss.forEach((cellRef) => {
-              dtr16to31Sheet.getCell(cellRef).border = {
-                bottom: { style: 'thin', color: { argb: '000000' } } ,
-                top: { style: 'thin', color: { argb: '000000' } } ,
-                left: { style: 'thin', color: { argb: '000000' } } ,
-                right: { style: 'thin', color: { argb: '000000' } } ,
-              };
-            });
+            row.getCell(1).value = formattedDate;
 
+            const mergeRange = `A${rowNumber}:B${rowNumber}`;
+            if (!alreadyMergedRows.has(rowNumber)) {
+              worksheet.mergeCells(mergeRange);
+              alreadyMergedRows.add(rowNumber);
+            }
 
-            // Increase font size and apply custom font to PCU title
-          dtr16to31Sheet.getRow(1).height = 25; // Increase row height for better visibility
-          dtr16to31Sheet.getCell('A1').font = { name: 'Old English', size: 20, bold: true }; 
-          
-          function addLetterSpacingg(text, spacing) {
-            return text.split('').join(' '.repeat(spacing));
+            // Style cell...
+            row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+            row.getCell(1).font = { size: 10 };
+            row.getCell(1).border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+
+            dayCounter++;
           }
-          
-          // Add letter spacing for the text in cell A3
-          const spacedTextt = addLetterSpacingg('DAILY TIME RECORD FOR INSTRUCTORS', 1); // 1 space between each character
-          
-          dtr16to31Sheet.getCell('A3').value = spacedTextt;
-          dtr16to31Sheet.getCell('A3').font = { name: 'Old English', size: 13, };
-  
-  
-  
-                  for (let col = 1; col <= 14; col++) {
-                    dtr16to31Sheet.getColumn(col).width = 12;
-                  }
 
-                  dtr16to31Sheet.getCell('E5').font = { name: 'Old English', size: 11 };
-                  dtr16to31Sheet.getCell('C8').font = { name: 'Old English', size: 11 };
+        if (displayedMonth && displayedYear) {
+          const certRowIndex = 33;
+          const certRow = worksheet.getRow(certRowIndex);
 
+          certRow.getCell(1).value = "I hereby certify that the foregoing is a true record of my actual teaching hours for the month of";
+          certRow.getCell(9).value = `${displayedMonth} 1-15 ${displayedYear}`;
 
+          // Optional styling
+          for (let col = 1; col <= 9; col++) {
+            const cell = certRow.getCell(col);
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.font = { size: 10 };
+          }
+        }
 
+        // Center align specific cells
+        const centerAlignedCells = ['A1', 'A3', 'E5', 'A10', 'A12', 'A13', 'I33'];
 
-                  // Add Table Headers logic for scheduleData (same as in Reg(1-15))
-                  scheduleData.forEach((schedule, index) => {
-                    const colStart = 3 + index * 2;
-                    const rowStart = 10;
-
-                    const row10 = dtr16to31Sheet.getRow(rowStart);
-                    const row11 = dtr16to31Sheet.getRow(rowStart + 1);
-                    const row12 = dtr16to31Sheet.getRow(rowStart + 2);
-
-                    row10.getCell(colStart).value = schedule.courseTitle || "-";
-                    row11.getCell(colStart).value = schedule.days || "-";
-                    row11.getCell(colStart + 1).value = schedule.timeIn && schedule.timeOut
-                      ? `${schedule.timeIn} - ${schedule.timeOut}`
-                      : "-";
-
-                    dtr16to31Sheet.mergeCells(rowStart + 2, colStart, rowStart + 3, colStart);
-                    dtr16to31Sheet.mergeCells(rowStart + 2, colStart + 1, rowStart + 3, colStart + 1);
-                    row12.getCell(colStart).value = "FROM";
-                    row12.getCell(colStart + 1).value = "TO";
-
-
-                    
-                    // Repeat the time-filling logic for dates 16–31
-                    scheduleData.forEach((schedule, index) => {
-                      const colStart = 3 + index * 2;
-
-                      // Loop through all 16–31 days
-                      for (let day = 16; day <= 31; day++) {
-                        const rowNumber = 13 + (day - 15); // Row 14 = Day 16
-                        const row = dtr16to31Sheet.getRow(rowNumber);
-
-                        // Find the date object matching this day
-                        const dateObj = dates.find(({ date }) => new Date(date).getDate() === day);
-                        let timeIn = "-";
-                        let timeOut = "-";
-
-                        if (dateObj && selectedItems[`${acadYear}-${semester}-${dateObj.date}`]) {
-                          const { details } = dateObj;
-
-                          Object.entries(details).forEach(([course, record]) => {
-                            const courseTitle = course.substring(11).trim();
-                            if (courseTitle === schedule.courseTitle.trim()) {
-                              timeIn = record.time_in || "-";
-                              timeOut = record.time_out || "-";
-                            }
-                          });
-                        }
-
-                        // Assign values to the correct columns
-                        row.getCell(colStart).value = timeIn;
-                        row.getCell(colStart + 1).value = timeOut;
-
-                        // Style the cells
-                        [colStart, colStart + 1].forEach((col) => {
-                          row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
-                          row.getCell(col).font = { size: 8 };
-                          row.getCell(col).border = {
-                            top: { style: 'thin' },
-                            left: { style: 'thin' },
-                            bottom: { style: 'thin' },
-                            right: { style: 'thin' },
-                          };
-                        });
-                      }
-                    });
-           
-
-                    const totalRowIndexx = 30;
-                    const totalWeekCelll = dtr16to31Sheet.getCell('D32');
-
-                    let grandTotalHourss = 0;
-
-                    // Filter dates from 16–31 only
-                    const filteredDates = dates.filter(({ date }) => {
-                      const day = new Date(date).getDate();
-                      return day >= 16 && day <= 31;
-                    });
-
-                    scheduleData.forEach((schedule, index) => {
-                      const colStart = 3 + index * 2;
-                      const toCol = colStart + 1;
-
-                      let totalHourss = 0;
-
-                      filteredDates.forEach(({ date, details }) => {
-                        if (!selectedItems[`${acadYear}-${semester}-${date}`]) return;
-
-                        Object.entries(details).forEach(([course, record]) => {
-                          const courseTitle = course.substring(11).trim().toLowerCase();
-                          const scheduledCourse = schedule.courseTitle.trim().toLowerCase();
-
-                          if (courseTitle === scheduledCourse && record.time_in && record.time_out) {
-                            const timeInn = new Date(`${date} ${record.time_in}`);
-                            const timeOutt = new Date(`${date} ${record.time_out}`);
-                            const diffInMilliss = timeOutt - timeInn;
-                            const hourss = diffInMilliss / (1000 * 60 * 60);
-
-                            if (!isNaN(hourss) && hourss > 0) {
-                              totalHourss += hourss;
-                            }
-                          }
-                        });
-                      });
-
-                      const totalCell = dtr16to31Sheet.getCell(totalRowIndexx, toCol);
-                      totalCell.value = totalHourss.toFixed(2);
-                      totalCell.font = { bold: true };
-                      totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
-                      totalCell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                      };
-
-                      grandTotalHourss += totalHourss;
-                    });
-
-                    // Write Grand Total
-                    totalWeekCelll.value = grandTotalHourss.toFixed(2);
-                    totalWeekCelll.font = { bold: true };
-                    totalWeekCelll.alignment = { horizontal: 'center', vertical: 'middle' };
-                    totalWeekCelll.border = { bottom: { style: 'thin' } };
-
-
-
-           
-           // Merge cells for total rendered area, but only if not merged yet
-           if (!dtr16to31Sheet.getCell('D32').isMerged) {
-             dtr16to31Sheet.mergeCells('D32:G32'); // Merge total rendered area
-           }
-           
-  
-            // Style for Course Title (Row 10)
-            row10.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
-            row10.getCell(colStart).font = { size: 7,  }; 
-            row10.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for Day (Row 11)
-            row11.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row11.getCell(colStart).font = { size: 10 };
-            row11.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for Time (Row 11)
-            row11.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row11.getCell(colStart + 1).font = { size: 6 }; 
-            row11.getCell(colStart + 1).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            }; 
-            
-            // Style for "FROM" (Merged C12:C13)
-            row12.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row12.getCell(colStart).font = { size: 10 }; 
-            row12.getCell(colStart).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            };
-            
-            // Style for "TO" (Merged D12:D13)
-            row12.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' }; 
-            row12.getCell(colStart + 1).font = { size: 10 }; 
-            row12.getCell(colStart + 1).border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            };
-            
-            // Merge course title horizontally across its two columns
-            dtr16to31Sheet.mergeCells(rowStart, colStart, rowStart, colStart + 1);
-            
-            
-      
+        centerAlignedCells.forEach((cellRef) => {
+          worksheet.getCell(cellRef).alignment = { horizontal: 'center', vertical: 'middle' };
         });
-    
+
+        // Right align specific labels
+        const rightAlignedCells = ['A5', 'A8', 'A9', 'I9', 'A32', 'A33'];
+
+        rightAlignedCells.forEach((cellRef) => {
+          worksheet.getCell(cellRef).alignment = { horizontal: 'right', vertical: 'middle' };
+
+          // Modify font for the right-aligned cells
+          worksheet.getCell(cellRef).font = { 
+            name: 'Times', 
+            size: 11,
+          };
+        });
+
+        // Left align specific labels
+        const leftAlignedCells = ['C8', 'C9', 'K9'];
+        leftAlignedCells.forEach((cellRef) => {
+          worksheet.getCell(cellRef).alignment = { horizontal: 'left', vertical: 'middle' };
+
+          // Modify font for the left-aligned cells
+          worksheet.getCell(cellRef).font = { 
+            name: 'arial', 
+            size: 10,
+          };
+        });
+
+        // Bottom grid
+        const bottomGridCells = ['A9', 'E5', 'A6', 'C8', 'C9', 'K9', 'I9', 'N9', 'D32', 'I33'];
+        bottomGridCells.forEach((cellRef) => {
+          worksheet.getCell(cellRef).border = {
+            bottom: { style: 'thin', color: { argb: '000000' } }
+          };
+        });
+
+        // Grid for box borders
+        const gridCells = ['A10', 'A12', 'A13', 'A29'];
+        gridCells.forEach((cellRef) => {
+          worksheet.getCell(cellRef).border = {
+            bottom: { style: 'thin', color: { argb: '000000' } },
+            top: { style: 'thin', color: { argb: '000000' } },
+            left: { style: 'thin', color: { argb: '000000' } },
+            right: { style: 'thin', color: { argb: '000000' } },
+          };
+        });
+
+        // Increase font size and apply custom font to PCU title
+        worksheet.getRow(1).height = 30;
+        worksheet.getCell('A1').font = { name: 'Old English', size: 20, bold: true };
+
+        // Add letter spacing function
+        function addLetterSpacing(text, spacing) {
+          return text.split('').join(' '.repeat(spacing));
+        }
+
+        // Add letter spacing for A3
+        const spacedText = addLetterSpacing('DAILY TIME RECORD FOR INSTRUCTORS', 1);
+        worksheet.getCell('A3').value = spacedText;
+        worksheet.getCell('A3').font = { name: 'Old English', size: 13 };
+
+        // Set all columns width to 12
+        for (let col = 1; col <= 14; col++) {
+          worksheet.getColumn(col).width = 12;
+        }
+
+        // Custom font for some cells
+        worksheet.getCell('E5').font = { name: 'Old English', size: 11 };
+        worksheet.getCell('C8').font = { name: 'Old English', size: 11 };
+
+        // Table Headers ------------------------
+        scheduleData.forEach((schedule, index) => {
+          const colStart = 3 + index * 2;
+          const rowStart = 10;
+
+          const row10 = worksheet.getRow(rowStart);
+          row10.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+          row10.getCell(colStart).font = { size: 7 };
+          row10.getCell(colStart).border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+
+          const row11 = worksheet.getRow(rowStart + 1);
+          // Style for Day (Row 11)
+        row11.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+        row11.getCell(colStart).font = { size: 10 };
+        row11.getCell(colStart).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        // Style for Time (Row 11)
+        row11.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+        row11.getCell(colStart + 1).font = { size: 6 };
+        row11.getCell(colStart + 1).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
 
 
-                  // Ensure placeholders and apply the same grid logic to the new worksheet
-// 🔹 Ensure minimum columns until 'N' 
-const minColEndd = 14; 
-for (let col = 3; col <= minColEndd; col++) {
+          const row12 = worksheet.getRow(rowStart + 2);
+          // Style for "FROM" (Merged C12:C13)
+        row12.getCell(colStart).alignment = { horizontal: 'center', vertical: 'middle' };
+        row12.getCell(colStart).font = { size: 10 };
+        row12.getCell(colStart).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
 
-  const cell10 = dtr16to31Sheet.getCell(10, col);
-  const cell11 = dtr16to31Sheet.getCell(11, col);
+        // Style for "TO" (Merged D12:D13)
+        row12.getCell(colStart + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+        row12.getCell(colStart + 1).font = { size: 10 };
+        row12.getCell(colStart + 1).border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
 
-  if (!cell10.value) {
-    cell10.value = "-";
-  }
-  if (!cell11.value) {
-    cell11.value = "-";
-  }
+        worksheet.mergeCells(rowStart, colStart, rowStart, colStart + 1);
 
-  // Apply center alignment
-  cell10.alignment = { horizontal: 'center', vertical: 'middle' };
-  cell11.alignment = { horizontal: 'center', vertical: 'middle' };
+          row10.getCell(colStart).value = schedule.courseTitle || "-";
+          row11.getCell(colStart).value = schedule.days || "-";
+          row11.getCell(colStart + 1).value = schedule.timeIn && schedule.timeOut
+            ? `${schedule.timeIn} - ${schedule.timeOut}`
+            : "-";
 
-  // Apply border
-  cell10.border = {
-    top: { style: 'thin' },
-    left: { style: 'thin' },
-    bottom: { style: 'thin' },
-    right: { style: 'thin' }
-  };
-  cell11.border = {
-    top: { style: 'thin' },
-    left: { style: 'thin' },
-    bottom: { style: 'thin' },
-    right: { style: 'thin' }
-  };
-}
+          worksheet.mergeCells(rowStart + 2, colStart, rowStart + 3, colStart);
+          worksheet.mergeCells(rowStart + 2, colStart + 1, rowStart + 3, colStart + 1);
+          row12.getCell(colStart).value = "FROM";
+          row12.getCell(colStart + 1).value = "TO";
 
-        
-// 🔹 Ensure placeholder "-" in every empty cell from Row 14 to 28 (days 1–15)
-for (let rowNum = 12; rowNum <= 30; rowNum++) {
-  const row = dtr16to31Sheet.getRow(rowNum);
-  for (let col = 3; col <= 14; col++) {
-    const cell = row.getCell(col);
-    if (!cell.value) {
-      cell.value = "-";
-    }
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.font = { size: 8 };
-    cell.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
-  }
-}
+          // Fill 1–15 days of time in/out         
+          scheduleData.forEach((schedule, index) => {
+            const colStart = 3 + index * 2;
+          
+            for (let day = 1; day <= 15; day++) {
+              const rowNumber = 13 + day;
+              const row = worksheet.getRow(rowNumber);
+              const cellDate = new Date(row.getCell(1).value); 
+          
+              let timeIn = "-";
+              let timeOut = "-";
+          
+
+              const dateObj = dates.find(({ date }) => {
+                const d = new Date(date);
+                return (
+                  d.getDate() === cellDate.getDate() &&
+                  d.getMonth() === cellDate.getMonth() &&
+                  d.getFullYear() === cellDate.getFullYear()
+                );
+              });
+          
+              if (dateObj && selectedItems[`${acadYear}-${semester}-${dateObj.date}`]) {
+                const { details } = dateObj;
+          
+                Object.entries(details).forEach(([course, record]) => {
+                  const courseTitle = course.substring(11).trim();
+                  if (courseTitle === schedule.courseTitle.trim()) {
+                    timeIn = record.time_in || "-";
+                    timeOut = record.time_out || "-";
+                  }
+                });
+              }
+          
+              row.getCell(colStart).value = timeIn;
+              row.getCell(colStart + 1).value = timeOut;
+          
+              [colStart, colStart + 1].forEach((col) => {
+                row.getCell(col).alignment = { horizontal: 'center', vertical: 'middle' };
+                row.getCell(col).font = { size: 8 };
+                row.getCell(col).border = {
+                  top: { style: 'thin' },
+                  left: { style: 'thin' },
+                  bottom: { style: 'thin' },
+                  right: { style: 'thin' },
+                };
+              });
+            }
+          });
+          
+
+          const totalRowIndex = 30;
+        const totalWeekCell = worksheet.getCell('D32');
+
+        let grandTotalHours = 0;
+
+        scheduleData.forEach((schedule, index) => {
+          const colStart = 3 + index * 2;
+          const toCol = colStart + 1;
+
+          let totalHours = 0;
+
+          for (let rowIndex = 14; rowIndex <= 28; rowIndex++) {
+            const row = worksheet.getRow(rowIndex);
+            const cellDate = new Date(row.getCell(1).value); 
+
+            const dateObj = dates.find(({ date }) => {
+              const d = new Date(date);
+              return (
+                d.getDate() === cellDate.getDate() &&
+                d.getMonth() === cellDate.getMonth() &&
+                d.getFullYear() === cellDate.getFullYear()
+              );
+            });
+
+            if (!dateObj) continue;
+
+            const selected = selectedItems[`${acadYear}-${semester}-${dateObj.date}`];
+            if (!selected) continue;
+
+            Object.entries(dateObj.details).forEach(([course, record]) => {
+              const courseTitle = course.substring(11).trim();
+
+              if (courseTitle === schedule.courseTitle.trim() && record.time_in && record.time_out) {
+                const timeIn = new Date(`${dateObj.date} ${record.time_in}`);
+                const timeOut = new Date(`${dateObj.date} ${record.time_out}`);
+
+                const diffInMillis = timeOut - timeIn;
+                const hours = diffInMillis / (1000 * 60 * 60);
+
+                if (!isNaN(hours) && hours > 0) {
+                  totalHours += hours;
+                }
+              }
+            });
+          }
+
+          const totalCell = worksheet.getCell(totalRowIndex, toCol);
+          totalCell.value = totalHours.toFixed(2);
+          totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
+          totalCell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' },
+          };
+
+          grandTotalHours += totalHours;
+        });
+
+        totalWeekCell.value = grandTotalHours.toFixed(2);
+        totalWeekCell.font = { bold: true };
+        totalWeekCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        totalWeekCell.border = {
+          bottom: { style: 'thin' },
+        };
+
+        });
+
+        if (!worksheet.getCell('D32').isMerged) {
+          worksheet.mergeCells('D32:G32'); 
+        }
+
+
+        // minimum columns until 'N' 
+        const minColEnd = 14; 
+        for (let col = 3; col <= minColEnd; col++) {
+
+          const cell10 = worksheet.getCell(10, col);
+          const cell11 = worksheet.getCell(11, col);
+
+          if (!cell10.value) {
+            cell10.value = "-";
+          }
+          if (!cell11.value) {
+            cell11.value = "-";
+          }
+
+          // center alignment
+          cell10.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell11.alignment = { horizontal: 'center', vertical: 'middle' };
+
+          // border
+          cell10.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+          cell11.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        }
+
+        // 🔹 Ensure placeholder "-" in every empty cell from Row 14 to 28 (days 1–15)
+        for (let rowNum = 12; rowNum <= 30; rowNum++) {
+          const row = worksheet.getRow(rowNum);
+          for (let col = 3; col <= 14; col++) {
+            const cell = row.getCell(col);
+            if (!cell.value) {
+              cell.value = "-";
+            }
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.font = { size: 8 };
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+          }
+        }
+
+        });
+
+
+
 
 
          // bawal maalis -----------------------------------------------------
